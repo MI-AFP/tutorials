@@ -1,0 +1,4 @@
+click
+lxml
+pypandoc
+requests
