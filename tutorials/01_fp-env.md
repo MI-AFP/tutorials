@@ -89,8 +89,9 @@ If you like to build (frontend/backend) JavaScript applications you can do that 
 * [GHCJS]
 * [Haste]
 * [PureScript]
+* [Elm]
 
-This is nice example for practical usage of Haskell for web projects! It is so much easier (and safer) to write JavaScript in Haskell than just plain JavaScript...
+This is nice example for practical usage of Haskell for web projects! It is so much easier (and safer) to write JavaScript in Haskell than just plain JavaScript. Some of those are not just Haskell dialects or libraries but new languages deeply inspired by Haskell. For more information, read about [The JavaScript Problem](https://wiki.haskell.org/The_JavaScript_Problem). We will slightly look at this at the end of this course.
 
 ## Try to be interactive
 
@@ -559,6 +560,7 @@ For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). 
 * [GHC User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/)
 
 [Cabal]: https://www.haskell.org/cabal/
+[Elm]: http://elm-lang.org
 [GHC]: https://www.haskell.org/ghc/
 [ghc-mod]: https://github.com/DanielG/ghc-mod
 [GHCJS]: https://github.com/ghcjs/ghcjs
