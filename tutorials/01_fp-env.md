@@ -523,7 +523,7 @@ Marek
 Hello, Marek!
 ```
 
-For debugging you can run `ghci` with preloaded project:
+For debugging you can run `ghci` with project preloaded:
 
 ```
 % stack ghci
@@ -542,13 +542,21 @@ main :: IO ()
 greet :: String -> String
 ```
 
-[Stack] is really powerful tool, you can find more by reading documentation or just with `stack --help`.
+[Stack] is really powerful tool, you can find more by reading documentation or just with `stack --help` or read [docs](https://docs.haskellstack.org/en/stable/README/).
+
+### Stack config files and dependencies
+
+You might have noticed that [Stack] uses not just `.cabal` file but also `stack.yaml` and `package.yaml`. Also somehow takes care of the needed dependencies. 
+
+*TODO*
+
+Further, [Stack] also provides [dependency visualization](https://docs.haskellstack.org/en/stable/dependency_visualization/) via well-known tool Dot (GraphViz).
 
 ## Task assignment
 
 To test out the workflow check the dummy homework [MI-AFP/hw00](https://github.com/MI-AFP/hw00) where you will learn how you should get, complete, check, and submit homework (especially useful if you are not familiar with [GitHub] and [Travis CI]). By working on such homework, you might also learn new things which you encounter in tests and skeletons.
 
-For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). The task consists of writing simple expression and looking up information with [Hoogle], [Hayoo] and/or GHCi.
+For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). The task consists of writing simple expression and looking up information with [Hoogle], [Hayoo!] and/or GHCi.
 
 ## Further reading
 
