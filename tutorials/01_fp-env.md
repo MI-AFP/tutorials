@@ -435,7 +435,7 @@ Writing configuration to file: HelloWorld/stack.yaml
 All done.
 ```
 
-Now whole project has been created for you. You should edit `HelloWorld.cabal` file which specifies the project (author, email, url, etc.). Then use the same code from previous example to `app/Main.hs` and `src/Lib.hs`.
+Now whole project has been created for you. You should edit `package.yaml` file which specifies the project (author, email, url, etc.) and thanks to [hpack] is nicer form which is then used to generate `HelloWorld.cabal`. Then use the same code from previous example to `app/Main.hs` and `src/Lib.hs`.
 
 ```haskell
 -- src/Lib.hs
@@ -514,7 +514,7 @@ Installing executable(s) in
 Registering HelloWorld-0.1.0.0...
 ```
 
-Everything ended up OK and you are finally able to run the application (`HelloWorld-exe` is defined in `HelloWorld.cabal` and you may change it):
+Everything ended up OK and you are finally able to run the application (`HelloWorld-exe` is defined in `package.yaml`, thus also `HelloWorld.cabal`, and you may change it):
 
 ```
 % stack exec HelloWorld-exe
@@ -529,11 +529,11 @@ For debugging you can run `ghci` with project preloaded:
 % stack ghci
 The following GHC options are incompatible with GHCi and have not been passed to it: -threaded
 Configuring GHCi with the following packages: HelloWorld
-Using main module: 1. Package `HelloWorld' component exe:HelloWorld-exe with main-is file: /home/user/Projects/CTU/FPCourse/files/01_hw_stack/HelloWorld/app/Main.hs
+Using main module: 1. Package `HelloWorld' component exe:HelloWorld-exe with main-is file: /home/.../HelloWorld/app/Main.hs
 GHCi, version 8.0.2: http://www.haskell.org/ghc/  :? for help
-[1 of 1] Compiling Lib              ( /home/user/Projects/CTU/FPCourse/files/01_hw_stack/HelloWorld/src/Lib.hs, interpreted )
+[1 of 1] Compiling Lib              ( /home/.../HelloWorld/src/Lib.hs, interpreted )
 Ok, modules loaded: Lib.
-[2 of 2] Compiling Main             ( /home/user/Projects/CTU/FPCourse/files/01_hw_stack/HelloWorld/app/Main.hs, interpreted )
+[2 of 2] Compiling Main             ( /home/.../HelloWorld/app/Main.hs, interpreted )
 Ok, modules loaded: Lib, Main.
 Loaded GHCi configuration from /tmp/ghci18580/ghci-script
 *Main Lib> :browse
@@ -546,11 +546,42 @@ greet :: String -> String
 
 ### Stack config files and dependencies
 
-You might have noticed that [Stack] uses not just `.cabal` file but also `stack.yaml` and `package.yaml`. Also somehow takes care of the needed dependencies. 
+You might have noticed that [Stack] uses `package.yaml` to generate `.cabal` and there is some `stack.yaml`. It also somehow takes care of the needed dependencies. Let's say you need to you collection of type Set. Of course you could implement it by your own, but reinventing the wheel is unnecessary! Use `Data.Set` which is already here (we will cover details about this and other data structures in Haskell in the future).
 
-*TODO*
+If you lookup `Data.Set` ([Hoogle], [Hayoo!] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Set.html)). If you now try to do this in your `Lib.hs`:
 
-Further, [Stack] also provides [dependency visualization](https://docs.haskellstack.org/en/stable/dependency_visualization/) via well-known tool Dot (GraphViz).
+```haskell
+import Data.Set
+
+namesSet = insert "Robert" (insert "Marek" empty)
+```
+
+After trying to build with `stack build` you should get this error stating that it could not find module `Data.Set`:
+
+```
+/home/.../HelloWorld/src/Lib.hs:5:1: error:
+    Could not find module ‘Data.Set’
+    Perhaps you meant Data.Int (from base-4.10.1.0)
+    Use -v to see a list of the files searched for.
+  |
+5 | import Data.Set
+  | ^^^^^^^^^^^^^^^
+```
+
+
+All you need to do is include package `containers` in the dependencies of `package.yaml` file. Then the build should be without any error and you can do for example this with `stack ghci`:
+
+```
+*Main Lib> namesSet
+fromList ["Marek","Robert"]
+*Main Lib> import Data.Set
+*Main Lib Data.Set> member "Marek" namesSet
+True
+*Main Lib Data.Set> member "Martin" namesSet
+False
+```
+
+Further, [Stack] also provides [dependency visualization](https://docs.haskellstack.org/en/stable/dependency_visualization/) via well-known tool Dot (GraphViz) and more detailed options...
 
 ## Task assignment
 
@@ -582,6 +613,7 @@ For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). 
 [hindent]: https://github.com/commercialhaskell/hindent
 [hlint]: https://hackage.haskell.org/package/hlint
 [Hoogle]: https://www.haskell.org/hoogle/
+[hpack]: https://github.com/sol/hpack
 [literate Haskell]: https://wiki.haskell.org/Literate_programming
 [PureScript]: http://www.purescript.org
 [Stack]: https://docs.haskellstack.org
