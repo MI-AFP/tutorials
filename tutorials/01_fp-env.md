@@ -188,6 +188,17 @@ Prelude> (2 / 3) :: Int
 
 You can see that error message exactly tells us what is wrong! `Int` is not instance of `Fractional` which we need when using `/` in the expression `(2 / 3) :: Int`. This is kind of obvious but when you will have bigger project with source files, you will find GHC error messages very useful.
 
+If you need to change type, find a suitable function. Some of them are in `Prelude`: `toInteger`, `fromInteger`, `toRational`, etc. Another quite important is `show` for showing anything as `String`. How these work will be covered more later on as we get to typeclasses and polymorphism!
+
+```
+Prelude> :t toInteger (7::Int)
+toInteger (7::Int) :: Integer
+Prelude> show (2/3)
+"0.6666666666666666"
+Prelude> toRational (2/16)
+1 % 8
+```
+
 Similarly you can do such thing with functions, because we are in functional language! Function `abs` (absolute value) takes a number and returns a number. That means it doesn't work for strings...
 
 The type signature is very math-like... Instance (type) of `Num` is for example `Integer` and you know functions from math which have type `Integer -> Integer` (domain and co-domain).
