@@ -568,8 +568,18 @@ After trying to build with `stack build` you should get this error stating that 
   | ^^^^^^^^^^^^^^^
 ```
 
+All you need to do is include package `containers` (you could also specify the required version) in the dependencies of `package.yaml` file. After `stack build` the package will be downloaded and built, if something else is needed (like adding `extra-deps` to `stack.yaml`, you will be informed in detail - it happens when it is not common package).
 
-All you need to do is include package `containers` in the dependencies of `package.yaml` file. Then the build should be without any error and you can do for example this with `stack ghci`:
+```yaml
+# ...
+dependencies:
+- base >= 4.7 && < 5
+- containers
+
+# ...
+```
+
+Then after the build you can do for example this with `stack ghci`:
 
 ```
 *Main Lib> namesSet
