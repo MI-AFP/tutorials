@@ -307,11 +307,59 @@ Enough of types and containers, let's do some functions when this is functional 
 
 ### Intro to patterns
 
-### Recursion
+### Recursion and tail recursion
+
+The concept of [recursion] is well-known - a function that has the ability to invoke itself. That allows us to solve big problems by recursively solving their smaller part(s). The best known example is factorial - trivial case is the factorial of 0, which is 1. Any other factorial of natural number *n* is then *n* times factorial of *n-1*. In Haskell we can write exactly this definition:
+
+```haskell
+factorial 0 = 1
+factorial n = n * factorial n-1
+```
+
+During any call of subroutine (function, procedure, or other action), it is needed to store information to the [call stack]. Such information consist of where was the call initiated, what was the state and where it should return the value when poping from this stack. For example, with calling `res = factorial 3` call stack could look like this (top on the left):
+
+1. `res = _`
+2. `factorial 3 = 3 * _`, `res = _`
+3. `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
+4. `factorial 1 = 1 * _`,  `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
+
+Now it reaches `factorial 0 = 1` and can start popping back the result:
+
+1. `factorial 1 = 1 * 1`,  `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
+2. `factorial 2 = 2 * 1`,  `factorial 3 = 3 * _`, `res = _`
+3. `factorial 3 = 3 * 2`, `res = _`
+4. `res = 6`
+
+Result is indeed 6, but could it be more efficient? Why it is necessary to use [call stack]? It stores the context of interrupted functions by the recursive call, it must remember that result needs to be multiplied then and after that it can be returned. What if there is nothing more to do after returning the value from recursive call - nothing needed to remember? That is called [tail recursion] and in such case it can optimize usage of [call stack] - only 1 frame will be (re)used!
+
+Following `factorial` is tail recursive with use of so-called accumulator `acc`, the result is returned from trivial case without any change.
+
+```haskell
+factorial n = fac' n 1 
+            where fac' 0 acc = acc
+                  fac' x acc = fac' (x - 1) (x * acc) 
+```
+
+
+1. `factorial 3`
+2. `fac' 3 1`
+3. `fac' 2 3`
+4. `fac' 1 6`
+5. `fac' 1 6`
+6. `6`
+
+Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unnecessary to write tail-recursive functions, you should be familiar with the concept as functional programmer. With Haskell you should more focus about the readability of your code and productivity!
 
 ## Task assignment
 
 ## Further reading
 
+* [Haskell: Tail Recursion](http://www.cs.bham.ac.uk/~vxs/teaching/Haskell/handouts/tail-recursion.pdf)
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
 * [School of Haskell](https://www.schoolofhaskell.com/school/starting-with-haskell/introduction-to-haskell)
+
+[lazy evaluation]: https://wiki.haskell.org/Lazy_evaluation
+[call stack]: https://en.wikipedia.org/wiki/Call_stack
+[recursion]: https://en.wikibooks.org/wiki/Haskell/Recursion
+[tail recursion]: https://wiki.haskell.org/Tail_recursion
+
