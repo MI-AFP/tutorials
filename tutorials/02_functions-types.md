@@ -305,11 +305,63 @@ Enough of types and containers, let's do some functions when this is functional 
 
 ### Basic list functions
 
-Since list is very simple and widely used data structure, it is good time to learn useful functions to work with lists. You can find complete list in [Data.List] documentation.
+Since list is very simple and widely used data structure, it is good time to learn useful functions to work with lists. You can find complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also try to run some unclear cases like `head` of empty list and see what happens...
 
 ```haskell
--- TODO: demonstrate functions: head, tail, (++), (!!), null, length, reverse, take, drop, takeWhile, dropWhile, elem, zip, map, filter, sum, all, any, and, or
+Prelude> let myList = [2,4,5,3,2,8,4,1]
+Prelude> head myList
+2
+Prelude> tail myList
+[4,5,3,2,8,4,1]
+Prelude> myList ++ [4, 5]
+[2,4,5,3,2,8,4,1,4,5]
+Prelude> myList !! 2
+5
+Prelude> null myList
+False
+Prelude> null []
+True
+Prelude> length myList
+8
+Prelude> reverse myList
+[1,4,8,2,3,5,4,2]
+Prelude> take 2 myList
+[2,4]
+Prelude> drop 2 myList
+[5,3,2,8,4,1]
+Prelude> filter (<6) myList
+[2,4,5,3,2,4,1]
+Prelude> takeWhile (<6) myList
+[2,4,5,3,2]
+Prelude> dropWhile (<6) myList
+[8,4,1]
+Prelude> elem 5 myList
+True
+Prelude> elem 7 myList
+False
+Prelude> zip [1,2,3] [4,5,6]
+[(1,4),(2,5),(3,6)]
+Prelude> map (^2) myList
+[4,16,25,9,4,64,16,1]
+Prelude> all (<6) myList
+False
+Prelude> any (<6) myList
+True
+Prelude> sum myList
+29
+Prelude> or [True, False, True]
+True
+Prelude> and [True, False, True]
+False
+Prelude> foldl (+) 0 myList
+29
+Prelude> foldl (||) False [True, False, True]
+True
+Prelude> foldl (&&) False [True, False, True]
+False
 ```
+
+Last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later while explaining so-called catamorphism. Now you can just see that it is generalization of `sum`, `and`, `or`, and many others.
 
 It is very good practice to try implement some of these functions to understand them and their complexity. You may worry that using list is always very innefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
 
@@ -318,7 +370,27 @@ It is very good practice to try implement some of these functions to understand 
 Important concept in many (not just) functional programming languages is the pattern matching. You could already notice it before in the example with record data types. When defining a function, it is possible to match the parameters via data constructors and/or values. As we've shown, for lists and tuples there are data constructors (`:` and `,`) which can be used in pattern matching as well.
 
 ```haskell
--- TODO: show pattern matching functions
+data Age = Age Int | Unknown
+
+ageInfo         :: Age -> String
+ageInfo (Age x) = "Age is " ++ (show x) ++ " years."
+ageInfo Unknown = "Age is unknown"
+
+head        :: [a] -> a
+head (x:xs) = x
+
+tail        :: [a] -> a
+tail (x:xs) = xs
+
+length        :: [a] -> Integer
+length []     = 0
+length (_:xs) = 1 + length xs     -- _ wildcard = don't care & won't use
+
+fst        :: (a, b) -> a
+fst (x, _) = x
+
+snd        :: (a, b) -> b
+snd (_, y) = y
 ```
 
 There are three more advanced, not so common, but sometimes useful concepts: pattern naming, lazy pattern, and strict pattern. We will get back to them in the next lesson when we will cover also guards.
