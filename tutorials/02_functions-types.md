@@ -352,6 +352,8 @@ Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unne
 
 ## Task assignment
 
+The homework to try out your skills in using basic functions and types can be found at [MI-AFP/hw02](https://github.com/MI-AFP/hw02). 
+
 ## Further reading
 
 * [Haskell: Tail Recursion](http://www.cs.bham.ac.uk/~vxs/teaching/Haskell/handouts/tail-recursion.pdf)
