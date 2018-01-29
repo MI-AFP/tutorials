@@ -297,7 +297,7 @@ data [] a = [] | (:) a ([] a)
 
 ### String
 
-String is really nothing but just list of characters `[Char]`. Only difference is that there are more functions for working specially with `String`s - like `putStr`, `lines`, `words` and more.
+String is really nothing but just list of characters `[Char]`. Only difference is that there are more functions for working specially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes life of Haskell programmer sometimes little bit uneasy.
 
 ## Simple functions
 
@@ -305,7 +305,23 @@ Enough of types and containers, let's do some functions when this is functional 
 
 ### Basic list functions
 
-### Intro to patterns
+Since list is very simple and widely used data structure, it is good time to learn useful functions to work with lists. You can find complete list in [Data.List] documentation.
+
+```haskell
+-- TODO: demonstrate functions: head, tail, (++), (!!), null, length, reverse, take, drop, takeWhile, dropWhile, elem, zip, map, filter, sum, all, any, and, or
+```
+
+It is very good practice to try implement some of these functions to understand them and their complexity. You may worry that using list is always very innefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
+
+### Intro to pattern matching
+
+Important concept in many (not just) functional programming languages is the pattern matching. You could already notice it before in the example with record data types. When defining a function, it is possible to match the parameters via data constructors and/or values. As we've shown, for lists and tuples there are data constructors (`:` and `,`) which can be used in pattern matching as well.
+
+```haskell
+-- TODO: show pattern matching functions
+```
+
+There are three more advanced, not so common, but sometimes useful concepts: pattern naming, lazy pattern, and strict pattern. We will get back to them in the next lesson when we will cover also guards.
 
 ### Recursion and tail recursion
 
@@ -360,8 +376,15 @@ The homework to try out your skills in using basic functions and types can be fo
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
 * [School of Haskell](https://www.schoolofhaskell.com/school/starting-with-haskell/introduction-to-haskell)
 
-[lazy evaluation]: https://wiki.haskell.org/Lazy_evaluation
 [call stack]: https://en.wikipedia.org/wiki/Call_stack
+[containers]: http://hackage.haskell.org/package/containers
+[Data.List]: hackage.haskell.org/package/base/docs/Data-List.html
+[Data.Sequence]: http://hackage.haskell.org/package/containers/docs/Data-Sequence.html
+[Data.String]: https://hackage.haskell.org/package/base/docs/Data-String.html
+[Data.Text]: https://hackage.haskell.org/package/text/docs/Data-Text.html
+[lazy evaluation]: https://wiki.haskell.org/Lazy_evaluation
+[pattern matching]: https://www.haskell.org/tutorial/patterns.html
 [recursion]: https://en.wikibooks.org/wiki/Haskell/Recursion
 [tail recursion]: https://wiki.haskell.org/Tail_recursion
+[text]: http://hackage.haskell.org/package/text
 
