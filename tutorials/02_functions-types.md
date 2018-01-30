@@ -99,6 +99,17 @@ myAge :: Age
 myAge = Age 20
 ```
 
+The keyword `deriving` allows you to automatically make your data type instance of some typeclass (limited set of built-in classes) to allow some common Haskell mechanisms and functions to work with your types:
+
+* `Eq` - equality operators `==` and `/=`
+* `Ord` - comparison operators `<`, `<=`, `>`, `>=`; `min`, `max`, and `compare` (subclass of `Eq`)
+* `Show` - `show` for value to `String` conversion (+ other related functions)
+* `Read` - `read` for`String` to value conversion (+ other related functions)
+* `Enum` - for enumerations, allows the use of `..` range list syntax such as `[Blue .. Green]`
+* `Bounded` - for enumerations or other bounded, `minBound` and `maxBound` as the lowest and highest values that the type can take
+
+As it was said, typeclasses are very important in Haskell and will be covered later on. You will also learn how to make new typeclasses, their instances, etc.
+
 ## Data types
 
 Haskell has strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages can use predefined data types, get more from some libraries or introduce your own.
@@ -120,7 +131,7 @@ Get back to creating own data types with the `data` keyword. After `data` is the
 
 ```haskell
 data MyType a b = MyTypeC1 a Int | MyTypeC2 String b | MyType3
-                deriving Show  -- will be covered later
+                deriving Show
 
 x :: MyType Bool Float
 x = MyTypeC1 True 10
@@ -171,26 +182,33 @@ Now try to create a type `Pet` which also contains `name` and `age`. You will ge
 ```haskell
 {-# LANGUAGE DuplicateRecordFields #-}
 
+data Sin = Lust | Gluttony | Greed | Sloth | Wrath | Envy | Pride
+         deriving (Show, Read, Eq, Ord, Enum, Bounded)
+
 data Gender = Male | Female
-            deriving Show
+            deriving (Show, Read, Eq)      -- Why not Ord? Gender equality!
 
 data Person = Person
             { name   :: String
             , age    :: Int
             , gender :: Gender
             , city   :: String
-            } deriving Show
+            } deriving (Show, Read, Eq)
 
 data Pet = Pet
          { name   :: String
          , age    :: Int
-         } deriving Show
+         } deriving (Show, Read)
 
 olderPet :: Pet -> Pet
 olderPet pet = pet { age = (age pet + 1) }
 ```
 
-You can also see that there is a shorthand for updating the value of record - creating new edited record from previous.
+You can also see that there is a shorthand for updating the value of record - creating new edited record from previous. Now you can try some derived behaviour from typeclasses such as `show`, `read`, or `==`:
+
+```haskell
+-- TODO: try show, read, ==, <, <=, .., etc.
+```
 
 ### Algebraic Data Types (ADTs)
 
