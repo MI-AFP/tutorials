@@ -182,6 +182,10 @@ Now try to create a type `Pet` which also contains `name` and `age`. You will ge
 ```haskell
 {-# LANGUAGE DuplicateRecordFields #-}
 
+{-
+  Seven Deadly Sins ordered by Dante Alighieri
+  see: https://simple.wikipedia.org/wiki/Seven_deadly_sins
+-}
 data Sin = Lust | Gluttony | Greed | Sloth | Wrath | Envy | Pride
          deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
@@ -206,8 +210,42 @@ olderPet pet = pet { age = (age pet + 1) }
 
 You can also see that there is a shorthand for updating the value of record - creating new edited record from previous. Now you can try some derived behaviour from typeclasses such as `show`, `read`, or `==`:
 
-```haskell
--- TODO: try show, read, ==, <, <=, .., etc.
+```
+*Main> show Male
+"Male"
+*Main> read "Male"
+*** Exception: Prelude.read: no parse
+*Main> (read "Male") :: Gender
+Male
+*Main> Male == Female
+False
+*Main> Male == Male
+True
+*Main> Male < Female
+
+<interactive>:8:1: error:
+    • No instance for (Ord Gender) arising from a use of ‘<’
+    • In the expression: Male < Female
+      In an equation for ‘it’: it = Male < Female
+*Main> Gluttony < Wrath
+True
+*Main> [Gluttony .. Envy]
+[Gluttony,Greed,Sloth,Wrath,Envy]
+*Main> :t maxBound
+maxBound :: Bounded a => a
+*Main> maxBound :: Sin
+Pride
+*Main> minBound :: Sin
+Lust
+*Main> let p1 = Person { name = "Marek", age = 25, gender = Male, city = "Prague" }
+*Main> let p2 = Person { name = "Marek", age = 25, gender = Male, city = "Prague" }
+*Main> p1 == p2
+True
+*Main> let p3 = Person { name = "Marek", age = 26, gender = Male, city = "Prague" }
+*Main> p1 == p3
+False
+*Main> show p1
+"Person {name = \"Marek\", age = 25, gender = Male, city = \"Prague\"}"
 ```
 
 ### Algebraic Data Types (ADTs)
