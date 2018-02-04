@@ -114,7 +114,7 @@ For that you can use underscore `_` wildcard which acts as default case matching
 "unknown"
 ```
 
-As you can see, it uses pattern matching as it was introduced in the previous lesson. Without any surprise it is then possible to use pattern matching for lists as well.
+As you can see, it uses pattern matching as it was introduced in the previous lesson. Without any surprise it is then possible to use pattern matching for lists as well. When you need to match against multiple patterns, you can use tuple. 
 
 ```haskell
 describeList :: [a] -> String  
@@ -138,11 +138,34 @@ myMax a b
     | otherwise = b
 ```
 
+The order of testing guards is top-bottom and first which is `True` will be applied. Try it with:
+
+```haskell
+guardsOrder x
+    | x < 5 = "x < 5"
+    | x < 0 = "x < 0"
+    | x > 2 = "x > 1"
+    | otherwise = "otherwise"
+```
+
 ### Wildcards and patterns
 
 ### List guards
 
 ### Named patterns
+
+In some cases, if you are matching a pattern with a value, it may be useful to bind a name to the whole value being matched (when you need to use decomposition and whole as well). As-patterns allow exactly this: they are of the form `name@pattern` and in addition to acting as regular pattern it binds the `name` to the whole value being matched by `pattern`. Again, it can be used not just with lists but also with any other types.
+
+```haskell
+duplicateFirstElement1 [] = []
+duplicateFirstElement1 (x:xs) = x:x:xs
+
+duplicateFirstElement2 [] = []
+duplicateFirstElement2 list@(x:xs) = x:list
+
+duplicateFirstElement3 [] = []
+duplicateFirstElement3 list@(x:_) = x:list
+```
 
 ## Let in, where
 
