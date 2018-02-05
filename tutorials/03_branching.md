@@ -148,9 +148,43 @@ guardsOrder x
     | otherwise = "otherwise"
 ```
 
-### Wildcards and patterns
+Also remember the difference between `_` and `otherwise` (it is something totally different!).
 
-### List guards
+```
+Prelude> :t otherwise
+Prelude> otherwise == True
+True
+Prelude> not otherwise
+False
+otherwise :: Bool
+Prelude> :t _
+
+<interactive>:1:1: error:
+    • Found hole: _ :: t
+      Where: ‘t’ is a rigid type variable bound by
+               the inferred type of it :: t at <interactive>:1:1
+    • In the expression: _
+```
+
+### Patterns are syntactic sugar
+
+It is good to notice that pattern matching in function declaration is the same as pattern matching with `case-of`. Actually it is just [syntactic sugar](https://en.wikibooks.org/wiki/Haskell/Syntactic_sugar#Function_Bindings) and following two functions are equivalent. Moreover, you can combine pattern matching with guards (no surprise).
+
+```haskell
+myHead1 :: [a] -> a
+myHead1 []    = error "Empty list"
+myHead1 (x:_) = x
+
+myHead2 :: [a] -> a
+myHead2 list = case list of
+                  []    -> error "Empty list"
+                  (x:_) -> x
+
+myHead3 :: [a] -> a
+myHead3 = \list -> case list of   -- lambda expression
+                  []    -> error "Empty list"
+                  (x:_) -> x
+```
 
 ### Named patterns
 
@@ -269,6 +303,93 @@ birthYearToTitle year
     where age = currentYear - year
           currentYear = 2018       -- or from Data.Time
 ```
+
+## Evaluation, patterns and wildcards
+
+We will now slightly switch from branching to evaluation strategy of Haskell to understand why is good to use such things as wildcards and also to be able to understand bang patterns.
+
+### Haskell is lazy
+
+Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
+
+```
+Prelude> let x = 1:x   -- same as "repeat 1" or "[1,1..]"
+Prelude> take 10 x
+[1,1,1,1,1,1,1,1,1,1]
+Prelude> take 20 x
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+Prelude> x
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,...^C Interrupted.
+Prelude> [1,2..]
+[1,2,3,4,5,6,7,8,9,10,11,12,13,14,...^C Interrupted.
+Prelude> let x = undefined
+Prelude> let y = 1 + x
+Prelude> let z = y * 2 + 15
+Prelude> :type y
+y :: Num a => a
+Prelude> :type x
+x :: a
+Prelude> z
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
+  undefined, called at <interactive>:37:5 in interactive:Ghci23
+```
+
+(For stopping output press CTRL+C in GHCi)
+
+### Haskell can be strict
+
+For enforcing strictness there is the `!` symbol and you can read more about the usage [here](https://wiki.haskell.org/Performance/Strictness). Obviously bad things will happen if your code contains infinite list or recursion which never ends - you will need to terminate the program!
+
+There is an operator `$` called function application and its function is not very magical. As left operand it takes a function and on right side is operand for the function. It can avoid using brackets with function composition (will be covered later). Then there is strict application `$!$`, see the difference:
+
+```
+Prelude> :type ($)
+($) :: (a -> b) -> a -> b
+Prelude> :type ($!)
+($!) :: (a -> b) -> a -> b
+Prelude> :type (take 0)
+(take 0) :: [a] -> [a]
+Prelude>
+Prelude> take 0 $ undefined
+[]
+Prelude> take 0 $! undefined
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
+  undefined, called at <interactive>:20:11 in interactive:Ghci9
+Prelude> take 0 $ undefined
+[]
+```
+
+### Wildcard's advantage
+
+Similar problem you can avoid with wildcard, where the parameter is evaluated (strictly) till it can be matched with the pattern. If in pattern is `x`, nothing is evaluated, but if there is something like `[]` or `MyType a b 4` it will be evaluated until match can be confirmed or denied. Consider two following functions which differ only in order of matching rules (recall that patterns are tested top-bottom):
+
+```haskell
+myTake1 :: Int -> [a] -> [a]
+myTake1 _ [] = []
+myTake1 0 _ = []
+myTake1 n (x:xs) = x : myTake1 (n-1) xs
+
+myTake2 :: Int -> [a] -> [a]
+myTake1 0 _ = []
+myTake2 _ [] = []
+myTake2 n (x:xs) = x : myTake1 (n-1) xs
+```
+
+```
+*Main> myTake1 0 undefined
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
+  undefined, called at <interactive>:32:11 in interactive:Ghci1
+*Main> myTake2 0 undefined
+[]
+```
+
+### Bang patterns
 
 ## Modules and imports
 
