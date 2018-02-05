@@ -527,3 +527,8 @@ The homework to practice branching and slightly working with modules is in repos
 ## Further reading
 
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com) (chapters 4, 7)
+* [Haskell: Pattern matching](https://en.wikibooks.org/wiki/Haskell/Pattern_matching)
+* [Haskell: Control structures](https://en.wikibooks.org/wiki/Haskell/Control_structures)
+* [Haskell: Modules](https://en.wikibooks.org/wiki/Haskell/Modules)
+* [Haskell: Import](https://wiki.haskell.org/Import)
+* [24 Days of GHC Extensions: Bang Patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)
