@@ -308,6 +308,18 @@ birthYearToTitle year
 
 We will now slightly switch from branching to evaluation strategy of Haskell to understand why is good to use such things as wildcards and also to be able to understand bang patterns.
 
+### Bottom
+
+To talk about laziness we often use term [bottom](https://wiki.haskell.org/Bottom) (&#8869; or `_|_`) which means *computation which never completes successfully*. Various things can happen - computation can fail due to some kind of error or a computation that just goes into an infinite loop. Term bottom is related to value as well as to type. Examine those with GHCi:
+
+```haskell
+data BottomType = BottomType   -- same as unit "()"
+
+bottomValue = bottomValue -- endless 
+errorBottom = error "Reached some error"
+undefBottom = undefined
+```
+
 ### Haskell is lazy
 
 Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
