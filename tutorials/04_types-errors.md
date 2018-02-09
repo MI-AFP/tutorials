@@ -6,7 +6,7 @@ First we briefly get back to lazyness in Haskell as mentioned in the previous le
 
 ### List comprehensions
 
-Creation of lists with using the constructor or better with syntactic sugar is pretty simple but there are two more interesting ways for that. First is used basically for basic ranges and is called "dot dot notation. It is not a surprising at all. It works with types that are instances of type class `Enum` (you can check withing GHCi by `:info Enum`. You can specify start, step and end of range (inclusive), but you need to be careful with floats and doubles because of their precision - error cumulatively grows.
+Creation of lists with using the constructor or better with syntactic sugar is pretty simple but there are two more interesting ways for that. First is used basically for basic ranges and is called "dot dot notation. It is not a surprising at all and you have seen it already. It works with types that are instances of type class `Enum` (you can check withing GHCi by `:info Enum`. You can specify start, step and end of range (inclusive), but you need to be careful with floats and doubles because of their precision - error cumulatively grows.
 
 ```
 Prelude> [1..10]
@@ -19,7 +19,7 @@ Prelude> [1.0,1.05 .. 1.2]
 [1.0,1.05,1.1,1.1500000000000001,1.2000000000000002]
 ```
 
-More flexible are "list comprehensions". This concept is nowadays used in many other programming languages as well. In "list" you first specify expresion with variables and then after pipe `|` are specifications of bindings and restrictions.
+More flexible are [list comprehensions](https://wiki.haskell.org/List_comprehension). This concept/construct is nowadays used in many other programming languages as well. In "list" you first specify expresion with variables and then after pipe `|` are specifications of bindings and restrictions. It is also possible to define local names with `let`.
 
 ```
 Prelude> [n*2+1 | n <- [1..5]]
@@ -34,7 +34,7 @@ Prelude> take 10 [(i, j) | i <- [1..5], let k=i-5, j <- [k..6]]
 
 ### Lazy Haskell
 
-Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
+As we've already seen, Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
 
 ```
 Prelude> let x = 1:x
@@ -62,8 +62,6 @@ CallStack (from HasCallStack):
 
 (For stopping output press CTRL+C in GHCi)
 
-For enforcing strictness there is the `!` symbol and you can read more about the usage [here](https://wiki.haskell.org/Performance/Strictness). Obviously bad things will happen if your code contains infinite list or recursion which never ends - you will need to terminate the program!
-
 ### Strictness with types
 
 ### Boxed vs. Unboxed type
@@ -74,11 +72,13 @@ For enforcing strictness there is the `!` symbol and you can read more about the
 
 ### Text
 
-### Bytestring
+### ByteString
+
+### OverloadedStrings
 
 ## Important "base" types
 
-We already know basic data types such as `Char`, `Bool` or `Integer` and structures like lists and tuples pretty well. But of course there are more widely used types and we are going to know some more now.
+We already know basic data types (from `base` package) such as [Data.Char](https://hackage.haskell.org/package/base/docs/Data-Char.html), [Bool](https://hackage.haskell.org/package/base/docs/Data-Bool.html), or [Data.Int](https://hackage.haskell.org/package/base/docs/Data-Int.html) and structures like [Data.List](https://hackage.haskell.org/package/base/docs/Data-List.html) and [Data.Tuple](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) pretty well. But of course there are more widely used types and we are going to know some more now.
 
 ### Maybe
 
@@ -159,6 +159,10 @@ It is semantically more similar to `void` from other languages and you can use i
 
 ## Other containers
 
+As in other programming languages or programming theory there are various types of containers - data types/structures whose instances are collections of other objects. If we talk about collections with arbitrary number of element, then we talked so far just about lists which are pretty simple to use and have a nice syntactic sugar notation in Haskell. But you might notice that for some use cases is not list optimal (when you need to access by index, find element in it, etc.). 
+
+Luckily there are more and more containers. Various of them which we will mention in this lesson are from package [containers](https://hackage.haskell.org/package/containers), but there are of course many more like [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and others (use [Hoogle], [Hayoo], [Hackage]).
+
 ### Sequence
 
 ### Set
@@ -229,6 +233,7 @@ We won't use such exceptions and always will try to deal with errors some other 
 
 ## Task assignment
 
+The homework to practice working with new types, list comprehensions, containers, and errors is in repository [MI-AFP/hw04](https://github.com/MI-AFP/hw04). 
 
 ## Further reading
 
@@ -240,3 +245,7 @@ We won't use such exceptions and always will try to deal with errors some other 
 * [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
 * [Haskell - error](https://wiki.haskell.org/Error)
 * [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
+
+[Hackage]: https://hackage.haskell.org
+[Hayoo!]: https://hayoo.fh-wedel.de
+[Hoogle]: https://www.haskell.org/hoogle/
