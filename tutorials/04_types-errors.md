@@ -66,6 +66,24 @@ CallStack (from HasCallStack):
 
 ### Boxed vs. Unboxed type
 
+Last theoretical topic which we are going to briefly mention is difference between boxed and unboxed types. Although it is low level concern and with regular Haskell programming you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
+
+To support lazyness, parametric polymorphism, and other properties, by default Haskell data types are represented uniformly as a pointer to a closure on the heap. These are "boxed" values. An unboxed is represented directly by raw value (i.e., without any indirection). Using unboxed types can lead to time/space optimizations. Having always pointers to a heap-allocated object is fairly slow so compilers attempt to replace these boxed values with unboxed raw values when possible. Unboxed values are a feature of some compilers that allows directly manipulating these low level values. Since they behave differently than normal haskell types, generally the type system is extended to type these unboxed values. 
+
+In [GHC], unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. Pretty simple, huh? However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
+
+* By default kind of type is `*` (try in GHCi: `:kind Int`)
+* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`)
+
+```haskell
+import GHC.Exts
+ 
+showUnboxedInt   :: Int# -> String
+showUnboxedInt n = "Unboxed: " ++ (show $ I# n) ++ "#"
+```
+
+(If you find kinds interesting, try to examine `:kind Maybe` and `:kind Either`.)
+
 ## Textual types
 
 ### String
@@ -246,6 +264,7 @@ The homework to practice working with new types, list comprehensions, containers
 * [Haskell - error](https://wiki.haskell.org/Error)
 * [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
 
+[GHC]: https://www.haskell.org/ghc/
 [Hackage]: https://hackage.haskell.org
 [Hayoo!]: https://hayoo.fh-wedel.de
 [Hoogle]: https://www.haskell.org/hoogle/
