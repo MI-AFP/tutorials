@@ -109,13 +109,29 @@ We mention this just because of differences in perfomance of types we are going 
 
 ## Textual types
 
+There are several types of [strings](https://wiki.haskell.org/Strings) that can be used in Haskell programs. Each can have some advantages and disadvantages when compared to other and you should consider which one to use in your specific case.
+
 ### String
+
+[String](https://hackage.haskell.org/package/base/docs/Data-String.html) is the only string type in the `base` package. It is just a type synonym for `[Char]`, so it comes with all properties of [list](https://hackage.haskell.org/package/base/docs/Data-List.html), and as such is the most common one, especially for non-performance-sensitive applications. But when it comes to performace (and sometimes even Unicode behavior), then problems arise - `String` has big overhead in time and space.
 
 ### Text
 
 ### ByteString
 
 ### OverloadedStrings
+
+OK! So we have multiple types which we can use for working with strings in Haskell. But wait... If we have string literal, for example `"Hello, world!"`, what type it is? It is `String` (`[Char]`)! Something like we have with numeric literals would be good (look at type of `5` or `7.5`...
+
+```
+-- TODO: test types of literals
+```
+
+When we want to make our life easier with this (no need to convert string literals everywhere), there is [GHC] extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html) (enable by language pragma or option). After that string literal type can be infered by its usage in the source code.
+
+```
+-- TODO: overloaded strings example
+```
 
 ## Important "base" types
 
