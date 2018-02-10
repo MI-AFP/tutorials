@@ -62,9 +62,7 @@ CallStack (from HasCallStack):
 
 (For stopping output press CTRL+C in GHCi)
 
-### Strictness with types
-
-### Boxed vs. Unboxed type
+### Boxed vs. Unboxed types
 
 Last theoretical topic which we are going to briefly mention is difference between boxed and unboxed types. Although it is low level concern and with regular Haskell programming you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
 
@@ -83,6 +81,31 @@ showUnboxedInt n = "Unboxed: " ++ (show $ I# n) ++ "#"
 ```
 
 (If you find kinds interesting, try to examine `:kind Maybe` and `:kind Either`.)
+
+### Strictness with types
+
+In the previous lesson we touched the topic of enforcing strictness with `!` in patterns ([bang patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)) and in function application with `$!` operator. Similarly we can use `!` with type fields like this:
+
+```haskell
+data MyType = MyConstr Int !Int
+
+data MyRec = MyRecConstr { xA ::  Int
+                         , xB :: !Int
+                         }
+```
+
+For both cases it means that when data contructor is evaluated it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in lazy way. All depends on language implementation in used compiler.
+
+#### Unpacking strict fields
+
+One of the most used optimization techniques when talking about unboxed types and strictness with [GHC] is [unpacking strict fields](https://wiki.haskell.org/Performance/Data_types#Unpacking_strict_fields). When a constructor field is marked strict, and it is a single-constructor type, then it is possible to ask GHC to unpack the contents of the field directly in its parent with `{-# UNPACK #-}` pragma:
+
+```haskell
+data T1 = T1 {-# UNPACK #-} !(Int, Float)  -- => T1 Int Float
+data T2 = T2 {-# UNPACK #-} Double !Int    -- => T2 Double Int#
+```
+
+We mention this just because of differences in perfomance of types we are going to described now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations...
 
 ## Textual types
 
@@ -255,6 +278,7 @@ The homework to practice working with new types, list comprehensions, containers
 
 ## Further reading
 
+* [Oh my laziness](http://alpmestan.com/posts/2013-10-02-oh-my-laziness.html)
 * [Haskell - list comprehension](https://wiki.haskell.org/List_comprehension)
 * [Haskell - Lazy evaluation](https://wiki.haskell.org/Lazy_evaluation)
 * [Haskell String Types](http://www.alexeyshmalko.com/2015/haskell-string-types/)
