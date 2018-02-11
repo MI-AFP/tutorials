@@ -339,19 +339,101 @@ It is semantically more similar to `void` from other languages and you can use i
 
 As in other programming languages or programming theory there are various types of containers - data types/structures whose instances are collections of other objects. If we talk about collections with arbitrary number of element, then we talked so far just about lists which are pretty simple to use and have a nice syntactic sugar notation in Haskell. But you might notice that for some use cases is not list optimal (when you need to access by index, find element in it, etc.). 
 
-Luckily there are more and more containers. Various of them which we will mention in this lesson are from package [containers](https://hackage.haskell.org/package/containers), but there are of course many more like [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and others (use [Hoogle], [Hayoo], [Hackage]).
+Luckily there are more and more containers. Various of them which we will mention in this lesson are from package [containers], but there are of course many more like [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and others (use [Hoogle], [Hayoo], [Hackage]).
 
 ### Sequence
 
+The `Seq a` is a type from [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) that represents a **finite** sequence of values of type `a`. Sequences are very similar to lists, working with sequences is not so different, but some operations are more efficient - constant-time access to both the front and the rear and Logarithmic-time concatenation, splitting, and access to any element. But in other cases it can be slower than lists because of overhead created for making listed operations effective. The size of a `Seq` must not exceed `maxBound::Int`! 
+
+```
+Prelude> import Data.Sequence
+Prelude Data.Sequence> seq1 = 1 <| 2 <| 15 <| 7 <| empty
+Prelude Data.Sequence> seq1
+fromList [1,2,15,7]
+Prelude Data.Sequence> :type seq1
+seq1 :: Num a => Seq a
+Prelude Data.Sequence> 3 <| seq1
+fromList [3,1,2,15,7]
+Prelude Data.Sequence> seq1 |> 3
+fromList [1,2,15,7,3]
+Prelude Data.Sequence> seq1 >< (fromList [2, 3, 4])
+fromList [1,2,15,7,2,3,4]
+Prelude Data.Sequence> sort seq1
+fromList [1,2,7,15]
+```
+
 ### Set
 
-#### IntSet
+The `Set e` type represents a set of elements of type `e`. Most operations require that `e` be an instance of the `Ord` class. A `Set` is strict in its elements. If you know what is *set* in math and/or programming, using it will be very easy.
+
+```
+Prelude> import Data.Set
+Prelude Data.Set> set1 = insert 4 (insert 2 (insert 0 (singleton 2)))
+Prelude Data.Set> set1
+fromList [0,2,4]
+Prelude Data.Set> delete 2 set1
+fromList [0,4]
+Prelude Data.Set> delete 3 set1
+fromList [0,2,4]
+Prelude Data.Set> mem
+member  mempty
+Prelude Data.Set> member 4 set1
+True
+Prelude Data.Set> member (-6) set1
+False
+Prelude Data.Set> Data.Set.filter (>3) set1
+fromList [4]
+Prelude Data.Set> set2 = insert 5 (insert 3 (singleton 2))
+Prelude Data.Set> set2
+fromList [2,3,5]
+Prelude Data.Set> set1
+fromList [0,2,4]
+Prelude Data.Set> intersection set1 set2
+fromList [2]
+Prelude Data.Set> union set1 set2
+fromList [0,2,3,4,5]
+```
+
+There is an efficient implementation of integer sets, which uses big-endian patricia trees (works better mainly with union and intersection). Use qualified import like `import qualified Data.IntSet as IntSet` to work with it.
 
 ### Map
 
-#### IntMap
+The `Map k v` type represents a finite map (sometimes called a dictionary) from keys of type `k` to values of type `v`. A Map is strict in its keys but lazy in its values (by default we use [Data.Map.Lazy](https://hackage.haskell.org/package/containers/docs/Data-Map-Lazy.html). You should use [Data.Map.Strict](https://hackage.haskell.org/package/containers/docs/Data-Map-Strict.html) instead if you will eventually need all the values stored and/or the stored values are not so complicated to compute (no big advantage of laziness).
+
+```
+Prelude> import Data.Map
+Prelude Data.Map> map1 = insert "suchama4" "Marek Suchanek" (singleton "perglr" "Robert Pergl")
+Prelude Data.Map> map1 ! "suchama4"
+"Marek Suchanek"
+Prelude Data.Map> map1 ! "suchamar"
+"*** Exception: Map.!: given key is not an element in the map
+CallStack (from HasCallStack):
+  error, called at ./Data/Map/Internal.hs:610:17 in containers-0.5.11.0-K2TDqgYtGUcKxAY1UqVZ3R:Data.Map.Internal
+Prelude Data.Map> map1 !? "suchamar"
+Nothing
+Prelude Data.Map> map1 !? "suchama4"
+Just "Marek Suchanek"
+Prelude Data.Map> size map1
+2
+Prelude Data.Map> delete "suchama4" map1
+fromList [("perglr","Robert Pergl")]
+Prelude Data.Map> delete "suchamar" map1
+fromList [("perglr","Robert Pergl"),("suchama4","Marek Suchanek")]
+Prelude Data.Map> map2 = insert "suchama4" "Marek Suchanek" (singleton "stengvac" "Vaclav Stengl")
+Prelude Data.Map> map2 = insert "suchama4" "Marek Sushi Suchanek" (singleton "stengvac" "Vaclav Stengl")
+Prelude Data.Map> union map1 map2
+fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Suchanek")]
+Prelude Data.Map> union map2 map1
+fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Sushi Suchanek")]
+Prelude Data.Map> intersection map1 map2
+fromList [("suchama4","Marek Suchanek")]
+```
+
+Again, there is an efficient implementation of maps where the keys are of `Int`. It uses same mechanisms as `Data.IntSet` - use `import qualified Data.IntMap as IntMap`.
 
 ### Graph and Tree
+
+Finally, [containers] specify also [Data.Tree](https://hackage.haskell.org/package/containers/docs/Data-Tree.html) and [Data.Graph](https://hackage.haskell.org/package/containers/docs/Data-Graph.html), both in very generic manner. If you ever need to work with trees or graphs, it is convenient to use those instead of introducing totally new types. Probability of finding already developed utilities for those types is much higher than for some others and it can save you lots of time...
 
 ## Working with errors
 
@@ -425,6 +507,7 @@ The homework to practice working with new types, list comprehensions, containers
 * [Haskell - error](https://wiki.haskell.org/Error)
 * [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
 
+[containers]: https://hackage.haskell.org/package/containers
 [GHC]: https://www.haskell.org/ghc/
 [Hackage]: https://hackage.haskell.org
 [Hayoo!]: https://hayoo.fh-wedel.de
