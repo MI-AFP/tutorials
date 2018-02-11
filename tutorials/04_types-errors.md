@@ -71,7 +71,7 @@ To support lazyness, parametric polymorphism, and other properties, by default H
 In [GHC], unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. Pretty simple, huh? However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
 
 * By default kind of type is `*` (try in GHCi: `:kind Int`)
-* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`)
+* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`, first do `:set -fglasgow-exts`)
 
 ```haskell
 import GHC.Exts
@@ -102,7 +102,7 @@ One of the most used optimization techniques when talking about unboxed types an
 
 ```haskell
 data T1 = T1 {-# UNPACK #-} !(Int, Float)  -- => T1 Int Float
-data T2 = T2 {-# UNPACK #-} Double !Int    -- => T2 Double Int#
+data T2 = T2 Double {-# UNPACK #-} !Int    -- => T2 Double Int#
 ```
 
 We mention this just because of differences in perfomance of types we are going to described now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations...
@@ -117,20 +117,141 @@ There are several types of [strings](https://wiki.haskell.org/Strings) that can 
 
 ### Text
 
+[Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html) from [text](https://hackage.haskell.org/package/text) package is a time and space-efficient implementation of Unicode text. Provided type is a space efficient, packed, unboxed Unicode text type. You can convert between `Text` and `String` with functions `pack` and `unpack`. There are also well-known functions with same names as are for `String` (`head`, `length`, `map`, `replace`, etc.), so you need to be careful with imports, preferable use some alias like suggested `import qualified Data.Text as T`.
+
+```
+Prelude> import qualified Data.Text as T
+Prelude T> txt = T.pack "my effective text"
+Prelude T> :type txt
+txt :: T.Text
+Prelude T> T.index txt 1
+'y'
+Prelude T> T.replace "my" "your" txt 
+
+<interactive>:13:11: error:
+    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
+    • In the first argument of ‘T.replace’, namely ‘"my"’
+      In the expression: T.replace "my" "your" txt
+      In an equation for ‘it’: it = T.replace "my" "your" txt
+
+<interactive>:13:16: error:
+    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
+    • In the second argument of ‘T.replace’, namely ‘"your"’
+      In the expression: T.replace "my" "your" txt
+      In an equation for ‘it’: it = T.replace "my" "your" txt
+Prelude T> T.replace (T.pack "my") (T.pack "your") txt 
+"your effective text"
+Prelude T> length txt
+
+<interactive>:11:8: error:
+    • Couldn't match expected type ‘[a0]’ with actual type ‘T.Text’
+    • In the first argument of ‘length’, namely ‘txt’
+      In the expression: length txt
+      In an equation for ‘it’: it = length txt
+Prelude T> T.length txt
+17
+```
+
+In addition, packaged comes also with [Data.Text.Lazy](https://hackage.haskell.org/package/text/docs/Data-Text-Lazy.html), which is for some operations, such as `concat`, `append`, `reverse`, and `cons`, better in time complexity. Useful might be also [Data.Text.Encoding](https://hackage.haskell.org/package/text/docs/Data-Text-Encoding.html) (and its lazy alternative).
+
 ### ByteString
+
+Last of the types mentioned here is [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) from [bytestring](https://hackage.haskell.org/package/bytestring) package. Byte vectors are encoded as strict Word8 arrays of bytes and it allows to pass between C and Haskell with little effort. In many ways the usage is similar with [text](https://hackage.haskell.org/package/text) package (again `pack` and `unpack`, same basic functions, `Lazy` alternative, and so on). Next there is option to use vectors with `Char8` instead of `Word8` which then works as Unicode subset (0-255) strings. Basically if you need just ASCII strings, this is the most effective way.
+
+```
+Prelude T> import Data.ByteString as B
+Prelude T B> bstr = B.pack [97, 98, 99]
+Prelude T B> bstr
+"abc"
+Prelude T B> index bstr 2
+99
+Prelude T B> B.map (+1) bstr
+"bcd"
+
+Prelude T B> import qualified Data.ByteString.Char8 as C
+Prelude T B C> C.pack "abc"
+"abc"
+Prelude T B C> B.pack "abc"
+
+<interactive>:28:8: error:
+    • Couldn't match type ‘Char’ with ‘GHC.Word.Word8’
+      Expected type: [GHC.Word.Word8]
+        Actual type: [Char]
+    • In the first argument of ‘pack’, namely ‘"abc"’
+      In the expression: pack "abc"
+      In an equation for ‘it’: it = pack "abc"
+Prelude T B C> cstr = C.pack "abc"
+Prelude T B C> C.index cstr 2
+'c'
+```
+
+In other cases you need to use encoding to encode/decode bytes to/from text:
+
+```
+E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
+"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
+Prelude T B C E> x = E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
+Prelude T B C E> x
+"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
+Prelude T B C E> index x 0
+197
+Prelude T B C E> index x 2
+105
+```
 
 ### OverloadedStrings
 
-OK! So we have multiple types which we can use for working with strings in Haskell. But wait... If we have string literal, for example `"Hello, world!"`, what type it is? It is `String` (`[Char]`)! Something like we have with numeric literals would be good (look at type of `5` or `7.5`...
+OK! So we have multiple types which we can use for working with strings in Haskell. But wait... If we have string literal, for example `"Hello, world!"`, what type it is? It is `String` (`[Char]`)! Something like we have with numeric literals would be good (look at type of `5` or `7.5`).
 
 ```
--- TODO: test types of literals
+
+Prelude> :type "abc"
+"abc" :: [Char]
+Prelude> :type 7
+7 :: Num t => t
+Prelude> :type 7.5
+7.5 :: Fractional t => t
+Prelude T C> :type abs
+abs :: Num a => a -> a
+Prelude T C> abs (-5)
+5
+Prelude T C> abs (-7.5)
+7.5
+
+Prelude> import qualified Data.Text as T
+Prelude T> :type T.index 
+T.index :: T.Text -> Int -> Char
+Prelude T> T.index "abc" 1
+
+<interactive>:2:9: error:
+    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
+    • In the first argument of ‘T.index’, namely ‘"abc"’
+      In the expression: T.index "abc" 1
+      In an equation for ‘it’: it = T.index "abc" 1
+
+Prelude T> import qualified Data.ByteString.Char8 as C
+Prelude T C> :type C.sort
+C.sort :: C.ByteString -> C.ByteString
+Prelude T C> C.sort "cab"
+
+<interactive>:10:8: error:
+    • Couldn't match expected type ‘C.ByteString’
+                  with actual type ‘[Char]’
+    • In the first argument of ‘C.sort’, namely ‘"cab"’
+      In the expression: C.sort "cab"
+      In an equation for ‘it’: it = C.sort "cab"
 ```
 
 When we want to make our life easier with this (no need to convert string literals everywhere), there is [GHC] extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html) (enable by language pragma or option). After that string literal type can be infered by its usage in the source code.
 
 ```
--- TODO: overloaded strings example
+Prelude T C> :set -XOverloadedStrings
+Prelude T C> T.index "abc" 1
+'b'
+Prelude T C> C.sort "cab"
+"abc"
+Prelude T C> :type "abc"
+"abc" :: Data.String.IsString t => t
 ```
 
 ## Important "base" types
