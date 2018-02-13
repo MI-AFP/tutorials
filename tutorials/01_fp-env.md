@@ -12,7 +12,7 @@ Lambda calculus is good to understand (at least basics) when you want to start w
 * [Lambda calculus (Stanford)](https://plato.stanford.edu/entries/lambda-calculus/)
 * [The Lambda Calculus for Absolute Dummies (like myself)](http://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
 
-For FIT CTU students, there is subject [BI-PPA](https://edux.fit.cvut.cz/courses/BI-PPA) which also covers basics of lambda calculus.
+For FIT CTU students, there are subjects [BI-PPA](https://edux.fit.cvut.cz/courses/BI-PPA) and [MI-PSL](https://edux.fit.cvut.cz/courses/MI-PSL) which also cover basics of lambda calculus and functional programming.
 
 ### Function as first class-object
 
