@@ -471,9 +471,7 @@ CallStack (from HasCallStack):
   undefined, called at <interactive>:5:1 in interactive:Ghci1
 ```
 
-Semantically it can be used where the value is not defined (for example when you want to divide by zero). Definitely you should not use `undefined` in meaning "Not implemented yet".
-
-For such things you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html).
+Semantically it can be used where the value is not defined (for example when you want to divide by zero). Sometimes you can see it used as basic placeholder with meaning "Not implemented yet". For such things you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html) which are more suitable.
 
 ### throw, try and catch
 
@@ -489,7 +487,7 @@ Prelude Control.Exception> :type catch
 catch :: Exception e => IO a -> (e -> IO a) -> IO a
 ```
 
-We won't use such exceptions and always will try to deal with errors some other and nicer way. If you are interested you can read documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html).
+We won't use such exceptions and always will try to deal with errors some other and nicer way. If you are interested you can read documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html). We will slightly get back to these after getting the notion of Monads.
 
 ## Task assignment
 
