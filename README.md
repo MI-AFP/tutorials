@@ -12,13 +12,13 @@ This repository contains tutorials and related stuff. Homeworks and other projec
 
 ## Acknowledgements
 
-Our work was highly affected by successful course [MI-PYT] (Advanced Python). The materials has been developed with support of the Faculty of Information Technology, CTU in Prague.
+Our work is highly inspired by successful course [MI-PYT] (Advanced Python). The materials have been developed with support of the Faculty of Information Technology, CTU in Prague.
 
 [![FIT CTU](https://fit.cvut.cz/sites/default/files/PR/information_technology.svg)](https://fit.cvut.cz/en)
 
 ## Contribution
 
-If you find some problem or have ideas about improvement, please submit new [issue] or do the changes on your own and create [pull request]. This is open course and we appreciate any help and feedback!
+If you find a problem or you have ideas about improvements, please submit new [issue] or do the changes on your own and create a [pull request]. This is open course and we appreciate any help and feedback!
 
 ## License
 
