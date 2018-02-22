@@ -1,6 +1,7 @@
 # Markdown to DW deployment script
 # inspired by https://github.com/cvut/MI-PYT
 import os
+import re
 
 import click
 import pypandoc
@@ -9,7 +10,29 @@ import requests
 from lxml import etree
 
 
+def prefilter_haskellcode(input_md):
+    """Make use of pascal to enable haskell code highlighting (in md)"""
+    return input_md.replace('```haskell', '```pascal')
+
+
+def postfilter_haskellcode(output_dw):
+    """Make use of pascal to enable haskell code highlighting (in dw)"""
+    return output_dw.replace('<code pascal>', '<code haskell>')
+
+
+def prefilter_interlinking(input_md):
+    """Removed md from local interlinked documents in the same directory"""
+    return re.sub(r'\[([^\]]*)]\(([^\)\/]*)\.md\)', r'[\1](\2)', input_md)
+
+
 class DW:
+    PREFILTERS = [
+        prefilter_haskellcode,
+        prefilter_interlinking
+    ]
+    POSTFILTERS = [
+        postfilter_haskellcode
+    ]
 
     def __init__(self, url, username, password):
         self.url = url + '/doku.php'
@@ -71,10 +94,20 @@ class DW:
     def put_md(self, dw_page, file):
         self.put_page(dw_page, self._transform_md2dw(file))
 
+    @classmethod
+    def _transform_md2dw(cls, file):
+        with open(file, mode='r') as f:
+            content = f.read()
+        content = cls._apply_filters(cls.PREFILTERS, content)
+        content = pypandoc.convert_text(content, 'dokuwiki', format='md')
+        content = cls._apply_filters(cls.POSTFILTERS, content)
+        return content
+
     @staticmethod
-    def _transform_md2dw(file):
-        #: TODO: customizations (images, code haskell, ...)
-        return pypandoc.convert_file(file, 'dokuwiki')
+    def _apply_filters(filters, text):
+        for flt in filters:
+            text = flt(text)
+        return text
 
     @staticmethod
     def join(*args):

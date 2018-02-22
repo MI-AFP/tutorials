@@ -38,6 +38,8 @@ Strikethrough uses two tildes. ~~Scratch this.~~
 
 ## Links
 
+[Link to local markdown](other.md)
+
 [I'm an inline-style link](https://www.google.com)
 
 [I'm an inline-style link with title](https://www.google.com "Google's Homepage")
@@ -77,6 +79,11 @@ print s
 ```
 No language indicated, so no syntax highlighting.
 But let's throw in a <b>tag</b>.
+```
+
+```pascal
+test :: Num a => a -> String
+test = undefined
 ```
 
 ## Tables
