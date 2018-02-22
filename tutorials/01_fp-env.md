@@ -319,7 +319,7 @@ isTriangle :: Double -> Double -> Double -> Bool
 
 Now we can add another function to the file:
 
-```
+```haskell
 -- Added function
 -- . is function composition (as in math)
 isntTriangle = not . isTriangle
