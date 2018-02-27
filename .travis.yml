@@ -4,8 +4,8 @@ python:
 sudo: true
 dist: trusty
 install:
-- sudo apt-get update -qq
-- sudo apt-get install -qq pandoc
+- wget https://github.com/jgm/pandoc/releases/download/2.1.1/pandoc-2.1.1-1-amd64.deb
+- sudo dpkg -i pandoc-2.1.1-1-amd64.deb
 - pip install -r bin/requirements.txt
 script:
 - python bin/dw_deploy.py tutorials
