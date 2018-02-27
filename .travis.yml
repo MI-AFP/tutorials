@@ -12,7 +12,6 @@ script:
 branches:
   only:
   - master
-  - dw-deploy
 env:
   global:
   - DW_URL: https://edux.fit.cvut.cz/courses/MI-AFP
