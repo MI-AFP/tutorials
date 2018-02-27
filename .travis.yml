@@ -1,0 +1,20 @@
+language: python
+python:
+- '3.5'
+sudo: true
+dist: trusty
+install:
+- wget https://github.com/jgm/pandoc/releases/download/2.1.1/pandoc-2.1.1-1-amd64.deb
+- sudo dpkg -i pandoc-2.1.1-1-amd64.deb
+- pip install -r bin/requirements.txt
+script:
+- python bin/dw_deploy.py tutorials
+branches:
+  only:
+  - master
+env:
+  global:
+  - DW_URL: https://edux.fit.cvut.cz/courses/MI-AFP
+  - DW_NAMESPACE: tutorials:master
+  - DW_USERNAME: suchama4
+  - secure: kfeUcNiJ/wCzae4fSgi6m4dze44izWh3g9Yx/jpkwOeoAvEd1K7wf20dUs1dLclBCDechD2x5zjyomSJhg8zkpqDn0/6y/0Q2qtuLHcIihUybnaBg1y0OzvynPfhb9tm6ZxifvwfHPt3KmJ8QZP7EgWzXWoUpu2grrOEDVHza/K5PIyCq+TiK2NGfko/FQmpUKHYeLtcFt/gkX1KfZAJYWbcjWVkt1hhQmFH4w4eh5I4NQk+yvI8LoDzYm/b0XHtd5CCQZ+VOGoM8eKmNfDgmlIKQn6bPQHZUh57iJ7P2HEO5xfXn64fNPshEkqLgXdjRbYIo8kljRBHBkjsu0jfy3w9jCDpJR9FFAJS5ZmMfIiMrrFvbPPjmwXOAMt+ExF/lkJpp1idJoET/JLlz/GSgKdvFQGX3tDG9cNKbvNbUOd03g+FdL9Nh03HhYyFpxat94vZDK8tvm9ctTcF7dg2cW49qSa4OKp+YdBkhFvNPx3M7S5fQ+ODRFoeFhlJt2YMgW1iw8o5o77mPWTN2cGkeXeM6W4+PkN3R10nTOe2H7ZN6N+5u1NBXWCqtzit2Cq9lDSuDjRZwMhwA1znuoBtM4n1Qtz9qFov+48sZIPTk/pqHLVTF6wGpHpT5Hi65XHWqKQsjVM1+2W9dWIB+jhidKi0TlSkwBKQhQlygh7E7sQ=
