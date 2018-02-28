@@ -15,7 +15,7 @@ There are some [reserved keywords/operators] which have some special meaning in 
 
 ### Type signature
 
-As was in the previous lesson, you can specify type of any expression directly or by it's name via `::` operator-like keyword "has-type". It is mandatory only in case of ambiguity because Haskell's type system has type inference (it can analyze what type the expression should have). Type of expression cannot change - it is static typing.
+As was in the previous lesson, you can specify a type of an expression directly or by its name via `::` operator-like keyword "has-type". It is mandatory only in case of ambiguity because Haskell's type system has type inference (it can analyze what type the expression should have). Type of expression cannot change - it is static typing.
 
 ```haskell
 a :: Integer
@@ -26,7 +26,7 @@ b = a
 c = (a + 7) :: Double
 ```
 
-Haskell does not have implicit conversion and if you do something like it is in example above, you will get an error during compilation. Type system is very strict and helps programmers to find more bugs during compile time and not during runtime (where is more problematic to find it).
+Haskell does not have implicit conversion and if you do something like it is in the example above, you will get an error during compilation. The type system is very strict and helps programmers to find more bugs during compile time and not during runtime (where is more problematic to find it).
 
 ```
     Couldn`t match type ‘Integer’ with ‘[Char]’
@@ -38,7 +38,7 @@ Haskell does not have implicit conversion and if you do something like it is in 
 
 ### Type variable
 
-As you could have notice, we are able to achieve polymophism with something strange in function types, something called type variable. Type variables must start with lowercase letter and usually are just 1 character from the beginning of alphabet:
+As you could have noticed, we are able to achieve polymorphism with something strange in function types, something called type variable. Type variables must start with a lowercase letter and usually are just 1 character from the beginning of the alphabet:
 
 ```haskell
 identity :: a -> a
@@ -56,7 +56,7 @@ next :: Num a => a -> a
 next x = x + 1
 ```
 
-It says `next` has a type `a` to `a` where `a` is "from" typeclass `Num` (typeclasses will be covered later, for now it is just class or types). Such type signature can be even more complex.
+It says `next` has a type `a` to `a` where `a` is "from" typeclass `Num` (typeclasses will be covered later, for now, it is just class or types). Such type signature can be even more complex.
 
 ```haskell
 foo :: (Show a, Eq a, Read b) => a -> b -> a
@@ -64,9 +64,9 @@ foo :: (Show a, Eq a, Read b) => a -> b -> a
 
 ### Function declaration
 
-Although type can be in most cases inferred automatically by compiler, it is good practice to write it down at least in case of functions as part of code documentation. Functions can be complicated and by reading its type signature you know immediately what arguments it expects and what it returns.
+Although type can be in most cases inferred automatically by the compiler, it is good practice to write it down at least in case of functions as part of code documentation. Functions can be complicated and by reading its type signature you know immediately what arguments it expects and what it returns.
 
-Declaration of function is simple, just use the prefix notation as you would call the function and then describe what is it equal to.
+Declaration of a function is simple, just use the prefix notation as you would call the function and then describe what is it equal to.
 
 ```haskell
 fibonacci   :: Word -> Integer
@@ -77,11 +77,11 @@ fibonacci n = (fibonacci n-1) + (fibonacci n-2)
 
 ### Type declaration
 
-There are three basic way how to introduce your own data type:
+There are three basic ways how to introduce your own data type:
 
-1. type synonym = you just use different name for some existing type (for example `String` is type synonym for `[Char]` = list of `Char`)
-2. new data type = declare type with type constructor (before `=`) and one ore more data constructors (after `=`, separated by `|`), you may use typeclass constraints, type variables and recursion
-3. newtype = new data type with exactly one data constructor with one parameter (new type is isomorphic with the "wrapped" type and compiler can do optimizations, can be used also in other way in more advanced code)
+1. type synonym = you just use a different name for some existing type (for example `String` is type synonym for `[Char]` = list of `Char`)
+2. new data type = declare type with type constructor (before `=`) and one or more data constructors (after `=`, separated by `|`), you may use typeclass constraints, type variables, and recursion
+3. newtype = new data type with exactly one data constructor with one parameter (new type is isomorphic with the "wrapped" type and compiler can do optimizations, can be used also in another way in more advanced code)
 
 ```haskell
 type String = [Char]
@@ -112,7 +112,7 @@ As it was said, typeclasses are very important in Haskell and will be covered la
 
 ## Data types
 
-Haskell has strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages can use predefined data types, get more from some libraries or introduce your own.
+Haskell has a strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages can use predefined data types, get more from some libraries or introduce your own.
 
 ### Basic Data Types
 
@@ -127,7 +127,7 @@ Haskell has strong static type system which is one of the things making it so gr
 
 ### Type and data constructor
 
-Get back to creating own data types with the `data` keyword. After `data` is the type construction starting with capital letter and then there might be type parameters (type variables). Then `=` follows and after it we can specify multiple data constructors separated by `|`. Each data constructor again starts with capital letter and can be followed by data types which it takes as arguments.
+Get back to creating own data types with the `data` keyword. After `data` is the type construction starting with a capital letter and then there might be type parameters (type variables). Then `=` follows and after it, we can specify multiple data constructors separated by `|`. Each data constructor again starts with a capital letter and can be followed by data types which it takes as arguments.
 
 ```haskell
 data MyType a b = MyTypeC1 a Int | MyTypeC2 String b | MyType3
@@ -137,7 +137,7 @@ x :: MyType Bool Float
 x = MyTypeC1 True 10
 ```
 
-Usually when there is just one data constructor, the name is the same as of the type constructor (but it is not a rule).
+Usually, when there is just one data constructor, the name is the same as of the type constructor (but it is not a rule).
 
 ### Record types
 
@@ -163,7 +163,7 @@ city :: Person -> String
 city (Person _ _ _ x) = x
 ```
 
-Not very nice, right?! And we have just 4 attributes of a person. Luckily there is syntactic sugar which make it easier for us called record:
+Not very nice, right?! And we have just 4 attributes of a person. Luckily there is syntactic sugar which makes it easier for us called record:
 
 ```haskell
 data Gender = Male | Female
@@ -266,7 +266,7 @@ data Pair = P Int Double         -- Int * Double
 
 ## List and tuple
 
-There are two basic container types (has ability to store multiple values) - tuples and lists. Of course there are many more such as maps, sets, vectors, streams defined in some libraries or you can create your own but these are real the basic and widely used.
+There are two basic container types (has the ability to store multiple values) - tuples and lists. Of course, there are much more such as maps, sets, vectors, streams defined in some libraries or you can create your own but these are really the basic and widely used.
 
 ### Tuple
 
@@ -309,7 +309,7 @@ myTuple :: MyTuple3 Int String Double
 myTuple = XTuple3 7 "Hi" 2.25
 ```
 
-What forms the tuple is the `,` operator keyword and used notation in first example is just a syntactic sugar.
+What forms the tuple is the `,` operator keyword and used notation in the first example is just a syntactic sugar.
 
 
 ```haskell
@@ -318,7 +318,7 @@ myTuple = (,) 7 "Hi"
 
 ### List
 
-List is different than tuples - it has variable length (because it is recursive type) and its elements have the same type. To understand it, let's create an alternative implementation of list data type.
+List is different than tuples - it has variable length (because it is a recursive type) and its elements have the same type. To understand it, let's create an alternative implementation of list data type.
 
 ```haskell
 data List a = Empty | NonEmpty a (List a)
@@ -353,7 +353,7 @@ data [] a = [] | (:) a ([] a)
 
 ### String
 
-String is really nothing but just list of characters `[Char]`. Only difference is that there are more functions for working specially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes life of Haskell programmer sometimes little bit uneasy.
+String is really nothing but just list of characters `[Char]`. The only difference is that there are more functions for working especially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes a life of Haskell programmer sometimes little bit uneasy.
 
 ## Simple functions
 
@@ -361,7 +361,7 @@ Enough of types and containers, let's do some functions when this is functional 
 
 ### Basic list functions
 
-Since list is very simple and widely used data structure, it is good time to learn useful functions to work with lists. You can find complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also try to run some unclear cases like `head` of empty list and see what happens...
+Since list is very simple and widely used data structure, it is a good time to learn useful functions to work with lists. You can find a complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also, try to run some unclear cases like `head` of the empty list and see what happens...
 
 ```haskell
 Prelude> let myList = [2,4,5,3,2,8,4,1]
@@ -417,13 +417,13 @@ Prelude> foldl (&&) False [True, False, True]
 False
 ```
 
-Last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later while explaining so-called catamorphism. Now you can just see that it is generalization of `sum`, `and`, `or`, and many others.
+The last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later while explaining so-called catamorphism. Now you can just see that it is a generalization of `sum`, `and`, `or`, and many others.
 
-It is very good practice to try implement some of these functions to understand them and their complexity. You may worry that using list is always very innefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
+It is very good practice to try to implement some of these functions to understand them and their complexity. You may worry that using list is always very inefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
 
 ### Intro to pattern matching
 
-Important concept in many (not just) functional programming languages is the pattern matching. You could already notice it before in the example with record data types. When defining a function, it is possible to match the parameters via data constructors and/or values. As we've shown, for lists and tuples there are data constructors (`:` and `,`) which can be used in pattern matching as well.
+An important concept in many (not just) functional programming languages is the pattern matching. You could already notice it before in the example with record data types. When defining a function, it is possible to match the parameters via data constructors and/or values. As we've shown, for lists and tuples there are data constructors (`:` and `,`) which can be used in pattern matching as well.
 
 ```haskell
 data Age = Age Int | Unknown
@@ -453,7 +453,7 @@ There are three more advanced, not so common, but sometimes useful concepts: pat
 
 ### Recursion and tail recursion
 
-The concept of [recursion] is well-known - a function that has the ability to invoke itself. That allows us to solve big problems by recursively solving their smaller part(s). The best known example is factorial - trivial case is the factorial of 0, which is 1. Any other factorial of natural number *n* is then *n* times factorial of *n-1*. In Haskell we can write exactly this definition:
+The concept of [recursion] is well-known - a function that has the ability to invoke itself. That allows us to solve big problems by recursively solving their smaller part(s). The best-known example is factorial - the trivial case is the factorial of 0, which is 1. Any other factorial of natural number *n* is then *n* times factorial of *n-1*. In Haskell we can write exactly this definition:
 
 ```haskell
 factorial 0 = 1
@@ -474,9 +474,9 @@ Now it reaches `factorial 0 = 1` and can start popping back the result:
 3. `factorial 3 = 3 * 2`, `res = _`
 4. `res = 6`
 
-Result is indeed 6, but could it be more efficient? Why it is necessary to use [call stack]? It stores the context of interrupted functions by the recursive call, it must remember that result needs to be multiplied then and after that it can be returned. What if there is nothing more to do after returning the value from recursive call - nothing needed to remember? That is called [tail recursion] and in such case it can optimize usage of [call stack] - only 1 frame will be (re)used!
+The result is indeed 6, but could it be more efficient? Why is it necessary to use [call stack]? It stores the context of interrupted functions by the recursive call, it must remember that result needs to be multiplied then and after that, it can be returned. What if there is nothing more to do after returning the value from the recursive call - nothing needed to remember? That is called [tail recursion] and in such case, it can optimize usage of [call stack] - only 1 frame will be (re)used!
 
-Following `factorial` is tail recursive with use of so-called accumulator `acc`, the result is returned from trivial case without any change.
+Following `factorial` is tail recursive with use of so-called accumulator `acc`, the result is returned from the trivial case without any change.
 
 ```haskell
 factorial n = fac' n 1 
@@ -492,7 +492,7 @@ factorial n = fac' n 1
 5. `fac' 1 6`
 6. `6`
 
-Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unnecessary to write tail-recursive functions, you should be familiar with the concept as functional programmer. With Haskell you should more focus about the readability of your code and productivity!
+Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unnecessary to write tail-recursive functions, you should be familiar with the concept as functional programmer. With Haskell, you should more focus on the readability of your code and productivity!
 
 ## Task assignment
 
