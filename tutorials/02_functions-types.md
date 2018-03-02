@@ -64,7 +64,7 @@ foo :: (Show a, Eq a, Read b) => a -> b -> a
 
 ### Function declaration
 
-Although type can be in most cases inferred automatically by the compiler, it is good practice to write it down at least in case of functions as part of code documentation. Functions can be complicated and by reading its type signature you know immediately what arguments it expects and what it returns.
+Although type can be in most cases inferred automatically by the compiler, it is a good practice to write it down at least in case of functions as a part of code documentation. Functions can be complicated and by reading its type signature you know immediately what arguments it expects and what it returns.
 
 Declaration of a function is simple, just use the prefix notation as you would call the function and then describe what is it equal to.
 
@@ -99,6 +99,8 @@ myAge :: Age
 myAge = Age 20
 ```
 
+Here, type `String` can be replaced by `[Char]` (it is a mere synonym), so typechecking is not 'perfect' in this sense. In case of `newtype`, `Age` is a different type than Int and compiler will check it.
+
 The keyword `deriving` allows you to automatically make your data type instance of some typeclass (limited set of built-in classes) to allow some common Haskell mechanisms and functions to work with your types:
 
 * `Eq` - equality operators `==` and `/=`
@@ -108,11 +110,11 @@ The keyword `deriving` allows you to automatically make your data type instance 
 * `Enum` - for enumerations, allows the use of `..` range list syntax such as `[Blue .. Green]`
 * `Bounded` - for enumerations or other bounded, `minBound` and `maxBound` as the lowest and highest values that the type can take
 
-As it was said, typeclasses are very important in Haskell and will be covered later on. You will also learn how to make new typeclasses, their instances, etc.
+As it was said, typeclasses are a very important means of abstraction in Haskell and will be covered later on. You will also learn how to make new typeclasses, their instances, etc.
 
 ## Data types
 
-Haskell has a strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages can use predefined data types, get more from some libraries or introduce your own.
+Haskell has a strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages, you can use predefined data types, get more from some libraries or introduce your own.
 
 ### Basic Data Types
 
@@ -138,6 +140,8 @@ x = MyTypeC1 True 10
 ```
 
 Usually, when there is just one data constructor, the name is the same as of the type constructor (but it is not a rule).
+
+This is one another great Haskell feature: Algebraic Data Types (ADT). These are now found in more and more new languages (e.g. [Rust](https://www.rust-lang.org) and very fresh [Reason](https://reasonml.github.io) from Facebook).
 
 ### Record types
 
@@ -177,7 +181,7 @@ data Person = Person
             } deriving Show
 ```
 
-Now try to create a type `Pet` which also contains `name` and `age`. You will get an error which is logical, you cannot have two functions with the same name! One option is to rename it to `namePerson` and `namePet`, the second is available to you only if you have GHC 8.0.1 or higher and it is with language extension [DuplicateRecordFields](https://downloads.haskell.org/~ghc/master/users-guide/glasgow_exts.html#duplicate-record-fields):
+Now try to create a type `Pet` which also contains `name` and `age`. You will get an error which is logical, you cannot have two functions with the same name! One option is to rename it to `namePerson` and `namePet`, the second is available to you only if you have GHC 8.0.1 or higher and it is with language extension [DuplicateRecordFields](https://downloads.haskell.org/~ghc/master/users-guide/glasgow_exts.html#duplicate-record-fields) (however the first option is more common):
 
 ```haskell
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -248,6 +252,8 @@ False
 "Person {name = \"Marek\", age = 25, gender = Male, city = \"Prague\"}"
 ```
 
+This is one of the weaker parts of Haskell: it actually does NOT have records (as explained, there is just a syntactic sugar upon tuples). Newer languages from the Haskell family [PureScript](http://www.purescript.org) and [Elm](http://elm-lang.org) elaborated on this and introduced *proper* records.
+
 ### Algebraic Data Types (ADTs)
 
 We say that our datatypes are algebraic in Haskell because it allows us to create sum and product types (with `data`), type aliases (with `type`), and special types (with `newtype`).
@@ -298,7 +304,7 @@ Prelude Data.Tuple> swap (7, "Hello")
 ("Hello",7)
 ```
 
-Good to know is how it actually works and try to implement own tuples.
+Good to know is, how it actually works and try to implement own tuples.
 
 ```haskell
 data MyTuple2 a b = XTuple2 a b
@@ -324,7 +330,7 @@ List is different than tuples - it has variable length (because it is a recursiv
 data List a = Empty | NonEmpty a (List a)
 ```
 
-That's it! List of type `a` it either `Empty` or `NonEmpty` which means that it has an element and then rest of the list (which can be again `Empty` or `NonEmpty`). Sometimes the following naming is used:
+That's it! List of type `a` is either `Empty` or `NonEmpty` which means that it has an element and then rest of the list (which can be again `Empty` or `NonEmpty`). Sometimes the following naming is used:
 
 ```haskell
 data List a = Nil | Cons a (List a)
@@ -353,15 +359,15 @@ data [] a = [] | (:) a ([] a)
 
 ### String
 
-String is really nothing but just list of characters `[Char]`. The only difference is that there are more functions for working especially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes a life of Haskell programmer sometimes little bit uneasy.
+String is really nothing but just a list of characters `[Char]`. The only difference is that there are more functions for working especially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes a life of Haskell programmer sometimes little bit uneasy.
 
 ## Simple functions
 
-Enough of types and containers, let's do some functions when this is functional programming course!
+Enough of types and containers, let's do some functions when this is a functional programming course!
 
 ### Basic list functions
 
-Since list is very simple and widely used data structure, it is a good time to learn useful functions to work with lists. You can find a complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also, try to run some unclear cases like `head` of the empty list and see what happens...
+Since list is a very simple and widely used data structure, it is a good time to learn useful functions to work with lists. You can find a complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also, try to run some unclear cases like `head` of the empty list and see what happens...
 
 ```haskell
 Prelude> let myList = [2,4,5,3,2,8,4,1]
@@ -417,9 +423,9 @@ Prelude> foldl (&&) False [True, False, True]
 False
 ```
 
-The last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later while explaining so-called catamorphism. Now you can just see that it is a generalization of `sum`, `and`, `or`, and many others.
+The last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later, while explaining so-called catamorphism. Now you can just see that it is a generalization of `sum`, `and`, `or`, and many others.
 
-It is very good practice to try to implement some of these functions to understand them and their complexity. You may worry that using list is always very inefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
+It is a very good practice to try to implement some of these functions to understand them and their complexity. You may worry that using list is always very inefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
 
 ### Intro to pattern matching
 
@@ -460,7 +466,7 @@ factorial 0 = 1
 factorial n = n * factorial n-1
 ```
 
-During any call of subroutine (function, procedure, or other action), it is needed to store information to the [call stack]. Such information consist of where was the call initiated, what was the state and where it should return the value when poping from this stack. For example, with calling `res = factorial 3` call stack could look like this (top on the left):
+During any call of subroutine (function, procedure, or other action), it is needed to store information to the [call stack]. Such information consists of where was the call initiated, what was the state and where it should return the value when poping from this stack. For example, with calling `res = factorial 3` call stack could look like this (top on the left):
 
 1. `res = _`
 2. `factorial 3 = 3 * _`, `res = _`
