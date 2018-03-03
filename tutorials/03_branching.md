@@ -2,18 +2,18 @@
 
 ## If and case
 
-As in other languages, in Haskell you can use `if-then-else` and `case-of` (similar to `switch-case`) expression for branching the computation. But here it is slightly different. Although you've already seen and used `if-then-else` expression during this course, we will look at it in higher detail now.
+As in other languages, in Haskell, you can use `if-then-else` and `case-of` (similar to `switch-case`) expression for branching the computation. But here it is slightly different. Although you've already seen and used `if-then-else` expression during this course, we will look at it in higher detail now.
 
 ### Own ifThenElse
 
-First, let's try to implement own function realises the `if-then-else` branching. What would be the type of such function? We need the condition which is obviously of type `Bool` and then there are two expressions, one is evaluated if condition is `True` and the other if it is `False`. We can allow any type of such expression by type variable `a` and it will be the return type as well.
+First, let's try to implement own function realizes the `if-then-else` branching. What would be the type of such function? We need the condition which is obviously of type `Bool` and then there are two expressions, one is evaluated if the condition is `True` and the other if it is `False`. We can allow any type of such expression by type variable `a` and it will be the return type as well.
 
 ```haskell
 ifThenElse :: Bool -> a -> a -> a
 ifThenElse condition onTrue onFalse = ...
 ```
 
-But how to implement it without actually using `if-then-else` keywords? Just by definition and expected behavior - when `condition` is `True`, then result is `onTrue` and if it is `False` then `onFalse`.
+But how to implement it without actually using `if-then-else` keywords? Just by definition and expected behavior - when `condition` is `True`, then the result is `onTrue` and if it is `False` then `onFalse`.
 
 ```haskell
 ifThenElse :: Bool -> a -> a -> a
@@ -98,7 +98,7 @@ describeBW c = case c of
        _               -> "unknown"  -- "default" match
 ```
 
-You need to be careful that you cover all the cases with `case-of`. If you hit some case which is not covered an exception will come up in runtime:
+You need to be careful that you cover all the cases with `case-of`. If you hit some case which is not covered an exception will come up at runtime:
 
 ```
 *Main> badDescribeBW (RGB 0 0 0)
@@ -114,7 +114,7 @@ For that you can use underscore `_` wildcard which acts as default case matching
 "unknown"
 ```
 
-As you can see, it uses pattern matching as it was introduced in the previous lesson. Without any surprise it is then possible to use pattern matching for lists as well. When you need to match against multiple patterns, you can use tuple. 
+As you can see, it uses pattern matching as it was introduced in the previous lesson. Without any surprise, it is then possible to use pattern matching for lists as well. When you need to match against multiple patterns, you can use a tuple. 
 
 ```haskell
 describeList :: [a] -> String  
@@ -125,11 +125,11 @@ describeList xs = "Given list has " ++ case xs of []  -> "no item."
 
 ## Guards and patterns
 
-Another widely used way how create branches is by guards in function declarations. That allows you much more than matching shown in `ifThenElse`. Then you can also use patterns to easily work with some structures in branching.
+Another widely used way how to create branches is by guards in function declarations. That allows you much more than matching shown in `ifThenElse`. Then you can also use patterns to easily work with some structures in branching.
 
 ### Guards
 
-Guards are done by `|` operator-like keyword after introducing a function name and arguments as in following example. Then you can write boolean expressions instead of nested ifs and what should be the result in such case. The `otherwise` is the same meaning as `True` and so as `_` in `case-of` expression, you can notice the similarity with mathematical definitions of some functions.
+Guards are done by `|` operator-like keyword after introducing a function name and arguments as in the following example. Then you can write boolean expressions instead of nested ifs and what should be the result in such case. The `otherwise` is the same meaning as `True` and so as `_` in `case-of` expression, you can notice the similarity with mathematical definitions of some functions.
 
 ```haskell
 myMax :: (Ord a) => a -> a -> a
@@ -148,7 +148,7 @@ guardsOrder x
     | otherwise = "otherwise"
 ```
 
-Also remember the difference between `_` and `otherwise` (it is something totally different!).
+Also, remember the difference between `_` and `otherwise` (it is something totally different!).
 
 ```
 Prelude> :t otherwise
@@ -168,7 +168,7 @@ Prelude> :t _
 
 ### Patterns are syntactic sugar
 
-It is good to notice that pattern matching in function declaration is the same as pattern matching with `case-of`. Actually it is just [syntactic sugar](https://en.wikibooks.org/wiki/Haskell/Syntactic_sugar#Function_Bindings) and following two functions are equivalent. Moreover, you can combine pattern matching with guards (no surprise).
+It is good to notice that pattern matching in a function declaration is the same as pattern matching with `case-of`. Actually, it is just [syntactic sugar](https://en.wikibooks.org/wiki/Haskell/Syntactic_sugar#Function_Bindings) and following two functions are equivalent. Moreover, you can combine pattern matching with guards (no surprise).
 
 ```haskell
 myHead1 :: [a] -> a
@@ -188,7 +188,7 @@ myHead3 = \list -> case list of   -- lambda expression
 
 ### Named patterns
 
-In some cases, if you are matching a pattern with a value, it may be useful to bind a name to the whole value being matched (when you need to use decomposition and whole as well). As-patterns allow exactly this: they are of the form `name@pattern` and in addition to acting as regular pattern it binds the `name` to the whole value being matched by `pattern`. Again, it can be used not just with lists but also with any other types.
+In some cases, if you are matching a pattern with a value, it may be useful to bind a name to the whole value being matched (when you need to use decomposition and whole as well). As-patterns allow exactly this: they are of the form `name@pattern` and in addition to acting as a regular pattern it binds the `name` to the whole value being matched by `pattern`. Again, it can be used not just with lists but also with any other types.
 
 ```haskell
 duplicateFirstElement1 [] = []
@@ -257,7 +257,7 @@ let (a, b, c) = (10, 20, 30) in a*b*c :: Num a => a
 
 ### Where
 
-In contrast to `let-in`, `where` is bound to a surrounding syntactic construct, like the pattern matching line of a function definition and thus cannot be used everywhere as expression. You can understand it little as `let-in` but vice versa (first expression and then bindings of used expressions in it). If you are fan of math, it is similar to mathematical definitions - you first have some complex expression with unspecified symbols (variables, functions, constants, etc.) and then there is explanation part starting with *where*.
+In contrast to `let-in`, `where` is bound to a surrounding syntactic construct, like the pattern matching line of a function definition and thus cannot be used everywhere as an expression. You can understand it little as `let-in` but vice versa (first expression and then bindings of used expressions in it). If you are a fan of math, it is similar to mathematical definitions - you first have some complex expression with unspecified symbols (variables, functions, constants, etc.) and then there is explanation part starting with *where*.
 
 ```haskell
 circleArea radius = pi * radius^2
@@ -304,13 +304,13 @@ birthYearToTitle year
           currentYear = 2018       -- or from Data.Time
 ```
 
-## Evaluation, patterns and wildcards
+## Evaluation, patterns, and wildcards
 
 We will now slightly switch from branching to evaluation strategy of Haskell to understand why is good to use such things as wildcards and also to be able to understand bang patterns.
 
 ### Bottom
 
-To talk about laziness we often use term [bottom](https://wiki.haskell.org/Bottom) (&#8869; or `_|_`) which means *computation which never completes successfully*. Various things can happen - computation can fail due to some kind of error or a computation that just goes into an infinite loop. Term bottom is related to value as well as to type. Examine those with GHCi:
+To talk about laziness we often use the term [bottom](https://wiki.haskell.org/Bottom) (&#8869; or `_|_`) which means *computation which never completes successfully*. Various things can happen - computation can fail due to some kind of error or a computation that just goes into an infinite loop. Term bottom is related to value as well as to type. Examine those with GHCi:
 
 ```haskell
 data BottomType = BottomType   -- same as unit "()"
@@ -322,7 +322,7 @@ undefBottom = undefined
 
 ### Haskell is lazy
 
-Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
+Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of the possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
 
 ```
 Prelude> let x = 1:x   -- same as "repeat 1" or "[1,1..]"
@@ -352,7 +352,7 @@ CallStack (from HasCallStack):
 
 ### Haskell can be strict
 
-For enforcing strictness there is the `!` symbol and you can read more about the usage [here](https://wiki.haskell.org/Performance/Strictness). Obviously bad things will happen if your code contains infinite list or recursion which never ends - you will need to terminate the program!
+For enforcing strictness there is the `!` symbol and you can read more about the usage [here](https://wiki.haskell.org/Performance/Strictness). Obviously, bad things will happen if your code contains infinite list or recursion which never ends - you will need to terminate the program!
 
 There is an operator `$` called function application and its function is not very magical. As left operand it takes a function and on right side is operand for the function. It can avoid using brackets with function composition (will be covered later). Then there is strict application `$!$`, see the difference:
 
@@ -375,7 +375,7 @@ Prelude> take 0 $ undefined
 []
 ```
 
-In similar way you can enforce strictness when declaring data type.
+In a similar way, you can enforce strictness when declaring data type.
 
 ```haskell
 data Pet = Pet !String Int
@@ -446,11 +446,11 @@ Further information can be found in the [documentation](https://downloads.haskel
 
 ## Modules and imports
 
-A Haskell program consists of a collection of modules (similar to other programming language). In the top level you can declare and define data types, function, typeclasses and their instances, pattern bindings and so on.
+A Haskell program consists of a collection of modules (similar to other programming languages). In the top level, you can declare and define data types, function, typeclasses and their instances, pattern bindings and so on.
 
 ### Module specification
 
-Every file forms a module, if there is no specification of module name, `Main` is used by default as we saw. Module name must start with capital letter and then it is alphanumeric string. Although there is no formal connection between filesystem and modules, if you use GHC (and we do) you should name your canonical module name should reflect FS. For example module `FPCourse.Lesson3.TestModule` would be places in file `FPCourse/Lesson3/TestModule.hs` with content:
+Every file forms a module if there is no specification of the module name, `Main` is used by default as we saw. Module name must start with capital letter and then it is an alphanumeric string. Although there is no formal connection between filesystem and modules, if you use GHC (and we do) you should name your canonical module name should reflect FS. For example module `FPCourse.Lesson3.TestModule` would be placed in file `FPCourse/Lesson3/TestModule.hs` with content:
 
 ```haskell
 module FPCourse.Lesson3.TestModule (
@@ -464,11 +464,11 @@ myFunc2 x y = x - y
 myFunc3 x y z = x * y + z
 ```
 
-Notice that after module name there is an optional list of stuff which can be imported from this module. In this case you can import `myFunc1` and `myFunc3` but not `myFunc2`.
+Notice that after module name there is an optional list of stuff which can be imported from this module. In this case, you can import `myFunc1` and `myFunc3` but not `myFunc2`.
 
 ### Import something
 
-How to import something from different module? As in other languages use `import` keyword:
+How to import something from a different module? As in other languages use `import` keyword:
 
 ```haskell
 import FPCourse.Lesson3.TestModule
@@ -477,7 +477,7 @@ x = myFunc1 10
 y = FPCourse.Lesson3.TestModule.myFunc1 25
 ```
 
-Plain import will allow you to use all exposed from module with unqualified and qualified (with module name) names.
+Plain import will allow you to use all exposed from the module with unqualified and qualified (with module name) names.
 
 You can also specify what do you want to import explicitly:
 
@@ -499,7 +499,7 @@ x = FPCourse.Lesson3.TestModule.myFunc1 10
 y = FPCourse.Lesson3.TestModule.myFunc1 25
 ```
 
-If you need to import something with same name from different modules, you must use just the qualified names to distinguish it. As you can see writing qualified name can be bothersome but needed. Luckily you can introduce an alias for the module name with keyword `as`:
+If you need to import something with the same name from different modules, you must use just the qualified names to distinguish it. As you can see writing qualified name can be bothersome but needed. Luckily you can introduce an alias for the module name with the keyword `as`:
 
 ```haskell
 import qualified FPCourse.Lesson3.TestModule as FPTM ( myFunc1 )
@@ -510,8 +510,7 @@ y = FPTM.myFunc1 25
 
 ### Hiding import
 
-Last thing you can do with import is to hide something.
-It can be useful if there are name clashes. If you want to import everything from module except one (or several) functions it is the right way to use keyword `hiding`:
+The last thing you can do with import is to hide something. It can be useful if there are name clashes. If you want to import everything from module except one (or several) functions it is the right way to use keyword `hiding`:
 
 ```haskell
 import FPCourse.Lesson3.TestModule hiding ( myFunc3 )
