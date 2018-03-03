@@ -444,6 +444,23 @@ CallStack (from HasCallStack):
 
 Further information can be found in the [documentation](https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/bang-patterns.html).
 
+### Lazy pattern matching
+
+On the other hand, sometimes the other extreme might be useful - i.e. being lazier (or irrefutable). When a pattern is being matched, for example, `func (Just x) = "It is just x"`,  passed argument is evaluated to form when it can be matched with a pattern. So, if you call `foo undefined` it will turn into error even if you won't use `x` on the right side at all. To avoid that, you can use `~` (tilde) like `!`. Try to test with these:
+
+```haskell
+func1  (Just x) = "It is just x"
+
+func2  (Just _) = "It is just something"
+
+func3 ~(Just x) = "It is just x (or something else?)"
+
+func4 ~(Just x) = "It is just " ++ show x
+
+func5 ~Nothing  = "It is nothing"
+func5 ~(Just x) = "It is just " ++ show x
+```
+
 ## Modules and imports
 
 A Haskell program consists of a collection of modules (similar to other programming languages). In the top level, you can declare and define data types, function, typeclasses and their instances, pattern bindings and so on.
@@ -528,6 +545,7 @@ The homework to practice branching and slightly working with modules is in repos
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com) (chapters 4, 7)
 * [Haskell: Pattern matching](https://en.wikibooks.org/wiki/Haskell/Pattern_matching)
 * [Haskell: Control structures](https://en.wikibooks.org/wiki/Haskell/Control_structures)
+* [Haskell: Laziness](https://en.wikibooks.org/wiki/Haskell/Lazines)
 * [Haskell: Modules](https://en.wikibooks.org/wiki/Haskell/Modules)
 * [Haskell: Import](https://wiki.haskell.org/Import)
 * [24 Days of GHC Extensions: Bang Patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)
