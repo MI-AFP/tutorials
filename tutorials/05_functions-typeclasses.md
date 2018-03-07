@@ -55,6 +55,8 @@ Prelude> :type (uncurry myFunc)
 (uncurry myFunc) :: Num c => (c, c) -> c
 ```
 
+If you like math, then it is the same difference as between *f*: &#8477; &rarr; &#8477; &rarr; &#8477; and *g*: &#8477; × &#8477; &rarr; &#8477;.
+
 ### Function composition
 
 Just as in math, it is possible to compose functions in Haskell. With having two functions, one with type `a -> b` and second with type `b -> c` you can create composed one with type `a -> c`. All you need is the dot `(.)` operator. It can make your code more readable and easier to understand. It also provides a way how to build more complex functions from simpler parts (functions or partially applied functions).
@@ -79,6 +81,8 @@ Prelude> show . (5+) . (5*) $ 5
 "30"
 ```
 
+Again like in math, *f*: A &rarr; B and *g*: B &rarr; C, then (*f* &#8728; *g*): A &rarr; C.
+
 ### Pointfree style
 
 It is very common in FP to write functions as a composition of other functions without mentioning the actual arguments they will be applied to. Consider following two examples and notice that although the result is the same, the first one is way cleaner and more readable.
@@ -97,9 +101,167 @@ myFunc = show . (5+) . (5*)
 
 Now you might ask why we call this pointfree style when there are actually more points. A 'points-free' definition originates in math (not a suprise!) of a function is one which does not explicitly mention the points (values) of the space on which the function acts.
 
-### Infix and prefix
+### Fixity and precedence
+
+You might wonder how it works in Haskell that following expression are evaluated in correct order as you would expect without using brackets:
+
+```
+Prelude> 5 + 2^3 - 4 + 2 * 2
+13
+Prelude> 5 * sin pi - 3 * cos pi + 2
+5.0
+```
+
+First basic rule is that function application binds the most. For example, in `foo 5 + 4` it will first evaluate `foo 5` and then add `4` (`foo 5 + 4` is the same as `(+) (foo 5) 4`. If you want to avoid that, you need to use brackets `foo (5 + 4)` or function application operator `foo $ 5 + 4` (or strict `$!`). 
+
+For infix operators (`+`, `**`, `/`, `==`, etc.) and functions (with backticks: `div`, `rem`, `quot`, `mod`, etc.), there is special infix specification with one of three keywords:
+
+- `infix` = Non-associative operator (for example, comparison operators)
+- `infixl` = Left associative operator (for example, `+`, `-`, or `!!`) 
+- `infixr` = Right associative operator (for example, `^`, `**`, `.`, or `&&`)
+
+Each of them should be followed by precedence (0 binds least tightly, and level 9 binds most tightly, default is 9) and then name of the function/operator. To see it in action, you can use `:info` to discover this specification for existing well-known operators and infix functions:
+
+```
+Prelude> :info (+)
+...
+infixl 6 +
+Prelude> :info (&&)
+...
+infixr 3 &&
+Prelude> :info div
+...
+infixl 7 `div`
+```
+
+You can also check *Table 4.1* of [The Haskell 2010 Language: Chapter 4 - Declarations and Bindings](https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-820061).
 
 ### Own operators
+
+You know that operators are just functions and that you can switch always between prefix and infix:
+
+```
+Prelude> (+) 5 7
+12
+Prelude> 7 `div` 2
+3
+Prelude> foo x y z = x * (y + z)
+Prelude> (5 `foo` 3) 12
+65
+```
+
+You can define own operator as you would do it with function:
+
+```
+Prelude> (><) xs ys = reverse xs ++ reverse ys
+Prelude> (><) "abc" "xyz"
+"zyxcba"
+Prelude> "abc" >< "xyz"
+"zyxcba"
+Prelude> :info (><)
+(><) :: [a] -> [a] -> [a]
+```
+
+By default, its asociativity is left - as you can easily observe:
+
+```
+Prelude> "abc" >< "xyz" >< "klm"
+"xyzabcmlk"
+Prelude> ("abc" >< "xyz") >< "klm"
+"xyzabcmlk"
+Prelude> "abc" >< ("xyz" >< "klm")
+"cbaklmxyz"
+```
+
+By default, its precedence level is 9. We can observe that by constructing expression with `(++)` which has level 5 and right associativity.
+
+```
+Prelude> "abc" >< "xyz" ++ "klm"
+"cbazyxklm"
+Prelude> "klm" ++ "abc" >< "xyz"
+"klmcbazyx"
+```
+
+You can easily change that and if new precedence is lower, than `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have same associativity, otherwise you get an error).
+
+```haskell
+infixl 5 ><
+(><) :: [a] -> [a] -> [a]
+(><) xs ys = reverse xs ++ reverse ys
+
+infixl 2 >-<
+(>-<) :: [a] -> [a] -> [a]
+xs >-< ys = reverse xs ++ reverse ys
+
+foo :: Int -> Int -> Int
+x `foo` y = 2*x + y
+```
+
+```
+*Main> :info (><)
+(><) :: [a] -> [a] -> [a]       -- Defined at test01.hs:3:1
+infixl 5 ><
+*Main> "abc" >< "xyz" ++ "klm"
+
+<interactive>:6:1: error:
+    Precedence parsing error
+        cannot mix `><' [infixl 5] and `++' [infixr 5] in the same infix expression
+*Main> ("abc" >< "xyz") ++ "klm"
+"cbazyxklm"
+*Main> :info (>-<)
+(>-<) :: [a] -> [a] -> [a]      -- Defined at test01.hs:7:1
+infixl 2 >-<
+*Main> "abc" >-< "xyz" ++ "klm"
+"cbamlkzyx"
+*Main>
+
+<interactive>:12:1: error: lexical error at character '\ESC'
+*Main> "klm" ++ "abc" >-< "xyz"
+"cbamlkzyx"
+```
+
+For operators you can use *symbol characters* as being any of `!#$%&*+./<=>?@\^|-~:` or "any *non-ascii* Unicode symbol or punctuation". But, an operator symbol starting with a colon `:` is a constructor.
+
+### Infix and operator-like data constructors
+
+Data constructors can be treated just as functions. You can pass them to a function as a parameter, return them from a function as a result and also use them in infix:
+
+```
+Prelude> data MyTuple a b = MyTupleConstr a b deriving Show
+Prelude> :type MyTupleConstr
+MyTupleConstr :: a -> b -> MyTuple a b
+Prelude> MyTupleConstr 5 "Hi"
+MyTupleConstr 5 "Hi"
+Prelude> 5 `MyTupleConstr` "Hi"
+MyTupleConstr 5 "Hi"
+```
+
+As we said, for constructors you may create operator starting with a colon (and optionally specify also `infix`, `infixl`, or `infixr`).
+
+```
+Prelude> data MyTuple2 a b = a :@ b deriving Show
+Prelude> :type (:@)
+(:@) :: a -> b -> MyTuple2 a b
+Prelude> 5 :@ "Hi"
+5 :@ "Hi"
+Prelude> (:@) 5 "Hi"
+5 :@ "Hi"
+```
+
+You can try that using operator not starting with colon is not possible. But you can always make a synonym and then your code more readable:
+
+```
+Prelude> data MyTuple3 a b = a @@ b deriving Show
+
+<interactive>:15:17: error: Not a data constructor `a'
+Prelude> (@@) = (:@)
+Prelude> :type (@@)
+(@@) :: a -> b -> MyTuple2 a b
+Prelude> 5 @@ "Hi"
+5 :@ "Hi"
+```
+
+Another fine feature is, that operators `:@` and `@@` can be specified with different associativity and precedence!
 
 ### Anonymous functions
 
