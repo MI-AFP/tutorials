@@ -278,7 +278,23 @@ mapAFunc1 = map (\x y z -> x * y + z)
 
 As is visible from previous example, anonymous functions are sometimes good to use with combination of higher order functions. Higher order function is a function that takes function as argument and/or returns function as result. In this course there were already many of them: `(.)`, `curry`, `uncurry`, `map`, etc. We will now looks at those more used for structures...
 
-### Map, filter
+### Map and filter
+
+Two widely used functions well-known in the most of functional (but other as well) programming languages are `map` and `filter`. In the `Prelude` module, they are defined for lists, but they work in the same way for other data structures (`Data.Sequence`, `Data.Set`, etc.). When you need to *transform* a list by applying function to its every element, then you can use `map`. If you have a list and need to make a sublist based on some property of its elements, use `filter`. The best for understanding is to look at its possible implementation.
+
+```haskell
+myMap :: (a -> b) -> [a] -> [b]
+myMap _ []     = []
+myMap f (x:xs) = f x : myMap xs
+
+myFilter :: (a -> Bool) -> [a] -> [a]  
+myFilter _ []     = []  
+myFilter p (x:xs)   
+      | p x       = x : filter p xs  
+      | otherwise = filter p xs  
+```
+
+It is really nothing complicated, actually it is very simple, straightforward, and powerful.
 
 ```
 Prelude> :type map
@@ -287,15 +303,86 @@ Prelude> map show [1..5]
 ["1","2","3","4","5"]
 Prelude> map (5*) [1..5]
 [5,10,15,20,25]
+Prelude> map (length . show . abs) [135, (-15), 0, 153151]
+[3,2,1,6]
 Prelude> :type filter
 filter :: (a -> Bool) -> [a] -> [a]
 Prelude> filter (\x -> x `mod` 7 == 0) [1..50]
 [7,14,21,28,35,42,49]
 ```
 
+Soon we will get into generalized function called `fmap` while discussing the term *functor*.
+
 ### Folds and scans
 
-"reduce"
+Maybe you've heard about *Map/Reduce*... We know `map`, but there is no `reduce`! Actually, there is, but it is called [fold](https://wiki.haskell.org/Fold) (it is practically a synonym in functional programming). Folds are higher order functions that process a data structure in some order and build a return value. It (as everything in Haskell) has foundations in math - conretely in [Catamorphism](https://wiki.haskell.org/Catamorphisms) (Category Theory). 
+
+To get into folds in practice, let's try to implement `sum` and `product` functions (if you want to practice on your own, try it with `and` and `or`).
+
+```haskell
+mySum :: Num a => [a] -> a
+mySum []     = 0
+mySum (x:xs) = x + mySum xs
+
+myProduct :: Num a => [a] -> a
+myProduct []     = 1
+myProduct (x:xs) = x * myProduct xs
+```
+
+Obviously, there are some similarities:
+
+1. initial value for empty list (`0` for `sum` and `1` in the case of `product`),
+2. use a function and apply it to a element and recursive call to the rest of the list.
+
+Let's do the generalized higher order function that also takes an inital value and a function for processing.
+
+```haskell
+process :: (a -> a -> a) -> a -> [a] -> a
+process _ initValue [] = initValue
+process f _ (x:xs)     = f x (process xs)
+
+mySum = process (+) 0
+myProduct = process (*) 1
+```
+
+But here we are getting into a problem. Both `(+)` and `(*)` use operands and result of the same type - if we want to convert a number to string and join it in one go with `process`, it is not possible!
+
+```
+Prelude> process (\x str -> show x ++ str) "" [1,2,3,4]
+```
+
+The type of inital value must be the same as the type which is returned by given function. Now we get this:
+
+
+```haskell
+process :: (a -> b -> b) -> b -> [a] -> b
+process _ initValue [] = initValue
+process f _ (x:xs)     = f x (process xs)
+
+mySum = process (+) 0
+myProduct = process (*) 1
+myToStrJoin = process (\x str -> show x ++ str) ""
+```
+
+Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x ++ str)` is not, even type of `x` and `str` can be different. What if we need to apply the function in different order? Now we have to create two variants.
+
+
+```haskell
+processr :: (a -> b -> b) -> b -> [a] -> b   -- "accumulates" in the RIGHT operand
+processr _ initValue [] = initValue
+processr f _ (x:xs)     = f x (processl xs)
+
+processl :: (b -> a -> b) -> b -> [a] -> b   -- "accumulates" in the LEFT operand
+processl _ initValue [] = initValue
+processl f _ (x:xs)     = f (processr xs) x
+
+mySum = processl (+) 0
+myProduct = processl (*) 1
+myToStrJoinR = processr (\x str -> show x ++ str) ""
+myToStrJoinL = processl (\x str -> show x ++ str) ""
+```
+
+It is something so general, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl` and `foldr`:
 
 ```
 Prelude> :type foldl
@@ -312,11 +399,14 @@ Prelude> foldr (-) 0 [1..10]
 -5
 Prelude> (1-(2-(3-(4-(5-(6-(7-(8-(9-(10-0))))))))))
 -5
+```
+
+There are some more related functions which might be useful in some cases:
+
+```
 Prelude> scanr (-) 0 [1..10]
 [-5,6,-4,7,-3,8,-2,9,-1,10,0]
 ```
-
-### Catamorphisms theory
 
 ## Typeclasses
 
