@@ -114,11 +114,7 @@ For that you can use underscore `_` wildcard which acts as default case matching
 "unknown"
 ```
 
-As you can see, it uses pattern matching, as it was introduced in the previous lesson. It is the full-featured pattern matching, so matching for lists works, as well. When you need to match against multiple patterns, you can use a tuple.
-
-```diff
-Posledni veta neni jasna
-```
+As you can see, it uses pattern matching, as it was introduced in the previous lesson. It is the full-featured pattern matching, so matching for lists works, as well.
 
 ```haskell
 describeList :: [a] -> String
