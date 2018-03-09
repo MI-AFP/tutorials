@@ -382,7 +382,7 @@ myToStrJoinR = processr (\x str -> show x ++ str) ""
 myToStrJoinL = processl (\x str -> show x ++ str) ""
 ```
 
-It is something so general, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl` and `foldr`:
+It is something so general, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl`/`foldr` and related `scanl`/`scanr`, which capture intermediate values in a list:
 
 ```
 Prelude> :type foldl
@@ -399,14 +399,26 @@ Prelude> foldr (-) 0 [1..10]
 -5
 Prelude> (1-(2-(3-(4-(5-(6-(7-(8-(9-(10-0))))))))))
 -5
-```
-
-There are some more related functions which might be useful in some cases:
-
-```
 Prelude> scanr (-) 0 [1..10]
 [-5,6,-4,7,-3,8,-2,9,-1,10,0]
 ```
+
+There are some special folds and specific folds:
+
+```
+Prelude> foldr1 (+) [1..10]
+Prelude> foldl1 (*) [1..10]
+Prelude> foldr1 (+) []
+Prelude> foldl1 (*) []
+
+Prelude> foldl' (*) 0 [1..10]  -- strict evaluation before reduction
+Prelude> foldl'1 (*) [1..10]
+
+Prelude> minimum [1,2,63,12,5,201,2]
+Prelude> maximum [1,2,63,12,5,201,2]
+```
+
+If you like folds, try to implement `foldl` by using `foldr` (spoiler: [solution](https://wiki.haskell.org/Foldl_as_foldr)).
 
 ## Typeclasses
 
@@ -414,7 +426,7 @@ Typeclass is class of types with definition of common functions for all instance
 
 ### Kinds
 
-In type theory, a kind is the type of a type constructor or, less commonly, the type of a higher-order type operator. A kind system is essentially a simply typed lambda calculus 'one level up,' endowed with a primitive type, denoted * and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create type with kind `*` so you can have values of it.
+In the type theory, a kind is the type of a type constructor or, less commonly, the type of a higher-order type operator. A kind system is essentially a simply typed lambda calculus 'one level up,' endowed with a primitive type, denoted * and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create type with kind `*` so you can have values of it.
 
 ```
 Prelude> :kind Integer
