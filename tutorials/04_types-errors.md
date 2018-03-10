@@ -2,11 +2,11 @@
 
 ## Evaluation
 
-First, we briefly get back to laziness in Haskell as mentioned in the previous lesson. Because it is also related to lazy/strict types which will be discussed in this lesson.
+First, we briefly get back to laziness in Haskell as mentioned in the previous lesson, because it is also related to lazy/strict types which will be discussed in this lesson.
 
 ### List comprehensions
 
-Creation of lists by using the constructor or better with syntactic sugar is pretty simple but there are two more interesting ways for that. First is used basically for basic ranges and is called "dot dot notation. It is not a surprise at all and you have seen it already. It works with types that are instances of type class `Enum` (you can check within GHCi by `:info Enum`. You can specify start, step and end of the range (inclusive), but you need to be careful with floats and doubles because of their precision - error cumulatively grows.
+Creation of lists using a constructor (or its syntactic sugar) is pretty straightforward, but there are two more interesting ways for that. First is used basically for basic ranges and it is called "dot dot notation". You have seen it already. It works with types that are instances of type class `Enum` (you can check within GHCi by `:info Enum`. You can specify start, step and end of the range (inclusive), but you need to be careful with floats and doubles because of their precision - the error cumulatively grows.
 
 ```
 Prelude> [1..10]
@@ -19,7 +19,7 @@ Prelude> [1.0,1.05 .. 1.2]
 [1.0,1.05,1.1,1.1500000000000001,1.2000000000000002]
 ```
 
-More flexible are [list comprehensions](https://wiki.haskell.org/List_comprehension). This concept/construct is nowadays used in many other programming languages as well. In "list" you first specify an expression with variables and then after pipe `|` are specifications of bindings and restrictions. It is also possible to define local names with `let`.
+A more flexible way is offered by [list comprehensions](https://wiki.haskell.org/List_comprehension). This concept/construct is nowadays used in many other programming languages, as well, such as Python. In "list" you first specify an expression with variables and then after pipe `|`, there are specifications of bindings and restrictions. It is also possible to define local names with `let`.
 
 ```
 Prelude> [n*2+1 | n <- [1..5]]
@@ -34,7 +34,7 @@ Prelude> take 10 [(i, j) | i <- [1..5], let k=i-5, j <- [k..6]]
 
 ### Lazy Haskell
 
-As we've already seen, Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. One of the possibilities is creating infinite lists. For testing when the expression is evaluated is good to use `undefined`.
+As we've already seen, Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated, unless the value is needed. One of the possibilities is creating infinite lists. You may use `undefined` for testing when the expression is evaluated.
 
 ```
 Prelude> let x = 1:x
@@ -64,18 +64,18 @@ CallStack (from HasCallStack):
 
 ### Boxed vs. Unboxed types
 
-Last theoretical topic which we are going to briefly mention is the difference between boxed and unboxed types. Although it is a low-level concern and with regular Haskell programming you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
+Last theoretical topic that we are going to briefly mention is the difference between boxed and unboxed types. Although it is a low-level concern and with regular Haskell programming, you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
 
-To support laziness, parametric polymorphism, and other properties, by default Haskell data types are represented uniformly as a pointer to a closure on the heap. These are "boxed" values. An unboxed is represented directly by raw value (i.e., without any indirection). Using unboxed types can lead to time/space optimizations. Having always pointers to a heap-allocated object is fairly slow so compilers attempt to replace these boxed values with unboxed raw values when possible. Unboxed values are a feature of some compilers that allows directly manipulating these low-level values. Since they behave differently than normal Haskell types, generally the type system is extended to type these unboxed values. 
+To support laziness, parametric polymorphism, and other properties, by default Haskell data types are represented uniformly as a pointer to a closure on the heap. These are "boxed" values. An unboxed is represented directly by raw value (i.e., without any indirection). Using unboxed types can lead to time/space optimizations. Having always pointers to a heap-allocated object is fairly slow, so compilers attempt to replace these boxed values with unboxed raw values when possible. Unboxed values are a feature of some compilers that allow directly manipulating these low-level values. Since they behave differently than normal Haskell types, generally the type system is extended to type these unboxed values.
 
-In [GHC], unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. Pretty simple, huh? However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
+In [GHC], unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
 
-* By default kind of type is `*` (try in GHCi: `:kind Int`)
+* By default, kind of type is `*` (try in GHCi: `:kind Int`)
 * Kind of unboxed type is `#` (try in GHCi: `:kind Int#`, first do `:set -fglasgow-exts`)
 
 ```haskell
 import GHC.Exts
- 
+
 showUnboxedInt   :: Int# -> String
 showUnboxedInt n = "Unboxed: " ++ (show $ I# n) ++ "#"
 ```
@@ -94,7 +94,7 @@ data MyRec = MyRecConstr { xA ::  Int
                          }
 ```
 
-For both cases it means that when data constructor is evaluated it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
+For both cases it means that when data constructor is evaluated, it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
 
 #### Unpacking strict fields
 
@@ -109,15 +109,15 @@ We mention this just because of differences in performance of types we are going
 
 ## Textual types
 
-There are several types of [strings](https://wiki.haskell.org/Strings) that can be used in Haskell programs. Each can have some advantages and disadvantages when compared to other and you should consider which one to use in your specific case.
+Textual types [(strings)](https://wiki.haskell.org/Strings) are kind of pain in Haskell. This is mostly because of its long legacy and also laziness/strictness trade-offs. However, as everything, they are not really insidious, just not convenient as they could be (and actually are in newer "Haskells", such as PureScript).
 
 ### String
 
-[String](https://hackage.haskell.org/package/base/docs/Data-String.html) is the only string type in the `base` package. It is just a type synonym for `[Char]`, so it comes with all properties of [list](https://hackage.haskell.org/package/base/docs/Data-List.html), and as such is the most common one, especially for non-performance-sensitive applications. But when it comes to performance (and sometimes even Unicode behavior), then problems arise - `String` has big overhead in time and space.
+[String](https://hackage.haskell.org/package/base/docs/Data-String.html) is the string type in the `base` package. It is just a type synonym for `[Char]`, so it comes with all properties of a [list](https://hackage.haskell.org/package/base/docs/Data-List.html), and as such, it is the most common one, especially for non-performance-sensitive applications. But when it comes to performance (and sometimes even Unicode behavior), then problems arise - `String` has big overhead in time and space.
 
 ### Text
 
-[Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html) from [text](https://hackage.haskell.org/package/text) package is a time and space-efficient implementation of Unicode text. Provided type is a space efficient, packed, unboxed Unicode text type. You can convert between `Text` and `String` with functions `pack` and `unpack`. There are also well-known functions with same names as are for `String` (`head`, `length`, `map`, `replace`, etc.), so you need to be careful with imports, preferable use some alias like suggested `import qualified Data.Text as T`.
+[Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html) from [text](https://hackage.haskell.org/package/text) package is a time and space-efficient implementation of Unicode text. You can convert between `Text` and `String` with functions `pack` and `unpack`. The `Data.Text` package exports functions with same names as there are for `String` (`head`, `length`, `map`, `replace`, etc.), so the advised import style is `import qualified Data.Text as T`.
 
 ```
 Prelude> import qualified Data.Text as T
@@ -126,7 +126,7 @@ Prelude T> :type txt
 txt :: T.Text
 Prelude T> T.index txt 1
 'y'
-Prelude T> T.replace "my" "your" txt 
+Prelude T> T.replace "my" "your" txt
 
 <interactive>:13:11: error:
     • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
@@ -139,7 +139,7 @@ Prelude T> T.replace "my" "your" txt
     • In the second argument of ‘T.replace’, namely ‘"your"’
       In the expression: T.replace "my" "your" txt
       In an equation for ‘it’: it = T.replace "my" "your" txt
-Prelude T> T.replace (T.pack "my") (T.pack "your") txt 
+Prelude T> T.replace (T.pack "my") (T.pack "your") txt
 "your effective text"
 Prelude T> length txt
 
@@ -152,11 +152,11 @@ Prelude T> T.length txt
 17
 ```
 
-In addition, packaged comes also with [Data.Text.Lazy](https://hackage.haskell.org/package/text/docs/Data-Text-Lazy.html), which is for some operations, such as `concat`, `append`, `reverse`, and `cons`, better in time complexity. Useful might be also [Data.Text.Encoding](https://hackage.haskell.org/package/text/docs/Data-Text-Encoding.html) (and its lazy alternative).
+There is another variant of the Text package, which is [Data.Text.Lazy](https://hackage.haskell.org/package/text/docs/Data-Text-Lazy.html), which exports same operations and thanks to laziness, it can work with huge texts and it may provide better performance under the right circumstances. [Data.Text.Encoding](https://hackage.haskell.org/package/text/docs/Data-Text-Encoding.html) (and its lazy alternative) may be also useful.
 
 ### ByteString
 
-Last of the types mentioned here is [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) from [bytestring](https://hackage.haskell.org/package/bytestring) package. Byte vectors are encoded as strict Word8 arrays of bytes and it allows to pass between C and Haskell with little effort. In many ways, the usage is similar to [text](https://hackage.haskell.org/package/text) package (again `pack` and `unpack`, same basic functions, `Lazy` alternative, and so on). Next, there is an option to use vectors with `Char8` instead of `Word8` which then works as Unicode subset (0-255) strings. Basically, if you need just ASCII strings, this is the most effective way.
+Last of the types mentioned here is [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) from [bytestring](https://hackage.haskell.org/package/bytestring) package. Byte vectors are encoded as strict Word8 arrays of bytes and they are used for interoperability between Haskell and C or other lower-level situations. In many ways, the usage is similar to [text](https://hackage.haskell.org/package/text) package (again `pack` and `unpack`, same basic functions, `Lazy` alternative, and so on). Next, there is an option to use vectors with `Char8` instead of `Word8`, which works as Unicode subset (0-255) strings and it is used when working with pure ASCII string representations.
 
 ```
 Prelude T> import Data.ByteString as B
@@ -201,66 +201,44 @@ Prelude T B C E> index x 2
 
 ### OverloadedStrings
 
-OK! So we have multiple types which we can use for working with strings in Haskell. But wait... If we have string literal, for example `"Hello, world!"`, what type is it? It is `String` (`[Char]`)! Something, like we have with numeric literals, would be good (look at the type of `5` or `7.5`).
+As needing to pack all string literals when using non-base string representations is cumbersome, there is a handy [GHC] language extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html).
 
+Generally, [GHC] language extensions can be enabled in the source file using pragma `LANGUAGE` as the first line in the file::
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+
+module XY ...
 ```
 
-Prelude> :type "abc"
-"abc" :: [Char]
-Prelude> :type 7
-7 :: Num t => t
-Prelude> :type 7.5
-7.5 :: Fractional t => t
-Prelude T C> :type abs
-abs :: Num a => a -> a
-Prelude T C> abs (-5)
-5
-Prelude T C> abs (-7.5)
-7.5
+In GHCi, the extension can be enabled using the `:set` directive:
 
+```haskell
+Prelude> :set -XOverloadedStrings
+```
+
+After that, a string literal type can be inferred by its usage in the source code:
+
+```haskell
 Prelude> import qualified Data.Text as T
-Prelude T> :type T.index 
-T.index :: T.Text -> Int -> Char
-Prelude T> T.index "abc" 1
-
-<interactive>:2:9: error:
-    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
-    • In the first argument of ‘T.index’, namely ‘"abc"’
-      In the expression: T.index "abc" 1
-      In an equation for ‘it’: it = T.index "abc" 1
-
-Prelude T> import qualified Data.ByteString.Char8 as C
-Prelude T C> :type C.sort
-C.sort :: C.ByteString -> C.ByteString
-Prelude T C> C.sort "cab"
-
-<interactive>:10:8: error:
-    • Couldn't match expected type ‘C.ByteString’
-                  with actual type ‘[Char]’
-    • In the first argument of ‘C.sort’, namely ‘"cab"’
-      In the expression: C.sort "cab"
-      In an equation for ‘it’: it = C.sort "cab"
-```
-
-When we want to make our life easier with this (no need to convert string literals everywhere), there is [GHC] extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html) (enable by language pragma or option). After that string literal type can be inferred by its usage in the source code.
-
-```
-Prelude T C> :set -XOverloadedStrings
-Prelude T C> T.index "abc" 1
-'b'
-Prelude T C> C.sort "cab"
-"abc"
-Prelude T C> :type "abc"
-"abc" :: Data.String.IsString t => t
+Prelude T> :type "abc"
+"abc" :: [Char]
+Prelude T> :set -XOverloadedStrings
+Prelude> :type "abc"
+"abc" :: Data.String.IsString p => p
+Prelude T> T.length "abc" -- no need to pack the literal any more!
+3
 ```
 
 ## Important "base" types
 
-We already know basic data types (from `base` package) such as [Data.Char](https://hackage.haskell.org/package/base/docs/Data-Char.html), [Bool](https://hackage.haskell.org/package/base/docs/Data-Bool.html), or [Data.Int](https://hackage.haskell.org/package/base/docs/Data-Int.html) and structures like [Data.List](https://hackage.haskell.org/package/base/docs/Data-List.html) and [Data.Tuple](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) pretty well. But of course there are more widely used types and we are going to know some more now.
+We already know basic data types (from `base` package) such as [Data.Char](https://hackage.haskell.org/package/base/docs/Data-Char.html), [Bool](https://hackage.haskell.org/package/base/docs/Data-Bool.html), or [Data.Int](https://hackage.haskell.org/package/base/docs/Data-Int.html) and structures like [Data.List](https://hackage.haskell.org/package/base/docs/Data-List.html) and [Data.Tuple](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) pretty well. But of course, there are more widely used types and we are going to know some more now.
 
 ### Maybe
 
-As you can see in some other languages if you don't want to return actual value (object) you can use `null` or `nil` or even `None`. What would it mean in Haskell? That every type should contain such value (there are no such weird things as references and dynamic typing in Haskell). An even worse thing to do is returning some dummy value and checking it then with `if`s.
+In most programming languages, there is a notion of `null` or `nil` or even `None` value. Such a value is usable, but it leads often to undesired crashes of "Null pointer exception". As Haskell is type-safe, it does not allow such rogue surprises to happen, but instead deals with a possible "null" situation in a managed way.
+
+If we were to design such a solution, we may use ADTs like that:
 
 ```haskell
 data IntOrNull = I Int | Null
@@ -277,8 +255,9 @@ divString x y = case (myDiv x y) of
                   Value res -> "Result: " ++ (show res)
 ```
 
+In Haskell, we have a pretty structure called `Maybe` which does exactly that for us and there are some functions helping with common usage. It is a very important structure and you will be dealing with it very often. You can find more about in the documentation of [Data.Maybe](https://hackage.haskell.org/package/base/docs/Data-Maybe.html).
 
-In Haskell, we have a pretty structure called `Maybe` which does exactly that for us and there are some functions helping with common usage. More about it you can find in the documentation of [Data.Maybe](https://hackage.haskell.org/package/base/docs/Data-Maybe.html).
+It is defined as:
 
 ```haskell
 data Maybe a = Nothing | Just a
@@ -301,12 +280,22 @@ Prelude Data.Maybe> catMaybes [Just 6, Just 7, Nothing, Just 8, Nothing, Just 9]
 [6,7,8,9]
 ```
 
+```diff
++nejaky hezky priklad na Maybe jako parametr funkce
+```
+
 ### Either
 
-But what to do if we need to pass some value if there is an error, for example, some error message? One possibility would be to always return a tuple with two elements. But again there is a standard type for such use cases and it is called `Either` (again documentation in [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html))
+`Maybe` is also used to signal two types of results: an error (`Nothing`) and a success (`Just value`). However, it does not tell what is the error in case of `Nothing`. There is a standard type for such use cases, and it is called `Either`:
 
 ```haskell
 data Either a b = Left a | Right b
+```
+
+The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html))
+
+```diff
++nejaky priklad na Either
 ```
 
 ```
@@ -324,26 +313,24 @@ Prelude Data.Either> partitionEithers [Left 7, Right "Msg1", Left 8, Right "Msg2
 
 ### Unit
 
-Although we said there is no `null`, `nil` or `None` we still have one dummy value/type called "Unit" and it is designated as empty tuple `()`.
+Although we said there is no `null`, `nil` or `None`, we still have one dummy value/type called "Unit" and it is designated as an empty tuple `()`.
 
 ```
 Prelude> :info ()
-data () = () 	-- Defined in ‘GHC.Tuple’
+data () = ()    -- Defined in ‘GHC.Tuple’
 Prelude> :type ()
 () :: ()
 ```
 
-It is semantically more similar to `void` from other languages and you can use it wherever you don't want to use actual type. For example, if you don't know about `Maybe` and want to use `Either` instead in the same way, you could do `Either a ()`. For more about [unit type read wikipedia](https://en.wikipedia.org/wiki/Unit_type).
+It is semantically more similar to `void` from other languages and you can use it wherever you don't want to use an actual type. For example, using `Either` to simulate  `Maybe`, you could do `Either a ()`. For more about [unit type, read wikipedia](https://en.wikipedia.org/wiki/Unit_type).
 
 ## Other containers
 
-As in other programming languages or programming theory, there are various types of containers - data types/structures whose instances are collections of other objects. If we talk about collections with an arbitrary number of elements, then we talked so far just about lists which are pretty simple to use and have a nice syntactic sugar notation in Haskell. But you might notice that for some use cases is not list optimal (when you need to access by index, find an element in it, etc.). 
-
-Luckily there are more and more containers. Various of them which we will mention in this lesson are from package [containers], but there are of course many more like [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and others (use [Hoogle], [Hayoo], [Hackage]).
+As in other programming languages or programming theory, there are various types of containers - data types/structures, whose instances are collections of other objects. As for collections with an arbitrary number of elements, we talked about lists, which are simple to use and have a nice syntactic-sugar notation in Haskell. However, there are also other versatile types of containers available in the package [containers] and others, such as [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and more (use [Hoogle], [Hayoo], [Hackage]).
 
 ### Sequence
 
-The `Seq a` is a type from [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) that represents a **finite** sequence of values of type `a`. Sequences are very similar to lists, working with sequences is not so different, but some operations are more efficient - constant-time access to both the front and the rear and Logarithmic-time concatenation, splitting, and access to any element. But in other cases, it can be slower than lists because of overhead created for making listed operations effective. The size of a `Seq` must not exceed `maxBound::Int`! 
+The `Seq a` is a type from [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) that represents a **finite** sequence of values of type `a`. Sequences are very similar to lists, working with sequences is not so different, but some operations are more efficient - constant-time access to both the front and the rear and Logarithmic-time concatenation, splitting, and access to any element. But in other cases, it can be slower than lists because of overhead created for making operations efficient. The size of a `Seq` must not exceed `maxBound::Int`!
 
 ```
 Prelude> import Data.Sequence
@@ -364,11 +351,11 @@ fromList [1,2,7,15]
 
 ### Set
 
-The `Set e` type represents a set of elements of type `e`. Most operations require that `e` be an instance of the `Ord` class. A `Set` is strict in its elements. If you know what is *set* in math and/or programming, using it will be very easy.
+The `Set e` type represents a set of elements of type `e`. Most operations require that `e` be an instance of the `Ord` class. A `Set` is strict in its elements. If you know what is *set* in math and/or programming, you can be very powerful with them.
 
 ```
 Prelude> import Data.Set
-Prelude Data.Set> set1 = insert 4 (insert 2 (insert 0 (singleton 2)))
+Prelude Data.Set> set1 = insert 4 $ insert 2 $ insert 0 $ singleton 2
 Prelude Data.Set> set1
 fromList [0,2,4]
 Prelude Data.Set> delete 2 set1
@@ -398,7 +385,7 @@ There is an efficient implementation of integer sets, which uses big-endian Patr
 
 ### Map
 
-The `Map k v` type represents a finite map (sometimes called a dictionary) from keys of type `k` to values of type `v`. A Map is strict in its keys but lazy in its values (by default we use [Data.Map.Lazy](https://hackage.haskell.org/package/containers/docs/Data-Map-Lazy.html). You should use [Data.Map.Strict](https://hackage.haskell.org/package/containers/docs/Data-Map-Strict.html) instead if you will eventually need all the values stored and/or the stored values are not so complicated to compute (no big advantage of laziness).
+The `Map k v` type represents a finite map (sometimes called a dictionary) from keys of type `k` to values of type `v`. A Map is strict in its keys but lazy in its values (by default we use [Data.Map.Lazy](https://hackage.haskell.org/package/containers/docs/Data-Map-Lazy.html). You may use [Data.Map.Strict](https://hackage.haskell.org/package/containers/docs/Data-Map-Strict.html) instead if you will eventually need all the values stored and/or the stored values are not so complicated to compute (no big advantage of laziness).
 
 ```
 Prelude> import Data.Map
@@ -429,15 +416,15 @@ Prelude Data.Map> intersection map1 map2
 fromList [("suchama4","Marek Suchanek")]
 ```
 
-Again, there is an efficient implementation of maps where the keys are of `Int`. It uses same mechanisms as `Data.IntSet` - use `import qualified Data.IntMap as IntMap`.
+Again, there is an efficient implementation of maps, where the keys are of `Int`. It uses same mechanisms as `Data.IntSet` - use `import qualified Data.IntMap as IntMap`.
 
 ### Graph and Tree
 
-Finally, [containers] specify also [Data.Tree](https://hackage.haskell.org/package/containers/docs/Data-Tree.html) and [Data.Graph](https://hackage.haskell.org/package/containers/docs/Data-Graph.html), both in very generic manner. If you ever need to work with trees or graphs, it is convenient to use those instead of introducing totally new types. The probability of finding already developed utilities for those types is much higher than for some others and it can save you lots of time...
+Finally, [containers] specify also [Data.Tree](https://hackage.haskell.org/package/containers/docs/Data-Tree.html) and [Data.Graph](https://hackage.haskell.org/package/containers/docs/Data-Graph.html), both in a very generic manner. If you ever need to work with trees or graphs, it is convenient to use those instead of reinventing the wheel yourself.
 
-## Working with errors
+## Handling errors
 
-As we saw very smooth way how to work with errors is with `Either` or `Maybe` types. But still, you can work with more complex errors and instead of logically returning some other value you can create error/exception skipping the natural way of computation and causing headaches.
+As we saw, a very elegant way way how to handle errors is using `Maybe` or `Either` types. This is a preferred way with obvious advantages, however, in practice, it may still come to a more explosive situation.
 
 ### error
 
@@ -461,7 +448,7 @@ It is obviously even worse than just `error` because you somewhere deep in your 
 
 ### undefined
 
-Special case of error is that something is `undefined` and does not accept any message:
+Special case of error is that something is `undefined` and it does not accept any message:
 
 ```
 Prelude> undefined
@@ -471,11 +458,11 @@ CallStack (from HasCallStack):
   undefined, called at <interactive>:5:1 in interactive:Ghci1
 ```
 
-Semantically it can be used where the value is not defined (for example when you want to divide by zero). Sometimes you can see it used as a basic placeholder with meaning "Not implemented yet". For such things, you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html) which are more suitable.
+Semantically, it can be used where the value is not defined (for example when you want to divide by zero). Sometimes you can see it used as a basic placeholder with meaning "Not implemented yet". For such things, you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html), which are more suitable.
 
 ### throw, try and catch
 
-Even in Haskell, there are defined `throw`, `try` and `catch`, but those are functions - not keywords!
+We have `throw`, `try` and `catch`, but those are functions - not keywords!
 
 ```
 Prelude> import Control.Exception
@@ -487,11 +474,11 @@ Prelude Control.Exception> :type catch
 catch :: Exception e => IO a -> (e -> IO a) -> IO a
 ```
 
-We won't use such exceptions and always will try to deal with errors some other and nicer way. If you are interested you can read the documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html). We will slightly get back to these after getting the notion of Monads.
+If you are interested you can read the documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html), however, exceptions are considered an anti-pattern in Haskell and you should always try to deal with potential errors in a more systematic way using types. We will slightly get back to these after getting the notion of Monads.
 
 ## Task assignment
 
-The homework to practice working with new types, list comprehensions, containers, and errors is in repository [MI-AFP/hw04](https://github.com/MI-AFP/hw04). 
+The homework to practice working with new types, list comprehensions, containers, and errors is in repository [MI-AFP/hw04](https://github.com/MI-AFP/hw04).
 
 ## Further reading
 
