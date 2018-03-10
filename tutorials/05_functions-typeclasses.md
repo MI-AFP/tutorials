@@ -444,7 +444,13 @@ Prelude> :kind (Either Integer String)
 
 ### Polymorfism
 
-https://en.wikibooks.org/wiki/Haskell/Polymorphism
+In Haskell, there are more ways of polymorphism. It might be very surprising, especially for people who believe that polymorphism is something related only to object oriented programming. We already used type classes and type variables - the basic enablers of polymorphism in Haskell.
+
+**Parametric polymorphism** refers to when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also parametric polymorphism. This type of polymorhism doesn't know anything about the type which it will by used with. It must behave the same regardless of its type. This is a somewhat limiting but extremely useful property known as versatility.
+
+**Ad-hoc polymorphism** refers to when a value is able to adopt any one of several types because it, or a value it uses, has been given a separate definition for each of those types. It is when the type variable *is constrained* by some type class. Thanks to that extra information about given *still-generic* type, it is possible to used some behavior defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of arbitrary list an instance of some class.
+
+There are some other types of polymorhism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorhism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
 
 ### Own typeclass and instance
 
@@ -588,6 +594,7 @@ https://docs.python.org/3/library/typing.html
 * [Haskell - Higher order function](https://wiki.haskell.org/Higher_order_function)
 * [Haskell - Fold](https://wiki.haskell.org/Fold)
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com) (chapters 3, 6, 8)
+* [Haskell - Polymorphism](https://wiki.haskell.org/Polymorphism)
 * [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
 * [Haskell - OOP vs type classes](https://wiki.haskell.org/OOP_vs_type_classes)
 * [WikiBooks - Haskell: Classes and types](https://en.wikibooks.org/wiki/Haskell/Classes_and_types)
