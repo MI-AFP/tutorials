@@ -55,7 +55,7 @@ We can see that we are able to implement very simply our own `ifThenElse` but it
 0
 ```
 
-And nested conditions:
+And nested conditions use another `if-then-else` expression in `else` branch (brackets are not necessary as shown above, here for demonstrating the separate expression):
 
 ```
 *Main> if (x < y) then (y - x) else (if (x == y) then 0 else (x - y))
@@ -148,7 +148,7 @@ guardsOrder x
     | otherwise = "otherwise"
 ```
 
-It is just important not to forger the difference of `_` ("anything" in `case-of`) and `otherwise` ("True" in guards).
+It is just important not to forget the difference of `_` ("anything" in `case-of`) and `otherwise` ("True" in guards).
 
 ```
 Prelude> :t otherwise
@@ -399,12 +399,22 @@ However, strictness is a rather advanced topic, which you do not need to worry a
 
 ### Function application operator
 
-There is a binary operator `$` called function application and at first sight, it looks quite lame: As its left operand, it takes a function and on right side, there is the operand for the function. So instead of: `func operand`, we write `func $ operand`. Huh?! The point is that '$' has a very low priority, so it is used to avoid brackets for function composition (a very common thing in Haskell, will be covered later). For completeness, there is also a strict application `$!$`.
+There is a binary operator `$` called function application and at first sight, it looks quite lame: As its left operand, it takes a function and on right side, there is the operand for the function. So instead of: `func operand`, we write `func $ operand`. Huh?! The point is that '$' has a very low priority, so it is used to avoid brackets for function composition (a very common thing in Haskell, will be covered later). For completeness, there is also a strict application `$!`.
+
+
+```
+Prelude> :type ($)
+($) :: (a -> b) -> a -> b
+Prelude> :type ($!)
+($!) :: (a -> b) -> a -> b
+```
 
 ```haskell
-show (getSiblingsOf (getParentOf (head people)))
+show (getSiblingsOf (getParentOf (head people)))    -- For LISP lovers only
 
-show $ getSiblingsOf $ getParentOf $ head people
+show $ getSiblingsOf $ getParentOf $ head people    -- A bit nicer
+
+show . getSiblingsOf . getParentOf . head $ people  -- Haskell way (will be covered later on)
 ```
 
 ## Modules and imports
@@ -420,7 +430,7 @@ module FPCourse.Lesson3.TestModule (
     myFunc1, myFunc3
 ) where
 
-myFunc1 x = myFun2 7 x
+myFunc1 x = myFunc2 7 x
 
 myFunc2 x y = x - y
 
@@ -428,6 +438,8 @@ myFunc3 x y z = x * y + z
 ```
 
 Notice that after the module name, there is an optional list of stuff that can be imported from this module. In this case, you can import `myFunc1` and `myFunc3`, but not `myFunc2`.
+
+*Note*: In GHCi, the `:load` command works differently than `import` in normal Haskell code.
 
 ### Import something
 
@@ -489,11 +501,12 @@ import Data.Set (size) -- name clash!
 
 ```haskell
 import qualified Data.Set as S
-size [1, 2, 2, 3]
 
-size (fromList [1, 2, 2, 3]) -- wrong size!
+map (+2) [1, 2, 2, 3]
 
-S.size (fromList [1, 2, 2, 3]) -- correct!
+map (+2) (S.fromList [1, 2, 2, 3])   -- wrong map function (from Prelude)!
+
+S.map (+2) (S.fromList [1, 2, 2, 3]) -- correct!
 ```
 
 ### Hiding import
