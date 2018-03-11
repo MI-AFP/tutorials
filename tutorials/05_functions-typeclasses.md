@@ -448,23 +448,43 @@ In Haskell, there are more ways of polymorphism. It might be very surprising, es
 
 **Parametric polymorphism** refers to when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also parametric polymorphism. This type of polymorhism doesn't know anything about the type which it will by used with. It must behave the same regardless of its type. This is a somewhat limiting but extremely useful property known as versatility.
 
-**Ad-hoc polymorphism** refers to when a value is able to adopt any one of several types because it, or a value it uses, has been given a separate definition for each of those types. It is when the type variable *is constrained* by some type class. Thanks to that extra information about given *still-generic* type, it is possible to used some behavior defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of arbitrary list an instance of some class.
+**Ad-hoc polymorphism** refers to when a value is able to adopt any one of several types because it, or a value it uses, has been given a separate definition for each of those types. It is when the type variable *is constrained* by some type class. Thanks to that extra information about given *still-generic* type, it is possible to used some behavior defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of arbitrary list an instance of some class. This polymorphism is not only about functions, but also values - recall `Bounded` class with `minBound` and `maxBound` values which are different for each instance.
 
 There are some other types of polymorhism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorhism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
 
 ### Own typeclass and instance
 
-There are many defined typeclasses and basic types which are instances of those classes. You can create your own on top of it if you need more.
+There are many defined typeclasses and basic types which are instances of those classes. You can create your own on top of it if you need more. You need to use keyword `class` to defined functions for that typeclass and also optionally class inheritance. It is possible to just declare the type of function but also to define it completely (also using other declared functions). Then by using the keyword `instance` you can define how some type is instance of a typeclass (define or re-define functions for that class).
 
 ```haskell
-class CSVExportable a where
-    headings :: a -> [String]
-    toList :: a -> String
-    toCSV :: a -> String
-    headingsCSV :: a -> String
-```
+-- from https://en.wikibooks.org/wiki/Haskell/Classes_and_types#A_concerted_example
+-- Location, in two dimensions.
+class Located a where
+    getLocation :: a -> (Int, Int)
 
-*TODO example*
+class (Located a) => Movable a where
+    setLocation :: (Int, Int) -> a -> a
+
+-- An example type, with accompanying instances.
+data NamedPoint = NamedPoint
+    { pointName :: String
+    , pointX    :: Int
+    , pointY    :: Int
+    } deriving (Show)
+
+instance Located NamedPoint where
+    getLocation p = (pointX p, pointY p)
+
+instance Movable NamedPoint where
+    setLocation (x, y) p = p { pointX = x, pointY = y }
+
+-- Moves a value of a Movable type by the specified displacement.
+-- This works for any movable, including NamedPoint.
+move :: (Movable a) => (Int, Int) -> a -> a
+move (dx, dy) p = setLocation (x + dx, y + dy) p
+    where
+    (x, y) = getLocation p
+```
 
 ## Basic typeclasses in detail
 
@@ -480,6 +500,8 @@ You can derive only built-in typeclasses:
 * `Read` = from `String` conversion
 * `Enum` = enumerations only (no arguments), list `..` syntax
 * `Bounded` = only for enumerations or just one arguments, `minBound` and `maxBound`
+
+You cannot use `deriving` for your own classes without putting some more effort in it by using [Data.Derive](https://hackage.haskell.org/package/derive) and [Template Haskell](https://wiki.haskell.org/Template_Haskell). 
 
 ### Read and Show
 
@@ -510,7 +532,15 @@ class Show a where
 You can of course make your own instance of those classes where would be representation different but why would you do that - you already like Haskell! When you make own `read` and `show`, you should ensure that after using `read` on string produced by `show` you will get the same data.
 
 ```haskell
--- TODO: Read, Show custom instance
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+size :: Num a => Tree b -> a
+size (Leaf _)   = 1
+size (Node l r) = size l + size r
+
+instance (Show a) => Show (Tree a) where
+  show (Leaf x)   = show x
+  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
 ```
 
 ### Numerics
@@ -524,18 +554,14 @@ For numbers there are several builtin typeclasses making the computation more fl
   * `Fractional`
     * `Floating`
     * `RealFloat` (subclass of `Floating` and `RealFrac`)
+    
+If you really don't need to explicitly specify the type of number, use typeclass constraint in the declaration of function type.
 
 ### Comparison
 
 For comparison there are two basic typeclasses - `Eq` and its subclass `Ord`:
 
 ```
--- ord, eq in GHCi
-```
-
-You can again implement your own instances of those classes:
-
-```haskell
 Prelude> :info Eq
 class Eq a where
   (==) :: a -> a -> Bool
@@ -558,6 +584,26 @@ class Eq a => Ord a where
 ...
 ```
 
+You can again implement your own instances of those classes:
+
+```haskell
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+size :: Num a => Tree b -> a
+size (Leaf _)   = 1
+size (Node l r) = size l + size r
+
+instance (Show a) => Show (Tree a) where
+  show (Leaf x)   = show x
+  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
+
+instance Eq (Tree a) where
+    (==) t1 t2 = (size t1) == (size t2)
+
+instance Ord (Tree a) where
+    compare t1 t2 = compare (size t1) (size t2)
+```
+
 ## FP in other languages
 
 Functional programming concepts that you learn in pure functional language are applicable in other non-functional languages as well. Simply because those languages adopt some principles which make them more useful (or not so useless).
@@ -574,19 +620,40 @@ int calculate(int(*binOperation)(const int, const int), const int operandA, cons
 
 If you are normal person and not bighead you will most probably use `typedef` to name the type of such functions so the code is more readable and understandable. In newer versions of C++ there are also anonymous functions, combinators (`for_each`, `transform`, `filter`, ...), functors. Then you can of course use simpler functional concepts such as closures or recursion.
 
+
+```cpp
+typedef int(*binOperation)(const int, const int);  /* I am not a bighead */
+
+int calculate(binOperation bo, const int operandA, const int operandB){
+    return bo(operandA, operandB);
+}
+```
+
+* [libf - C++ as a Pure Functional Programming Language](https://github.com/GJDuck/libf)
+* [Functional in C++17 and C++20](http://www.modernescpp.com/index.php/functional-in-c-17-and-c-20)
+
 ### Java
 
-In Java 8 were added many functional programming concepts *TODO*
+* [Flying Bytes - An Introduction to Functional Programming in Java 8](https://flyingbytes.github.io/programming/java8/functional/part0/2017/01/16/Java8-Part0.html)
+* [Hackernoon - Finally Functional Programming in Java](https://hackernoon.com/finally-functional-programming-in-java-ad4d388fb92e)
+* [JavaCodeGeeks - Java 9 Functional Programming Tutorial](https://examples.javacodegeeks.com/core-java/java-9-functional-programming-tutorial/)
 
 ### Python
 
-http://www.oreilly.com/programming/free/functional-programming-python.csp
-https://docs.python.org/3/howto/functional.html
-https://docs.python.org/3/library/typing.html
+* [Functional Programming in Python (free O'Reilly)](http://www.oreilly.com/programming/free/functional-programming-python.csp)
+* [Python 3 - Functional Programming HOWTO](https://docs.python.org/3/howto/functional.html)
+* [Python 3 - Typing](https://docs.python.org/3/library/typing.html)
 
 ### Smalltalk and Ruby
 
+* [Smalltalk, A Functional Programming Language](http://monospacedmonologues.com/post/138978728947/smalltalk-a-functional-programming-language)
+* [Functional Programming in Ruby for people who don’t know what functional programming is](https://medium.com/craft-academy/functional-programming-in-ruby-for-people-who-dont-know-what-functional-programming-is-f0c4ab7dc68c)
+* [Functional Programming in Ruby](http://joelmccracken.github.io/functional-programming-in-ruby/#/)
+* [Embracing Functional Programming in Ruby](https://kellysutton.com/2017/09/13/embracing-functional-programming-in-ruby.html)
+
 ## Task assignment
+
+The homework to practice working with advanced functional patterns, operators, and typeclasses is in repository [MI-AFP/hw05](https://github.com/MI-AFP/hw05).
 
 ## Further reading
 
