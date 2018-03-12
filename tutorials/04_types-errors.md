@@ -280,8 +280,22 @@ Prelude Data.Maybe> catMaybes [Just 6, Just 7, Nothing, Just 8, Nothing, Just 9]
 [6,7,8,9]
 ```
 
-```diff
-+nejaky hezky priklad na Maybe jako parametr funkce
+```haskell
+-- Communicator interface
+data Message = Message { msgSender    :: String
+                       , msgRecipient :: String
+                       , msgMetadata  :: [(String, String)]
+                       , msgBody      :: String
+                       }
+
+sendAndReceive :: Communicator -> Message -> Maybe Message
+sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
+
+printReceivedMessage :: Maybe Message -> String
+printReceivedMessage Nothing    = "Unknown error occured during communication."
+printReceivedMessage (Just msg) = msgSender msg ++ ": " ++ msgBody msg
+
+myCommunicator = printReceivedMessage . sendAndReceive comm
 ```
 
 ### Either
@@ -294,9 +308,6 @@ data Either a b = Left a | Right b
 
 The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html))
 
-```diff
-+nejaky priklad na Either
-```
 
 ```
 Prelude Data.Either> :type Left 7
@@ -309,6 +320,27 @@ Prelude Data.Either> rights [Left 7, Right "Msg1", Left 8, Right "Msg2"]
 ["Msg1","Msg2"]
 Prelude Data.Either> partitionEithers [Left 7, Right "Msg1", Left 8, Right "Msg2"]
 ([7,8],["Msg1","Msg2"])
+```
+
+```haskell
+-- Communicator interface
+data Message = Message { msgSender    :: String
+                       , msgRecipient :: String
+                       , msgMetadata  :: [(String, String)]
+                       , msgBody      :: String
+                       }
+
+data CommError = Timeout | Disconnected | UnkownRecipient | IncorrectMetadata | UnknownError
+                deriving Show
+
+sendAndReceive :: Communicator -> Message -> Either CommError Message
+sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
+
+printReceivedMessage :: Either CommError Message -> String
+printReceivedMessage (Left  err) = "Error occured during communication: " ++ show 
+printReceivedMessage (Right msg) = msgSender msg ++ ": " ++ msgBody msg
+
+myCommunicator = printReceivedMessage . sendAndReceive comm
 ```
 
 ### Unit
