@@ -6,7 +6,7 @@ Creating new own functions or using the predefined from libraries is quite simpl
 
 ### Currying
 
-When we talk about "currying" in Haskell it has (almost) nothing to do with dishes or spices. Famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument. To better understand this, let's focus how we parenthesise function types:
+When we talk about "currying" in Haskell it has (almost) nothing to do with dishes or spices. Famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument. To better understand this, let's focus how we parenthesize function types:
 
 ```haskell
 myFunc1 :: a ->  b -> c
@@ -74,7 +74,7 @@ Prelude> (show . (5+) . (5*)) 5
 "30"
 ```
 
-Other operator which you now might want to know is `($)` called "application". Which can help you with getting rid of parentheses for applying arguments to right function.
+Another operator which you now might want to know is `($)` called "application". Which can help you with getting rid of parentheses for applying arguments to right function.
 
 ```
 Prelude> show . (5+) . (5*) $ 5
@@ -99,11 +99,11 @@ myFunc :: Int -> String
 myFunc = show . (5+) . (5*)
 ```
 
-Now you might ask why we call this pointfree style when there are actually more points. A 'points-free' definition originates in math (not a suprise!) of a function is one which does not explicitly mention the points (values) of the space on which the function acts.
+Now you might ask why we call this pointfree style when there are actually more points. A 'points-free' definition originates in math (not a surprise!) of a function is one which does not explicitly mention the points (values) of the space on which the function acts.
 
 ### Fixity and precedence
 
-You might wonder how it works in Haskell that following expression are evaluated in correct order as you would expect without using brackets:
+You might wonder how it works in Haskell that following expression is evaluated in correct order as you would expect without using brackets:
 
 ```
 Prelude> 5 + 2^3 - 4 + 2 * 2
@@ -112,7 +112,7 @@ Prelude> 5 * sin pi - 3 * cos pi + 2
 5.0
 ```
 
-First basic rule is that function application binds the most. For example, in `foo 5 + 4` it will first evaluate `foo 5` and then add `4` (`foo 5 + 4` is the same as `(+) (foo 5) 4`. If you want to avoid that, you need to use brackets `foo (5 + 4)` or function application operator `foo $ 5 + 4` (or strict `$!`). 
+The first basic rule is that function application binds the most. For example, in `foo 5 + 4` it will first evaluate `foo 5` and then add `4` (`foo 5 + 4` is the same as `(+) (foo 5) 4`. If you want to avoid that, you need to use brackets `foo (5 + 4)` or function application operator `foo $ 5 + 4` (or strict `$!`). 
 
 For infix operators (`+`, `**`, `/`, `==`, etc.) and functions (with backticks: `div`, `rem`, `quot`, `mod`, etc.), there is special infix specification with one of three keywords:
 
@@ -120,7 +120,7 @@ For infix operators (`+`, `**`, `/`, `==`, etc.) and functions (with backticks: 
 - `infixl` = Left associative operator (for example, `+`, `-`, or `!!`) 
 - `infixr` = Right associative operator (for example, `^`, `**`, `.`, or `&&`)
 
-Each of them should be followed by precedence (0 binds least tightly, and level 9 binds most tightly, default is 9) and then name of the function/operator. To see it in action, you can use `:info` to discover this specification for existing well-known operators and infix functions:
+Each of them should be followed by precedence (0 binds least tightly, and level 9 binds most tightly, default is 9) followed by the function/operator name. To see it in action, you can use `:info` to discover this specification for existing well-known operators and infix functions:
 
 ```
 Prelude> :info (+)
@@ -182,7 +182,7 @@ Prelude> "klm" ++ "abc" >< "xyz"
 "klmcbazyx"
 ```
 
-You can easily change that and if new precedence is lower, than `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have same associativity, otherwise you get an error).
+You can easily change that and if new precedence is lower, than `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have the same associativity, otherwise you get an error).
 
 ```haskell
 infixl 5 ><
@@ -248,7 +248,7 @@ Prelude> (:@) 5 "Hi"
 5 :@ "Hi"
 ```
 
-You can try that using operator not starting with colon is not possible. But you can always make a synonym and then your code more readable:
+You can try that using operator which doesn't start with a colon is not possible. But you can always make a synonym and then your code more readable:
 
 ```
 Prelude> data MyTuple3 a b = a @@ b deriving Show
@@ -276,11 +276,11 @@ mapAFunc1 = map (\x y z -> x * y + z)
 
 ## Higher order functions
 
-As is visible from previous example, anonymous functions are sometimes good to use with combination of higher order functions. Higher order function is a function that takes function as argument and/or returns function as result. In this course there were already many of them: `(.)`, `curry`, `uncurry`, `map`, etc. We will now looks at those more used for structures...
+As is visible from the previous example, anonymous functions are sometimes good to use with a combination of higher order functions. Higher order function is a function that takes a function as an argument and/or returns a function as a result. In this course, there were already many of them: `(.)`, `curry`, `uncurry`, `map`, etc. We will now look at those more used for structures...
 
 ### Map and filter
 
-Two widely used functions well-known in the most of functional (but other as well) programming languages are `map` and `filter`. In the `Prelude` module, they are defined for lists, but they work in the same way for other data structures (`Data.Sequence`, `Data.Set`, etc.). When you need to *transform* a list by applying function to its every element, then you can use `map`. If you have a list and need to make a sublist based on some property of its elements, use `filter`. The best for understanding is to look at its possible implementation.
+Two widely used functions well-known in the most of functional (but others as well) programming languages are `map` and `filter`. In the `Prelude` module, they are defined for lists, but they work in the same way for other data structures (`Data.Sequence`, `Data.Set`, etc.). When you need to *transform* a list by applying a function to its every element, then you can use `map`. If you have a list and need to make a sublist based on some property of its elements, use `filter`. The best for understanding is to look at its possible implementation.
 
 ```haskell
 myMap :: (a -> b) -> [a] -> [b]
@@ -294,7 +294,7 @@ myFilter p (x:xs)
       | otherwise = filter p xs  
 ```
 
-It is really nothing complicated, actually it is very simple, straightforward, and powerful.
+It is really nothing complicated, actually, it is very simple, straightforward, and powerful.
 
 ```
 Prelude> :type map
@@ -311,11 +311,11 @@ Prelude> filter (\x -> x `mod` 7 == 0) [1..50]
 [7,14,21,28,35,42,49]
 ```
 
-Soon we will get into generalized function called `fmap` while discussing the term *functor*.
+Soon we will get into a generalized function called `fmap` while discussing the term *functor*.
 
 ### Folds and scans
 
-Maybe you've heard about *Map/Reduce*... We know `map`, but there is no `reduce`! Actually, there is, but it is called [fold](https://wiki.haskell.org/Fold) (it is practically a synonym in functional programming). Folds are higher order functions that process a data structure in some order and build a return value. It (as everything in Haskell) has foundations in math - conretely in [Catamorphism](https://wiki.haskell.org/Catamorphisms) (Category Theory). 
+Maybe you've heard about *Map/Reduce*... We know `map`, but there is no `reduce`! Actually, there is, but it is called [fold](https://wiki.haskell.org/Fold) (it is practically a synonym in functional programming). Folds are higher order functions that process a data structure in some order and build a return value. It (as everything in Haskell) has foundations in math - concretely in [Catamorphism](https://wiki.haskell.org/Catamorphisms) (Category Theory). 
 
 To get into folds in practice, let's try to implement `sum` and `product` functions (if you want to practice on your own, try it with `and` and `or`).
 
@@ -331,10 +331,10 @@ myProduct (x:xs) = x * myProduct xs
 
 Obviously, there are some similarities:
 
-1. initial value for empty list (`0` for `sum` and `1` in the case of `product`),
-2. use a function and apply it to a element and recursive call to the rest of the list.
+1. initial value for an empty list (`0` for `sum` and `1` in the case of `product`),
+2. use a function and apply it to an element and recursive call to the rest of the list.
 
-Let's do the generalized higher order function that also takes an inital value and a function for processing.
+Let's do the generalized higher order function that also takes an initial value and a function for processing.
 
 ```haskell
 process :: (a -> a -> a) -> a -> [a] -> a
@@ -364,7 +364,7 @@ myProduct = process (*) 1
 myToStrJoin = process (\x str -> show x ++ str) ""
 ```
 
-Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x ++ str)` is not, even type of `x` and `str` can be different. What if we need to apply the function in different order? Now we have to create two variants.
+Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x ++ str)` is not, even type of `x` and `str` can be different. What if we need to apply the function in a different order? Now we have to create two variants.
 
 
 ```haskell
@@ -422,11 +422,11 @@ If you like folds, try to implement `foldl` by using `foldr` (spoiler: [solution
 
 ## Typeclasses
 
-Typeclass is class of types with definition of common functions for all instances of that class. It is allowing polymorphism and you can imagine it as interfaces in other languages.
+Typeclass is class of types with a definition of common functions for all instances of that class. It is allowing polymorphism and you can imagine it as interfaces in other languages.
 
 ### Kinds
 
-In the type theory, a kind is the type of a type constructor or, less commonly, the type of a higher-order type operator. A kind system is essentially a simply typed lambda calculus 'one level up,' endowed with a primitive type, denoted * and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create type with kind `*` so you can have values of it.
+In the type theory, a kind is the type of a type constructor or, less commonly, the type of a higher order type operator. A kind system is essentially a simply typed lambda calculus 'one level up,' endowed with a primitive type, denoted * and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create a type with kind `*` so you can have values of it.
 
 ```
 Prelude> :kind Integer
@@ -446,15 +446,15 @@ Prelude> :kind (Either Integer String)
 
 In Haskell, there are more ways of polymorphism. It might be very surprising, especially for people who believe that polymorphism is something related only to object oriented programming. We already used type classes and type variables - the basic enablers of polymorphism in Haskell.
 
-**Parametric polymorphism** refers to when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also parametric polymorphism. This type of polymorhism doesn't know anything about the type which it will by used with. It must behave the same regardless of its type. This is a somewhat limiting but extremely useful property known as versatility.
+**Parametric polymorphism** refers to when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of a list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also parametric polymorphism. This type of polymorphism doesn't know anything about the type which it will be used with. It must behave the same regardless of its type. This is a somewhat limiting but extremely useful property known as versatility.
 
-**Ad-hoc polymorphism** refers to when a value is able to adopt any one of several types because it, or a value it uses, has been given a separate definition for each of those types. It is when the type variable *is constrained* by some type class. Thanks to that extra information about given *still-generic* type, it is possible to used some behavior defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of arbitrary list an instance of some class. This polymorphism is not only about functions, but also values - recall `Bounded` class with `minBound` and `maxBound` values which are different for each instance.
+**Ad-hoc polymorphism** refers to when a value is able to adopt any one of several types because it, or a value it uses, has been given a separate definition for each of those types. It is when the type variable *is constrained* by some type class. Thanks to that extra information about the given *still-generic* type, it is possible to used some behavior defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of the arbitrary list an instance of some class. This polymorphism is not only about functions, but also values - recall `Bounded` class with `minBound` and `maxBound` values which are different for each instance.
 
-There are some other types of polymorhism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorhism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
+There are some other types of polymorphism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorphism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
 
 ### Own typeclass and instance
 
-There are many defined typeclasses and basic types which are instances of those classes. You can create your own on top of it if you need more. You need to use keyword `class` to defined functions for that typeclass and also optionally class inheritance. It is possible to just declare the type of function but also to define it completely (also using other declared functions). Then by using the keyword `instance` you can define how some type is instance of a typeclass (define or re-define functions for that class).
+There are many defined typeclasses and basic types which are instances of those classes. You can create your own on top of it if you need more. You need to use keyword `class` to defined functions for that typeclass and also optionally class inheritance. It is possible to just declare the type of function but also to define it completely (also using other declared functions). Then by using the keyword `instance` you can define how some type is an instance of a typeclass (define or re-define functions for that class).
 
 ```haskell
 -- from https://en.wikibooks.org/wiki/Haskell/Classes_and_types#A_concerted_example
@@ -490,7 +490,7 @@ move (dx, dy) p = setLocation (x + dx, y + dy) p
 
 ### Deriving
 
-We have already used the keyword `deriving` many times. It is kind of magic which will automatically derive instance of desired typeclass(es) so you don't have to write functions on your own.
+We have already used the keyword `deriving` many times. It is kind of magic which will automatically derive an instance of desired typeclass(es) so you don't have to write functions on your own.
 
 You can derive only built-in typeclasses:
 
@@ -505,7 +505,7 @@ You cannot use `deriving` for your own classes without putting some more effort 
 
 ### Read and Show
 
-If you derive default implementation of instance for `Show` and `Read` the string representing the data is actually the same as you would write it in Haskell code:
+If you derive default implementation of instances for `Show` and `Read` the string representing the data is actually the same as you would write it in Haskell code:
 
 ```
 Prelude> data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Show, Read)
@@ -610,7 +610,7 @@ Functional programming concepts that you learn in pure functional language are a
 
 ### C/C++
 
-C++ is general purpose object oriented programming language based on C which is imperative procedural language. In both is possible to create functions (and procedures). There is no control if function is pure or not (if it is makind side effects). And in C/C++ you need to deal with mutability, pointers and working with memory on low level (de/allocation). But typing is strict and you can make higher order functions with "function pointer" types.
+C++ is general purpose object oriented programming language based on C which is imperative procedural language. In both is possible to create functions (and procedures). There is no control if a function is pure or not (if it is making side effects). And in C/C++ you need to deal with mutability, pointers and working with memory on low level (de/allocation). But typing is strict and you can make higher order functions with "function pointer" types.
 
 ```cpp
 int calculate(int(*binOperation)(const int, const int), const int operandA, const int operandB){
@@ -618,7 +618,7 @@ int calculate(int(*binOperation)(const int, const int), const int operandA, cons
 }
 ```
 
-If you are normal person and not bighead you will most probably use `typedef` to name the type of such functions so the code is more readable and understandable. In newer versions of C++ there are also anonymous functions, combinators (`for_each`, `transform`, `filter`, ...), functors. Then you can of course use simpler functional concepts such as closures or recursion.
+If you are a normal person and not bighead you will most probably use `typedef` to name the type of such functions so the code is more readable and understandable. In newer versions of C++ there are also anonymous functions, combinators (`for_each`, `transform`, `filter`, ...), functors. Then you can of course use simpler functional concepts such as closures or recursion.
 
 
 ```cpp
