@@ -8,6 +8,12 @@ After learning common typeclasses it is not just easier to use them and understa
 
 // math, category theory
 
+### Category theory
+
+
+### The Hask category
+
+
 ## Monoid (and others from basic algebra)
 
 Monoid is the most simple typeclass we will learn. You can recall the [monoid](https://en.wikipedia.org/wiki/Monoid) them from algebra - it is algebraic structure with one binary operation which is associate and there is also one identity element. Same goes for Haskell - the operation is called `mappend` and identity is `mempty` (first letter `m` if for **m**onoid).
@@ -78,7 +84,11 @@ Just as with Monoid, you can take a look at the documentation of [Data.Functor](
 -- TODO play with functors and operators
 ```
 
-*TODO*: IO Functor, lifting, forall
+### Lifting
+
+### Functors on Hask category
+
+### forall quantification
 
 ## Applicative
 
@@ -118,6 +128,8 @@ u <*> pure y = pure ($ y) <*> u
 ```
 -- TODO play with applicative and operators
 ```
+
+### Lifting
 
 ## Monad
 
@@ -174,6 +186,8 @@ main = do
     putStr "\n"
 ```
 
+### Monads in category theory
+
 ### IO Monad
 
 Haskell separates pure functions from computations where side effects must be considered by encoding those side effects as values of a particular type. Specifically, a value of type (IO a) is an action, which if executed would produce a value of type a.
@@ -188,8 +202,12 @@ randomRIO :: (Random a) => (a,a) -> IO a
 
 ## Task assignment
 
+The homework to practice typeclasses from this tutorial [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
+
 ## Further reading
 
 * [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
-* [Monad](https://wiki.haskell.org/Monad)
-* [IO Monad](https://wiki.haskell.org/Introduction_to_IO)
+* [Haskell and Category Theory](https://en.wikibooks.org/wiki/Haskell/Category_theory)
+* [Haskell - Typoclassopedia](https://wiki.haskell.org/Typeclassopedia)
+* [Haskell - Monad](https://wiki.haskell.org/Monad)
+* [Haskell - IO Monad](https://wiki.haskell.org/Introduction_to_IO)
