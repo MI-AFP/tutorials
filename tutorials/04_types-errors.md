@@ -76,7 +76,7 @@ data MyRec = MyRecConstr { xA ::  Int
 
 For both cases it means that when data constructor is evaluated, it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
 
-In order to achieve laziness, Haskell wraps all types with some additional information = *boxed types*. If you don't need laziness and other related properties, it is more efficient to use raw *unboxed types*. We will talk about that as a bonus or at the end of course in a *Performance* section. Now you just need to know roughly what is it about, because it is used in some textual types...
+In order to achieve laziness, Haskell wraps all types with some additional information = *boxed types*. If you don't need laziness and other related properties, it is more efficient to use raw *unboxed types*. We will talk about that as a bonus or at the end of course in the *Performance* section. Now you just need to know roughly what is it about, because it is used in some textual types...
 
 ## Textual types
 
@@ -308,7 +308,7 @@ sendAndReceive :: Communicator -> Message -> Either CommError Message
 sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
 
 printReceivedMessage :: Either CommError Message -> String
-printReceivedMessage (Left  err) = "Error occured during communication: " ++ show 
+printReceivedMessage (Left  err) = "Error occured during communication: " ++ show err
 printReceivedMessage (Right msg) = msgSender msg ++ ": " ++ msgBody msg
 
 myCommunicator = printReceivedMessage . sendAndReceive comm
