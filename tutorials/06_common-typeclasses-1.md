@@ -6,13 +6,33 @@ After learning common typeclasses it is not just easier to use them and understa
 
 ## Intro: Mathematical foundations
 
-// math, category theory
+Relation between math and Haskell is very strong. You can observe it everywhere. Functions are very similar to mathematical functions when you talk about their type, definitions with `let` and `where` keywords, guards with `otherwise`, function compositions, and so on. In this tutorial we are going to see this relation even more - with typeclasses that come from mathematical world. You should be already familiar with basic abstract algebra (esp. algebraic structures with a single binary operation). 
+
+When getting into math, you should know that Haskell is based not just on the basic algebra, set theory, and logics, but also on the category theory. In order to sometimes mention the relation we will briefly explain what is it about. If you want to know more, please lookup some mathematical tutorials on your own.
 
 ### Category theory
 
+Category theory is on higher abstract level than *Monoid*, *Semigroup*, and similar algebraic structures. A **category** is also a structure or collection *C* with three components:
+
+* a collection of **objects**, *ob(C)*,
+* a collection of **morphisms**, *hom(C)*, that ties two objects together and sometimes they are called **arrows**,
+* a **composition** of morphisms (similar to function composition).
+
+There are many categories, for example, **Set** category has all possible sets as objects, standard functions as morphisms, and classical function composition. There are also three laws:
+
+1. the composition of category must be associative (i.e., *f ∘ (g ∘ h) = (f ∘ g) ∘ h*),
+2. the category needs to be closed under the composition operation (i.e., for all applies *h = f ∘ g ⇒ h ∈ C*),
+3. for every object *A ∈ ob(C)* there is an identity function *idA: A → A*, *idA ∈ hom(C)*. 
 
 ### The Hask category
 
+In Haskell, we have the **Hask** category where:
+
+* *ob(Hask)* are **types** (`Char`, `Int`, `Double`, `[Integer]`, `Person`, `Int -> String`, etc.),
+* *hom(C)* are **functions** (`show`, `id`, `length`, `words`, `flip`, `reverse`, etc.),
+* composition is **function composition** `(.)`.
+
+The identity function is for every *o ∈ ob(Hask)* the polymorphic `id` function. The associativity of composition is assured and in *hom(C)* are all the functions, even those created by composition. That's it - now we will show some typeclasses, their laws and come back to **Hask** when necessary...
 
 ## Monoid (and others from basic algebra)
 
