@@ -517,16 +517,15 @@ Prelude> read "Node (Leaf 5) (Leaf 100)"
 *** Exception: Prelude.read: no parse
 Prelude> (read "Node (Leaf 5) (Leaf 100)") :: Tree Int
 Node (Leaf 5) (Leaf 100)
+```
 
-Prelude> :info Show
+```haskell
 class Show a where
   showsPrec :: Int -> a -> ShowS
   show :: a -> String
   showList :: [a] -> ShowS
   {-# MINIMAL showsPrec | show #-}
   	-- Defined in ‘GHC.Show’
-
-...
 ```
 
 You can of course make your own instance of those classes where would be representation different but why would you do that - you already like Haskell! When you make own `read` and `show`, you should ensure that after using `read` on string produced by `show` you will get the same data.
@@ -541,6 +540,18 @@ size (Node l r) = size l + size r
 instance (Show a) => Show (Tree a) where
   show (Leaf x)   = show x
   show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
+```
+
+Typeclass `Read` is a bit more complicated. If you want to make own implementation, you need to write the parser. Parsing will be covered later on during the course. Basically, it tries to convert `String` to `a` and return it together with remaining `String`.
+
+```haskell
+class Read a where
+  readsPrec :: Int -> ReadS a
+  readList :: ReadS [a]
+  GHC.Read.readPrec :: Text.ParserCombinators.ReadPrec.ReadPrec a
+  GHC.Read.readListPrec :: Text.ParserCombinators.ReadPrec.ReadPrec [a]
+  {-# MINIMAL readsPrec | readPrec #-}
+        -- Defined in `GHC.Read'
 ```
 
 ### Numerics
@@ -561,16 +572,13 @@ If you really don't need to explicitly specify the type of number, use typeclass
 
 For comparison there are two basic typeclasses - `Eq` and its subclass `Ord`:
 
-```
-Prelude> :info Eq
+```haskell
 class Eq a where
   (==) :: a -> a -> Bool
   (/=) :: a -> a -> Bool
   {-# MINIMAL (==) | (/=) #-}
   	-- Defined in ‘GHC.Classes’
-...
 
-Prelude> :info Ord
 class Eq a => Ord a where
   compare :: a -> a -> Ordering
   (<) :: a -> a -> Bool
@@ -581,7 +589,6 @@ class Eq a => Ord a where
   min :: a -> a -> a
   {-# MINIMAL compare | (<=) #-}
   	-- Defined in ‘GHC.Classes’
-...
 ```
 
 You can again implement your own instances of those classes:
@@ -603,6 +610,27 @@ instance Eq (Tree a) where
 instance Ord (Tree a) where
     compare t1 t2 = compare (size t1) (size t2)
 ```
+
+### Enum and Bounded
+
+Class `Enum` defines operations on sequentially ordered types and it is a subclass of `Bounded` which defines just `minBound` and `maxBound` values. As you can see below, `Enum` describes 8 functions but only 2 are required (other will be derived based on that). Functions `toEnum` and `fromEnum` serve to specifying the order by numbering with `Int`s.
+
+```haskell
+class Enum a where
+    succ :: a -> a
+    pred :: a -> a
+    toEnum :: Int -> a
+    fromEnum :: a -> Int
+    enumFrom :: a -> [a]
+    enumFromThen :: a -> a -> [a]
+    enumFromTo :: a -> a -> [a]
+    enumFromThenTo :: a -> a -> a -> [a]
+    {-# MINIMAL toEnum, fromEnum #-}
+```
+
+When you derive `Enum` the order will be generated as left-to-right order of data constructors (without parameters, an enumeration consists of one or more nullary). Similarly, deriving `Bounded` will use first and last data constructor.
+
+Enumerations have also the `..` syntactic sugar. For example, `[1..10]` is translated to `enumFromThen 1 10` and `[1,5..100]` is translated to `enumFromThenTo`
 
 ## FP in other languages
 
