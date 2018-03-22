@@ -6,7 +6,7 @@ Creating new own functions or using the predefined ones from libraries is common
 
 ### Currying
 
-When we talk about "currying", in Haskell it has (almost) nothing to do with dishes or spices. A famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: *translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument*. Technically, the orginal author of this is [Moses Schönfinkel](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel), so sometimes you may even come across a very nice name ["Schönfinkelization"](http://www.natansh.in/2012/07/27/schonfinkelization/).
+When we talk about "currying", in Haskell it has (almost) nothing to do with dishes or spices. A famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: *translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument*. Technically, the original author of this is [Moses Schönfinkel](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel), so sometimes you may even come across a very nice name ["Schönfinkelization"](http://www.natansh.in/2012/07/27/schonfinkelization/).
 
 Curyying can be achieved in all functional programming languages, but Haskell is special in that *all functions are curried by default*, similarly to pure lambda calculus. Let's se how we parenthesize function types:
 
@@ -75,9 +75,9 @@ goodSort :: [Something] -> [Something]
 goodSort = generalSort slowOrderingFn
 ```
 
-This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern] (https://en.wikipedia.org/wiki/Factory_method_pattern) -- quite some fat, bloated relatives, aren't they?
+This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
 
-As you can see, the "parametrising" parametres must come first, so we can make a curried version of the constructor function. At the same time, the order of parametres can be switched using the `flip` function that takes its (first) two arguments in the reverse order of f:
+As you can see, the "parametrising" parametres must come first, so we can make a curried version of the constructor function. At the same time, the order of parametres can be switched using the `flip` function that takes its (first) two arguments in the reverse order of `f`:
 
 ```haskell
 flip :: (a -> b -> c) -> b -> a -> c
@@ -139,7 +139,7 @@ Prelude> :type (uncurry myFunc)
 
 If you like math, then it is the same difference as between *f*: &#8477; &rarr; &#8477; &rarr; &#8477; and *g*: &#8477; × &#8477; &rarr; &#8477;.
 
-In most other functional languages, like Lisp (Clojure) and Javascript, the situation is the opposite to Haskell: the functions are by default not curried and there are functions (usually called `curry`), which enable partial function application -- see e.g. [this post](https://blog.benestudio.co/currying-in-javascript-es6-540d2ad09400)
+In most other functional languages, like Lisp (Clojure) and Javascript, the situation is the opposite to Haskell: the functions are by default not curried and there are functions (usually called `curry`), which enable partial function application – see e.g. [this post](https://blog.benestudio.co/currying-in-javascript-es6-540d2ad09400).
 
 ### Function composition
 
