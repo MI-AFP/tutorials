@@ -2,6 +2,16 @@
 
 ## Basic IO
 
+### The main and gets + puts
+
+### What does `do` do?
+
+### I/O and `IO` without deep theory
+
+### Be `interact`ive
+
+### Work with files
+
 ## Testing
 
 Testing is very important for keeping code on the straight-and-narrow path. The main testing mechanisms in Haskell are traditional unit testing and its more powerful descendant: type-based “property” testing.
@@ -25,6 +35,12 @@ With QuickCheck you can for example check if you instance of
 
 ```
 
+#### Basic properties
+
+#### Generating values 
+
+#### Own datatypes and `Arbitrary`
+
 ### Hspec
 
 [Hspec](https://hackage.haskell.org/package/hspec) is a testing framework for Haskell. It is inspired by the Ruby library RSpec. Some of Hspec's distinctive features are:
@@ -39,6 +55,14 @@ Tests written in Hspec are very readable, intuitive and powerful. It allows inte
 ```haskell
 
 ```
+
+#### Expectations
+
+#### Property check
+
+#### Complex test suites
+
+### MuCheck
 
 ## Haddock (documentation)
 
