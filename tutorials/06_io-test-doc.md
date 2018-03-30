@@ -1,16 +1,73 @@
 # Basic IO, tests, and documentation
 
+So far, we were working with pure functions (without side effects). You should be able to build complex libraries, use standard containers and other data types, write clean Haskell code, and understand most of basic programs written by Haskellers. This time we will take a look at basics of working with user (or other) input/output, writing tests and documentation.
+
 ## Basic IO
+
+When you need to incorporate input and output (CLI, files, sockets, etc.), you bring impureness into your program. Obviously, IO brings side effects (it interacts with environment and changes the global state). It can be a bit complicated and so we won't go deep into theory this time and instead we will just show how to use it. Theoretical part will be covered in the future.
 
 ### The main and gets + puts
 
+If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` - can do something (some actions) with `IO` but actually nothing is contained `()` for further work. You might wonder why it is not `IO Int` (with return code). It is because giving a return code is also IO action and you can do it from main with functions from `System.Exit`.
+
+Now, let's take a look at basic IO examples:
+
+```haskell
+main1 :: IO ()
+main1 = putStr "Hello, Haskeller!"     -- putStr :: String -> IO ()
+
+main2 :: IO ()
+main2 = putStrLn "Hello, Haskeller!"   -- putStrLn :: String -> IO ()
+
+main3 :: IO ()
+main3 = do
+          putStr "Haskell "
+          putChar 'F'                   -- putChar :: Char -> IO ()
+          putChar 'T'
+          putChar 'W'
+          putStrLn "! Don't you think?!"
+
+-- pure function
+sayHello :: String -> String
+sayHello name = "Hello, " ++ name ++ "!"
+
+main4 :: IO ()
+main4 = do
+          putStrLn "Enter your name:"
+          name <- getLine                -- getLine :: IO String
+          putStrLn . sayHello $ name
+
+-- custom IO action
+promptInt :: IO Int
+promptInt = do
+              putStr "Enter single integer: "
+              inpt <- getLine       -- unwraps from IO (inpt :: String)
+              return (read inpt)    -- return wraps with IO, read :: String -> Int
+
+compute x y = 50 * x + y
+
+main5 :: IO ()
+main5 = do
+          intA <- promptInt
+          intB <- promptInt
+          putStrLn ("Result: ++ show . compute $ intA intB)
+```
+
 ### What does `do` do?
 
-### I/O and `IO` without deep theory
+It doesn't look so weird if you recall how imperative programming works... But we are in functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just syntactic sugar for chaining the actions and bindings (not just IO, in general!) in simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of typeclass `Monad`. 
+
+When you use binding operator `<-`, it means that result of binded action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for next action which will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
+
+You might have noticed the `return` in custom `promptInt` action. It is not a keyword but just a function of typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. We will look at all the `Monad` properties in detail next time.
 
 ### Be `interact`ive
 
+Very simple but interesting action for building CLI is `interact :: (String -> String) -> IO ()`.
+
 ### Work with files
+
+### Arguments and env variables
 
 ## Testing
 
