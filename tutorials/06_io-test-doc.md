@@ -132,6 +132,7 @@ For some well-known file formats are of course prepared libraries so you don't h
 
 * JSON = [aeson](https://hackage.haskell.org/package/aeson)
 * YAML = [yaml](https://hackage.haskell.org/package/yaml)
+* XML = [xml](https://hackage.haskell.org/package/xml), [hxt](https://hackage.haskell.org/package/hxt), or [xeno](https://hackage.haskell.org/package/xeno)
 * CSV = [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
 * INI = [ini](https://hackage.haskell.org/package/ini)
 
@@ -217,13 +218,13 @@ With QuickCheck you can, for example, check if some function is associative or c
 ```haskell
 import Test.QuickCheck
 
-prop_ReverseReverse :: Eq a => [a] -> Bool
+prop_ReverseReverse :: String -> Bool
 prop_ReverseReverse xs = reverse (reverse xs) == xs
 
-prop_AddAssociative :: Num a => a -> a -> a -> Bool
+prop_AddAssociative :: Int -> Int -> Int -> Bool
 prop_AddAssociative x y z = (x + y) + z == x + (y + z)
 
-prop_AddCommutative :: Num a => a -> a -> Bool
+prop_AddCommutative :: Int -> Int -> Bool
 prop_AddCommutative x y = x + y == y + x
 
 main = do
@@ -235,12 +236,46 @@ main = do
 
 QuickCheck generates automatically randomized values (tries to start with cornercases) and find a counterexample. There is some default behavior that you can override, for example, request more random values.
 
+```
+% runhaskell qctests.hs
++++ OK, passed 100 tests.
++++ OK, passed 100 tests.
++++ OK, passed 100 tests.
++++ OK, passed 100000 tests.
+```
+
 #### Own datatypes and `Arbitrary`
 
 If you have your own types, you need to make them instance of typeclass `Arbitrary`. Then QuickCheck can generate examples:
 
 ```haskell
+import Test.QuickCheck
+import Control.Monad
 
+data Person = Person
+  { name :: String
+  , age  :: Int
+  } deriving (Show, Eq)
+
+mature   :: Person -> Person
+mature p = p { age = 18 }
+
+instance Arbitrary Person where
+   arbitrary = do
+     nameLength <- choose (1, 30)
+     randomName <- replicateM nameLength (elements ['a'..'z'])
+     randomAge  <- choose (0, 100)
+     return Person { name = randomName
+                   , age  = randomAge
+                   }
+
+prop_Mature       :: Person -> Bool
+prop_Mature p
+    | age p < 18  = mature p == p { age = 18 }
+    | otherwise   = mature p == p
+
+main :: IO ()
+main = quickCheck prop_Mature
 ```
 
 ### Hspec
@@ -255,16 +290,158 @@ If you have your own types, you need to make them instance of typeclass `Arbitra
 Tests written in Hspec are very readable, intuitive and powerful. It allows integration with HUnit as well as with QuickCheck so it is sort of ultimate testing framework in Haskell.
 
 ```haskell
+import Test.Hspec
+import Test.QuickCheck
+import Control.Exception (evaluate)
 
+main :: IO ()
+main = hspec $ do
+  describe "Prelude.head" $ do
+    it "returns the first element of a list" $ do
+      head [23 ..] `shouldBe` (23 :: Int)
+
+    it "returns the first element of an *arbitrary* list" $
+      property $ \x xs -> head (x:xs) == (x :: Int)
+
+    it "throws an exception if used with an empty list" $ do
+      evaluate (head []) `shouldThrow` anyException
 ```
 
 #### Expectations
 
+There are many predefined expectation functions that are typically writen in infix notation to improve readability of specs. They are in separated packages and project: https://github.com/hspec/hspec-expectations#readme
+
+* `shouldBe` = equality test
+* `shouldNotBe` = inequality test
+* `shouldSatisfy` = test if result satisfies given property as function `:: a -> Bool`
+* `shouldStartWith` = test if list has a given prefix
+* `shouldEndWith` = test if list has a given suffix
+* `shouldContain` = test if list contains sublist
+* `shouldMatchList` = test if lists have same elements (can be different order)
+* `shouldReturn` = test for actions (where is `return` used)
+* `shouldThrow` = test if throwing some exception or error (`evaluate` from `Control.Exception` must be used, then there are predefined expectations: `anyException`, `anyErrorCall`, `errorCall "message"`, `anyIOException`, and `anyArithException`.
+
 #### Property check
+
+The integration of hspec with QuickCheck is really great, all you need to do is writing `property`.
+
+```haskell
+import Test.Hspec
+import Test.Hspec.QuickCheck (modifyMaxSuccess)
+import Test.QuickCheck
+
+prop_ReverseReverse :: String -> Bool
+prop_ReverseReverse xs = reverse (reverse xs) == xs
+
+prop_AddAssociative :: Int -> Int -> Int -> Bool
+prop_AddAssociative x y z = (x + y) + z == x + (y + z)
+
+prop_AddCommutative :: Int -> Int -> Bool
+prop_AddCommutative x y = x + y == y + x
+
+main :: IO ()
+main = hspec $ do
+  describe "addition" $ do
+    context "when used with ints" $ do
+      modifyMaxSuccess (const 20000) $ do
+        it "is associative" $
+          property prop_AddAssociative
+        it "is commutative" $
+          property prop_AddCommutative
+  describe "reverse" $ do
+    context "when used with string" $ do
+      it "negates when used twice" $
+        property prop_ReverseReverse
+```
+
+```
+% runhaskell Spec.hs
+
+addition
+  when used with ints
+    is associative
+    is commutative
+reverse
+  when used with string
+    negates when used twice
+
+Finished in 0.2299 seconds
+3 examples, 0 failures
+```
 
 #### Complex test suites
 
+It is good practice to separate specs according to your modules including the directories.
+
+```haskell
+import Test.Hspec
+
+import qualified FooSpec
+import qualified Foo.BarSpec
+import qualified BazSpec
+
+main :: IO ()
+main = hspec spec
+
+spec :: Spec
+spec = do
+  describe "Foo"     FooSpec.spec
+  describe "Foo.Bar" Foo.BarSpec.spec
+  describe "Baz"     BazSpec.spec
+```
+
+This is quite bothersome and thus [hspec-discover](https://hackage.haskell.org/package/hspec-discover) provides automatic spec discovery. All you need to do in the main spec file is this:
+
+```haskell
+-- file test/Spec.hs
+{-# OPTIONS_GHC -F -pgmF hspec-discover #-}
+```
+
+Another interesting and possibly useful thing for bigger projects are [Test.Hspec.Formatters](https://hackage.haskell.org/package/hspec/docs/Test-Hspec-Formatters.html). In following example `main` is in different module than `spec` created by automatic discovery:
+
+```haskell
+import Test.Hspec
+import Test.Hspec.Runner
+import Test.Hspec.Formatters
+import Test.Hspec.QuickCheck (modifyMaxSuccess)
+import Test.QuickCheck
+
+prop_ReverseReverse :: String -> Bool
+prop_ReverseReverse xs = reverse (reverse xs) == xs
+
+prop_AddAssociative :: Int -> Int -> Int -> Bool
+prop_AddAssociative x y z = (x + y) + z == x + (y + z)
+
+prop_AddCommutative :: Int -> Int -> Bool
+prop_AddCommutative x y = x + y == y + x
+
+main :: IO ()
+main = hspecWith defaultConfig {configFormatter = Just progress} $ do
+  describe "addition" $ do
+    context "when used with ints" $ do
+      modifyMaxSuccess (const 20000) $ do
+        it "is associative" $
+          property prop_AddAssociative
+        it "is commutative" $
+          property prop_AddCommutative
+  describe "reverse" $ do
+    context "when used with string" $ do
+      it "negates when used twice" $
+        property prop_ReverseReverse
+```
+
+```
+% runhaskell playground.hs
+...
+Finished in 0.2056 seconds
+3 examples, 0 failures
+```
+
 ### MuCheck
+
+Mutation Testing is a special type of software testing where certain statements in the source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck) (and [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec)) that are dealing with this are of software testing.
+
+//TODO more
 
 ## Haddock (documentation)
 
@@ -332,7 +509,7 @@ Another advantage of publishing is that your project can get attention and commu
 
 When you are developing the project and sharing it with community, you want to show that it is working well and also check if contributions to your code are not breaking the functionality. For that you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
 
-All (almost) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
+All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
 
 ```yaml
 # https://docs.haskellstack.org/en/stable/travis_ci/
