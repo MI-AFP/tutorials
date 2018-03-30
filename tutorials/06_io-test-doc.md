@@ -34,7 +34,7 @@ sayHello name = "Hello, " ++ name ++ "!"
 main4 :: IO ()
 main4 = do
           putStrLn "Enter your name:"
-          name <- getLine                -- getLine :: IO String
+          name <- getLine                -- getLine :: IO String, see getChar & getContents
           putStrLn . sayHello $ name
 
 -- custom IO action
@@ -51,6 +51,9 @@ main5 = do
           intA <- promptInt
           intB <- promptInt
           putStrLn ("Result: ++ show . compute $ intA intB)
+
+main6 :: IO ()
+main6 = print 1254                  -- print = putStrLn . show
 ```
 
 ### What does `do` do?
@@ -63,11 +66,116 @@ You might have noticed the `return` in custom `promptInt` action. It is not a ke
 
 ### Be `interact`ive
 
-Very simple but interesting action for building CLI is `interact :: (String -> String) -> IO ()`.
+Very interesting action for building a simple CLI is `interact :: (String -> String) -> IO ()`. The interact function takes a function of type `String -> String` as its argument. The **entire** input from the standard input device is passed to this function as its argument, and the resulting string is output on the standard output device.
 
-### Work with files
+```haskell
+import Data.Char
+
+main1 :: IO ()
+main1 = interact (map toUpper)
+
+main2 :: IO ()
+main2 = interact (show . length)
+
+main3 :: IO ()
+main3 = interact reverse
+```
+
+As is emphasized, it work with entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by works, you can create helper functions for that easily.
+
+```haskell
+
+eachLine :: (String -> String) -> (String -> String)
+eachLine f = unlines . f . lines
+
+eachWord :: (String -> String) -> (String -> String)
+eachWord f = unwords . f . words
+
+main5 :: IO ()
+main5 = interact (eachLine reverse)
+
+main6 :: IO ()
+main6 = interact (eachWord reverse)
+
+chatBot "Hello" = "Hi, how are you?"
+chatBot "Fine" = "Lucky you... bye!"
+chatBot "Bad" = "Me too!"
+chatBot _ = "Sorry, I'm too dumb to understand this..."
+
+main7 :: IO ()
+main7 = interact (eachLine chatBot)
+```
+
+### IO with files
+
+Working with files is very similar to working with console IO. As you might already know, most of IO for console is build by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
+
+```haskell
+main1 :: IO ()
+main1 = withFile "test.txt" ReadMode $ \handle -> do
+           fileSize <- hFileSize handle
+           print fileSize
+           xs <- getlines handle
+           sequence_ $ map (putStrLn . reverse) xs
+
+main2 :: IO ()
+main2 = do
+          handle <- openFile  "test.txt" ReadMode    -- :: IO Handle
+          fileSize <- hFileSize handle
+          print fileSize
+          hClose handle
+```
+
+In similar manner you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use some library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req). 
+
+For some well-known file formats are of course prepared libraries so you don't have to work with them over and over again just with functions from `Prelude`:
+
+* JSON = [aeson](https://hackage.haskell.org/package/aeson)
+* YAML = [yaml](https://hackage.haskell.org/package/yaml)
+* CSV = [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
+* INI = [ini](https://hackage.haskell.org/package/ini)
+
+... and so on. Also you probably know fabulous [pandoc](https://hackage.haskell.org/package/pandoc) writen in Haskell - you can use its API anytime.
 
 ### Arguments and env variables
+
+Last basic way how to interact with program is via arguments and environment variables. Again, there is a little bit clumsy but simple way from [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some libraries that can help you with more complex cases...
+
+```haskell
+main :: IO ()
+main = do
+         progName <- getProgName    -- IO String
+         print progName
+         path <- getExecutablePath  -- IO String
+         print path
+         args <- getArgs            -- :: IO [String]
+         print args
+         user <- lookupEnv "USER"   -- :: IO (Maybe String), vs. getEnv :: IO String
+         print user
+         env <- getEnvironment      -- :: IO [(String, String)]
+         print env
+```
+
+The most used library for [command line option parser](https://wiki.haskell.org/Command_line_option_parsers) is [cmdargs](http://hackage.haskell.org/package/cmdargs):
+
+```
+{-# LANGUAGE DeriveDataTypeable #-}
+module Sample where
+import System.Console.CmdArgs
+
+data Sample = Hello {whom :: String}
+            | Goodbye
+              deriving (Show, Data, Typeable)
+
+hello = Hello{whom = def}
+goodbye = Goodbye
+
+main = do
+         args <- cmdArgs (modes [hello, goodbye])
+         print args
+```
+
+For more complex example, visit their documentation - for example, hlint or diffy use this one.
 
 ## Testing
 
