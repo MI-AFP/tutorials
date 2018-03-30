@@ -158,7 +158,7 @@ main = do
 
 The most used library for [command line option parser](https://wiki.haskell.org/Command_line_option_parsers) is [cmdargs](http://hackage.haskell.org/package/cmdargs):
 
-```
+```haskell
 {-# LANGUAGE DeriveDataTypeable #-}
 module Sample where
 import System.Console.CmdArgs
@@ -186,25 +186,62 @@ Testing is very important for keeping code on the straight-and-narrow path. The 
 [HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java. For people familiar with unit testing this framework is very simple to use. First you define several test cases which you put in test list (instead of test class as in Java). Single test case is composed optionally of some data preparation and asserts. Result of running tests are four numbers - cases, tried, errors and failures.
 
 ```haskell
+import Test.HUnit
 
+test1 = TestCase (assertEqual "for (foo 3)," (1,2) (foo 3))
+test2 = TestCase (do (x,y) <- partA 3
+                     assertEqual "for the first result of partA," 5 x
+                     b <- partB y
+                     assertBool ("(partB " ++ show y ++ ") failed") b)
+
+tests = TestList [ TestLabel "test1" test1
+                 , TestLabel "test2" test2
+                 ]
+```
+
+It is very simple, uses set of asserts (with many operator aliases) and three variants of tests which can be composed - `TestCase`, `TestLabel`, and `TestList`.  It is sufficient for simple unit testing (not a surprise after reading its name) but tests are not very readable like with hspec.
+
+```
+GHCi> runTestTT tests
+Cases: 2  Tried: 2  Errors: 0  Failures: 0
 ```
 
 ### QuickCheck
 
 Different approach of testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, observe the distribution of test data, and define test data generators. All from simple example to complex tutorials of such definitions is explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
 
-With QuickCheck you can for example check if you instance of
-`Monoid` is compliant with its laws.
+#### Basic properties
+
+With QuickCheck you can, for example, check if some function is associative or commutative:
+
+```haskell
+import Test.QuickCheck
+
+prop_ReverseReverse :: Eq a => [a] -> Bool
+prop_ReverseReverse xs = reverse (reverse xs) == xs
+
+prop_AddAssociative :: Num a => a -> a -> a -> Bool
+prop_AddAssociative x y z = (x + y) + z == x + (y + z)
+
+prop_AddCommutative :: Num a => a -> a -> Bool
+prop_AddCommutative x y = x + y == y + x
+
+main = do
+         quickCheck prop_ReverseReverse
+         quickCheck prop_AddAssociative
+         quickCheck prop_AddCommutative
+         quickCheck (withMaxSuccess 100000 prop_AddCommutative)
+```
+
+QuickCheck generates automatically randomized values (tries to start with cornercases) and find a counterexample. There is some default behavior that you can override, for example, request more random values.
+
+#### Own datatypes and `Arbitrary`
+
+If you have your own types, you need to make them instance of typeclass `Arbitrary`. Then QuickCheck can generate examples:
 
 ```haskell
 
 ```
-
-#### Basic properties
-
-#### Generating values 
-
-#### Own datatypes and `Arbitrary`
 
 ### Hspec
 
@@ -249,7 +286,7 @@ commentary with @some markup@.
 -}
 module W where
 
--- |The 'square' function squares an integer.
+-- | The 'square' function squares an integer.
 -- It takes one argument, of type 'Int'.
 square :: Int -> Int
 square x = x * x
@@ -261,19 +298,21 @@ class C a where
    g :: Int -> a
 
 data R a b =
-  C { -- | This is the documentation for the 'a' field
+  R { -- | This is the documentation for the 'a' field
       a :: a,
       -- | This is the documentation for the 'b' field
       b :: b
     }
 
-data R a b =
-  C { a :: a  -- ^ This is the documentation for the 'a' field
+data S a b =
+  S { a :: a  -- ^ This is the documentation for the 'a' field
     , b :: b  -- ^ This is the documentation for the 'b' field
     }
 ```
 
-For more information about using Haddock and writing the documentation of source code in Haskell check http://haskell-haddock.readthedocs.io/en/latest/index.html (examples above are from this documentation).
+For more information about using Haddock and writing the documentation of source code in Haskell check http://haskell-haddock.readthedocs.io/en/latest/index.html or https://www.haskell.org/haddock/doc/html/ (examples above are from this documentation).
+
+For building the documentation within *stack project*, you can use `stack haddock` command. Then you have to locate generated documentation and open `index.html` file.
 
 ## Publish project
 
@@ -321,11 +360,13 @@ For Haskell you can use `.travis.yml` above or read documentation.
 
 ## Task assignment
 
-* Write tests and documentation for given project.
-* Publish on GitHub with use of Travis CI for testing.
+The homework to practice IO basics, testing, and writing project documentation is in repository [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
 
 ## Further reading
 
+* [A Gentle Introduction to Haskell - Input/Output](https://www.haskell.org/tutorial/io.html)
+* [Haskell - Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
 * [Real World Haskell - Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
 * [WikiBooks - Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
 * [Haddock User Guide](https://www.haskell.org/haddock/doc/html/index.html)
+* [QuickCheck and Magic of Testing](https://www.fpcomplete.com/blog/2017/01/quickcheck)
