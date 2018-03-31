@@ -1,14 +1,14 @@
 # Basic IO, tests, and documentation
 
-So far, we were working with pure functions (without side effects). You should be able to build complex libraries, use standard containers and other data types, write clean Haskell code, and understand most of basic programs written by Haskellers. This time we will take a look at basics of working with user (or other) input/output, writing tests and documentation.
+So far, we were working with pure functions (without side effects). You should be able to build complex libraries, use standard containers and other data types, write clean Haskell code, and understand most of the basic programs written by Haskellers. This time we will take a look at basics of working with a user (or other) input/output, writing tests and documentation.
 
 ## Basic IO
 
-When you need to incorporate input and output (CLI, files, sockets, etc.), you bring impureness into your program. Obviously, IO brings side effects (it interacts with environment and changes the global state). It can be a bit complicated and so we won't go deep into theory this time and instead we will just show how to use it. Theoretical part will be covered in the future.
+When you need to incorporate input and output (CLI, files, sockets, etc.), you bring impureness into your program. Obviously, IO brings side effects (it interacts with the environment and changes the global state). It can be a bit complicated and so we won't go deep into theory this time and instead, we will just show how to use it. Theoretical part will be covered in the future.
 
 ### The main and gets + puts
 
-If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` - can do something (some actions) with `IO` but actually nothing is contained `()` for further work. You might wonder why it is not `IO Int` (with return code). It is because giving a return code is also IO action and you can do it from main with functions from `System.Exit`.
+If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in a file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` - can do something (some actions) with `IO` but actually, nothing is contained `()` for further work. You might wonder why it is not `IO Int` (with return code). It is because giving a return code is also IO action and you can do it from main with functions from `System.Exit`.
 
 Now, let's take a look at basic IO examples:
 
@@ -58,11 +58,11 @@ main6 = print 1254                  -- print = putStrLn . show
 
 ### What does `do` do?
 
-It doesn't look so weird if you recall how imperative programming works... But we are in functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just syntactic sugar for chaining the actions and bindings (not just IO, in general!) in simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of typeclass `Monad`. 
+It doesn't look so weird if you recall how imperative programming works... But we are in the functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just syntactic sugar for chaining the actions and bindings (not just IO, in general!) in a simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of the typeclass `Monad`. 
 
-When you use binding operator `<-`, it means that result of binded action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for next action which will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
+When you use binding operator `<-`, it means that result of a bound action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for next action which will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
 
-You might have noticed the `return` in custom `promptInt` action. It is not a keyword but just a function of typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. We will look at all the `Monad` properties in detail next time.
+You might have noticed the `return` in custom `promptInt` action. It is not a keyword but just a function of the typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. We will look at all the `Monad` properties in detail next time.
 
 ### Be `interact`ive
 
@@ -81,7 +81,7 @@ main3 :: IO ()
 main3 = interact reverse
 ```
 
-As is emphasized, it work with entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by works, you can create helper functions for that easily.
+As is emphasized, it works with entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by works, you can create helper functions for that easily.
 
 ```haskell
 
@@ -108,7 +108,7 @@ main7 = interact (eachLine chatBot)
 
 ### IO with files
 
-Working with files is very similar to working with console IO. As you might already know, most of IO for console is build by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
+Working with files is very similar to working with console IO. As you might already know, most of IO for consoles is build by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
 
 ```haskell
 main1 :: IO ()
@@ -126,7 +126,7 @@ main2 = do
           hClose handle
 ```
 
-In similar manner you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use some library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req). 
+In a similar manner, you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use some library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req). 
 
 For some well-known file formats are of course prepared libraries so you don't have to work with them over and over again just with functions from `Prelude`:
 
@@ -136,11 +136,11 @@ For some well-known file formats are of course prepared libraries so you don't h
 * CSV = [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
 * INI = [ini](https://hackage.haskell.org/package/ini)
 
-... and so on. Also you probably know fabulous [pandoc](https://hackage.haskell.org/package/pandoc) writen in Haskell - you can use its API anytime.
+... and so on. Also, you probably know fabulous [pandoc](https://hackage.haskell.org/package/pandoc) written in Haskell - you can use its API anytime.
 
 ### Arguments and env variables
 
-Last basic way how to interact with program is via arguments and environment variables. Again, there is a little bit clumsy but simple way from [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some libraries that can help you with more complex cases...
+Last basic way how to interact with a program is via arguments and environment variables. Again, there is a little bit clumsy but simple way from [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some libraries that can help you with more complex cases...
 
 ```haskell
 main :: IO ()
@@ -180,11 +180,11 @@ For more complex example, visit their documentation - for example, hlint or diff
 
 ## Testing
 
-Testing is very important for keeping code on the straight-and-narrow path. The main testing mechanisms in Haskell are traditional unit testing and its more powerful descendant: type-based “property” testing.
+Testing is very important for keeping the code on the straight-and-narrow path. The main testing mechanisms in Haskell are traditional unit testing and its more powerful descendant: type-based “property” testing.
 
 ### HUnit
 
-[HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java. For people familiar with unit testing this framework is very simple to use. First you define several test cases which you put in test list (instead of test class as in Java). Single test case is composed optionally of some data preparation and asserts. Result of running tests are four numbers - cases, tried, errors and failures.
+[HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java. For people familiar with unit testing this framework is very simple to use. First, you define several test cases which you put in test list (instead of test class as in Java). A single test case is composed optionally of some data preparation and asserts. The result of running tests constists of four numbers - cases, tried, errors and failures.
 
 ```haskell
 import Test.HUnit
@@ -209,7 +209,7 @@ Cases: 2  Tried: 2  Errors: 0  Failures: 0
 
 ### QuickCheck
 
-Different approach of testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, observe the distribution of test data, and define test data generators. All from simple example to complex tutorials of such definitions is explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
+A different approach to testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, observe the distribution of test data, and define test data generators. All from a simple example to complex tutorials of such definitions is explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
 
 #### Basic properties
 
@@ -234,7 +234,7 @@ main = do
          quickCheck (withMaxSuccess 100000 prop_AddCommutative)
 ```
 
-QuickCheck generates automatically randomized values (tries to start with cornercases) and find a counterexample. There is some default behavior that you can override, for example, request more random values.
+QuickCheck generates automatically randomized values (tries to start with cornercases) and finds a counterexample. There is some default behavior that you can override, for example, request more random values.
 
 ```
 % runhaskell qctests.hs
@@ -246,7 +246,7 @@ QuickCheck generates automatically randomized values (tries to start with corner
 
 #### Own datatypes and `Arbitrary`
 
-If you have your own types, you need to make them instance of typeclass `Arbitrary`. Then QuickCheck can generate examples:
+If you have your own types, you need to make them an instance of the typeclass `Arbitrary`. Then QuickCheck can generate examples:
 
 ```haskell
 import Test.QuickCheck
@@ -309,7 +309,7 @@ main = hspec $ do
 
 #### Expectations
 
-There are many predefined expectation functions that are typically writen in infix notation to improve readability of specs. They are in separated packages and project: https://github.com/hspec/hspec-expectations#readme
+There are many predefined expectation functions that are typically written in infix notation to improve readability of specs. They are in separated packages and project: https://github.com/hspec/hspec-expectations#readme
 
 * `shouldBe` = equality test
 * `shouldNotBe` = inequality test
@@ -397,7 +397,7 @@ This is quite bothersome and thus [hspec-discover](https://hackage.haskell.org/p
 {-# OPTIONS_GHC -F -pgmF hspec-discover #-}
 ```
 
-Another interesting and possibly useful thing for bigger projects are [Test.Hspec.Formatters](https://hackage.haskell.org/package/hspec/docs/Test-Hspec-Formatters.html). In following example `main` is in different module than `spec` created by automatic discovery:
+Another interesting and possibly useful thing for bigger projects is [Test.Hspec.Formatters](https://hackage.haskell.org/package/hspec/docs/Test-Hspec-Formatters.html) module. In following example `main` is in a different module than `spec` created by automatic discovery:
 
 ```haskell
 import Test.Hspec
@@ -489,7 +489,7 @@ Sadly this interesting project with published [paper](https://www.researchgate.n
 
 ## Haddock (documentation)
 
-Haskell projects, as any other project, should have good documentation of source code. In Haskell is the tool for documentation called [Haddock](https://www.haskell.org/haddock/).
+Haskell projects, like any other projects, should have good documentation of source code. In Haskell is the tool for documentation called [Haddock](https://www.haskell.org/haddock/).
 
 ```haskell
 {-|
@@ -537,7 +537,7 @@ For building the documentation within *stack project*, you can use `stack haddoc
 
 ## Publish project
 
-If you think that other people might be interested in your project and want to use it standalone or as part of their project (as dependency), you can publish your project on GitHub and also on Hackage! Stack will help you to make nice projects and then just follow:
+If you think that other people might be interested in your project and want to use it standalone or as part of their project (as a dependency), you can publish your project on GitHub and also on Hackage! Stack will help you to make nice projects and then just follow:
 
 * [GitHub - create a repo](https://help.github.com/articles/create-a-repo/)
 * [Hackage - upload](https://hackage.haskell.org/upload)
@@ -551,9 +551,9 @@ Another advantage of publishing is that your project can get attention and commu
 
 ## Using CI (Travis CI)
 
-When you are developing the project and sharing it with community, you want to show that it is working well and also check if contributions to your code are not breaking the functionality. For that you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
+When you are developing the project and sharing it with a community, you want to show that it is working well and also check if contributions to your code are not breaking the functionality. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
 
-All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
+All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of the good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
 
 ```yaml
 # https://docs.haskellstack.org/en/stable/travis_ci/
@@ -577,7 +577,7 @@ script:
   - stack --no-terminal test --haddock --no-haddock-deps
 ```
 
-For Haskell you can use `.travis.yml` above or read documentation.
+For Haskell, you can use `.travis.yml` above or read the [documentation](https://docs.travis-ci.com/user/languages/haskell/).
 
 ## Task assignment
 
