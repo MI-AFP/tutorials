@@ -439,9 +439,53 @@ Finished in 0.2056 seconds
 
 ### MuCheck
 
-Mutation Testing is a special type of software testing where certain statements in the source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck) (and [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec)) that are dealing with this are of software testing.
+Mutation Testing is a special type of software testing where certain statements in the source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck) that is dealing with this are of software testing.
 
-//TODO more
+```haskell
+-- https://github.com/vrthra/mucheck
+import Test.MuCheck.TestAdapter.AssertCheck
+
+qsort :: [Int] -> [Int]
+qsort [] = []
+qsort (x:xs) = qsort l ++ [x] ++ qsort r
+    where l = filter (< x) xs
+          r = filter (>= x) xs
+
+{-# ANN sortEmpty "Test" #-}
+sortEmpty = assertCheck $ qsort [] == []
+
+{-# ANN sortSorted "Test" #-}
+sortSorted = assertCheck $ qsort [1,2,3,4] == [1,2,3,4]
+
+{-# ANN sortRev "Test" #-}
+sortRev = assertCheck $ qsort [4,3,2,1] == [1,2,3,4]
+
+{-# ANN sortSame "Test" #-}
+sortSame = assertCheck $ qsort [1,1,1,1] == [1,1,1,1]
+
+{-# ANN sortNeg "Test" #-}
+sortNeg = assertCheck $ qsort [-1,-2,3] == [-2,-1,3]
+
+main = do
+         assertCheckResult sortEmpty
+         assertCheckResult sortSorted
+         assertCheckResult sortRev
+         assertCheckResult sortSame
+         assertCheckResult sortNeg
+```
+
+```
+% cabal run sample-test
+% cabal run mucheck -- -tix sample-test.tix Examples/AssertCheckTest.hs
+Total mutants: 19 (basis for %)
+        Covered: 13
+        Sampled: 13
+        Errors: 0  (0%)
+        Alive: 1/19
+        Killed: 12/19 (63%)
+```
+
+Sadly this interesting project with published [paper](https://www.researchgate.net/publication/266659188_MuCheck_An_extensible_tool_for_mutation_testing_of_haskell_programs) is dead for some years. Hopefully, someone will take a look at it and become a maintainer or at least contributor (:wink: term project). It also has some interesting integrations like [MuCheck-QuickCheck](https://hackage.haskell.org/package/MuCheck-QuickCheck), [MuCheck-HUnit](https://hackage.haskell.org/package/MuCheck-HUnit), or [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec).
 
 ## Haddock (documentation)
 
