@@ -222,7 +222,7 @@ randomRIO :: (Random a) => (a,a) -> IO a
 
 ## Task assignment
 
-The homework to practice typeclasses from this tutorial [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
+The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw07](https://github.com/MI-AFP/hw07).
 
 ## Further reading
 
