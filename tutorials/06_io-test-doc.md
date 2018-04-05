@@ -8,7 +8,7 @@ When you need to incorporate input and output (CLI, files, sockets, etc.), you b
 
 ### The main and gets + puts
 
-If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in a file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` - can do something (some actions) with `IO` but actually, nothing is contained `()` for further work. You might wonder why it is not `IO Int` (with return code). It is because giving a return code is also IO action and you can do it from main with functions from `System.Exit`.
+If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in a file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` -- it can do something (some actions) with `IO` and nothing `()` is returned. You may wonder why it is not `IO Int` (with a return code). It is because giving a return code is also an IO action and you can do it from `main` with functions from `System.Exit`.
 
 Now, let's take a look at basic IO examples:
 
@@ -58,15 +58,15 @@ main6 = print 1254                  -- print = putStrLn . show
 
 ### What does `do` do?
 
-It doesn't look so weird if you recall how imperative programming works... But we are in the functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just syntactic sugar for chaining the actions and bindings (not just IO, in general!) in a simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of the typeclass `Monad`. 
+It doesn't look so weird if you recall how imperative programming works... But we are in the functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just a syntactic sugar for chaining actions and bindings (not just IO, in general!) in a simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of the typeclass `Monad`. We cover this topic in detail in the next lecture, right now you can remember that although `do` looks imperative, it is actually still pure thanks to a smart "trick".
 
-When you use binding operator `<-`, it means that result of a bound action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for next action which will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
+When you use the binding operator `<-`, it means that the result of a bound action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for the following action that will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
 
-You might have noticed the `return` in custom `promptInt` action. It is not a keyword but just a function of the typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. We will look at all the `Monad` properties in detail next time.
+You might have noticed the `return` in custom `promptInt` action. This is a confusing thing for beginners, as `return` here has **nothing to do** with imperative languages return. The confusing thing is that it *looks* very much like it. However, conceptually it is not a control-flow expression, but just a function of the typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. This is one of the reasons why PureScript got rid of `return` and uses `pure` instead. Again, we will look at this in detail in the next lecture.
 
 ### Be `interact`ive
 
-Very interesting action for building a simple CLI is `interact :: (String -> String) -> IO ()`. The interact function takes a function of type `String -> String` as its argument. The **entire** input from the standard input device is passed to this function as its argument, and the resulting string is output on the standard output device.
+A very interesting construct for building a simple CLI is `interact :: (String -> String) -> IO ()`. The interact function takes a function of type `String -> String` as its argument. The **entire** input from the standard input device is passed to this function as its argument, and the resulting string is output on the standard output device. Btw. this is a nice example of a higher-order function at work, right?
 
 ```haskell
 import Data.Char
@@ -81,10 +81,9 @@ main3 :: IO ()
 main3 = interact reverse
 ```
 
-As is emphasized, it works with entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by works, you can create helper functions for that easily.
+As is emphasized, it works with an entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by words, you can create helper functions for that easily.
 
 ```haskell
-
 eachLine :: (String -> String) -> (String -> String)
 eachLine f = unlines . f . lines
 
@@ -108,7 +107,7 @@ main7 = interact (eachLine chatBot)
 
 ### IO with files
 
-Working with files is very similar to working with console IO. As you might already know, most of IO for consoles is build by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
+Working with files is very similar to working with console IO. As you may already know, most of IO for consoles is built by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
 
 ```haskell
 main1 :: IO ()
@@ -126,21 +125,23 @@ main2 = do
           hClose handle
 ```
 
-In a similar manner, you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use some library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req). 
+In a similar manner, you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use a library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req).
 
-For some well-known file formats are of course prepared libraries so you don't have to work with them over and over again just with functions from `Prelude`:
+For some well-known file formats there are libraries ready, so you don't have to work with them over and over again just with functions from `Prelude`:
 
-* JSON = [aeson](https://hackage.haskell.org/package/aeson)
-* YAML = [yaml](https://hackage.haskell.org/package/yaml)
-* XML = [xml](https://hackage.haskell.org/package/xml), [hxt](https://hackage.haskell.org/package/hxt), or [xeno](https://hackage.haskell.org/package/xeno)
-* CSV = [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
-* INI = [ini](https://hackage.haskell.org/package/ini)
+* JSON: [aeson](https://hackage.haskell.org/package/aeson)
+* YAML: [yaml](https://hackage.haskell.org/package/yaml)
+* XML: [xml](https://hackage.haskell.org/package/xml), [hxt](https://hackage.haskell.org/package/hxt), or [xeno](https://hackage.haskell.org/package/xeno)
+* CSV: [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
+* INI: [ini](https://hackage.haskell.org/package/ini)
 
-... and so on. Also, you probably know fabulous [pandoc](https://hackage.haskell.org/package/pandoc) written in Haskell - you can use its API anytime.
+... and so on. Also, you probably know the fabulous [pandoc](https://pandoc.org), which is written in Haskell -- and you can use it as a [library](https://hackage.haskell.org/package/pandoc)!
+
+Hmmm, who said that Haskell is just for math and mad academics? ;-)
 
 ### Arguments and env variables
 
-Last basic way how to interact with a program is via arguments and environment variables. Again, there is a little bit clumsy but simple way from [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some libraries that can help you with more complex cases...
+Another way of interacting with a program is via its command-line arguments and environment variables. Again, there is a little bit clumsy but simple way in [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some fancy libraries that can help you with more complex cases...
 
 ```haskell
 main :: IO ()
@@ -176,15 +177,15 @@ main = do
          print args
 ```
 
-For more complex example, visit their documentation - for example, hlint or diffy use this one.
+For a more complex example, visit their documentation -- for example, `hlint` or `diffy` use this one.
 
 ## Testing
 
-Testing is very important for keeping the code on the straight-and-narrow path. The main testing mechanisms in Haskell are traditional unit testing and its more powerful descendant: type-based “property” testing.
+Haskellers sometimes say that "When the programme compiles, it is correct!" There is a lot of truth to it, as you may have already experienced: the strong static type system does not allow you to make many errors, especially the most common (and insidious) "stupid" ones. At the same time, this saying is obviously exaggerated and there is still quite some space for a programme to be buggy. This is why traditional unit testing has its place in Haskell. Moreover, Haskell also offers an even more powerful types of testing such as property testing and mutation testing.
 
 ### HUnit
 
-[HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java. For people familiar with unit testing this framework is very simple to use. First, you define several test cases which you put in test list (instead of test class as in Java). A single test case is composed optionally of some data preparation and asserts. The result of running tests constists of four numbers - cases, tried, errors and failures.
+[HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java and similar ones. For developers familiar with unit testing, this framework is very simple to use. First, you define several test cases that you put in a test list (instead of test class as in Java). A single test case is composed optionally of some data preparation and assertions. The result of running tests consists of four numbers: cases, tried, errors and failures.
 
 ```haskell
 import Test.HUnit
@@ -200,7 +201,7 @@ tests = TestList [ TestLabel "test1" test1
                  ]
 ```
 
-It is very simple, uses set of asserts (with many operator aliases) and three variants of tests which can be composed - `TestCase`, `TestLabel`, and `TestList`.  It is sufficient for simple unit testing (not a surprise after reading its name) but tests are not very readable like with hspec.
+It is very simple, there are set of assertions (with many operator aliases) and three variants of tests that can be composed: `TestCase`, `TestLabel`, and `TestList`.  It is sufficient for a simple unit testing, but tests are not that nicely readable as with `hspec` (see below).
 
 ```
 GHCi> runTestTT tests
@@ -209,7 +210,7 @@ Cases: 2  Tried: 2  Errors: 0  Failures: 0
 
 ### QuickCheck
 
-A different approach to testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, observe the distribution of test data, and define test data generators. All from a simple example to complex tutorials of such definitions is explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
+A different approach to testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with a given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, to observe the distribution of test data, and to define test data generators. All from a simple example to complex tutorials of such definitions are explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
 
 #### Basic properties
 
@@ -234,7 +235,7 @@ main = do
          quickCheck (withMaxSuccess 100000 prop_AddCommutative)
 ```
 
-QuickCheck generates automatically randomized values (tries to start with cornercases) and finds a counterexample. There is some default behavior that you can override, for example, request more random values.
+QuickCheck generates automatically randomized values (it tries to start with corner cases) and it tries to find a counterexample. There is some default behaviour that you can override, for example, to request more random values.
 
 ```
 % runhaskell qctests.hs
@@ -246,7 +247,7 @@ QuickCheck generates automatically randomized values (tries to start with corner
 
 #### Own datatypes and `Arbitrary`
 
-If you have your own types, you need to make them an instance of the typeclass `Arbitrary`. Then QuickCheck can generate examples:
+If you have your own types, you need to make them an instance of the typeclass `Arbitrary`. Then QuickCheck can generate examples for them, too:
 
 ```haskell
 import Test.QuickCheck
@@ -287,7 +288,7 @@ main = quickCheck prop_Mature
 * parallel test execution,
 * automatic discovery of test files.
 
-Tests written in Hspec are very readable, intuitive and powerful. It allows integration with HUnit as well as with QuickCheck so it is sort of ultimate testing framework in Haskell.
+Tests written in Hspec are very readable, intuitive and powerful. It allows integration with HUnit as well as with QuickCheck so it is sort of an "ultimate testing framework for Haskell".
 
 ```haskell
 import Test.Hspec
@@ -309,7 +310,7 @@ main = hspec $ do
 
 #### Expectations
 
-There are many predefined expectation functions that are typically written in infix notation to improve readability of specs. They are in separated packages and project: https://github.com/hspec/hspec-expectations#readme
+There are many predefined expectation functions that are typically written in infix notation to improve readability of specs. They are in separated packages and projects: https://github.com/hspec/hspec-expectations#readme
 
 * `shouldBe` = equality test
 * `shouldNotBe` = inequality test
@@ -323,7 +324,7 @@ There are many predefined expectation functions that are typically written in in
 
 #### Property check
 
-The integration of hspec with QuickCheck is really great, all you need to do is writing `property`.
+The integration of hspec with QuickCheck is really great, all you need to do is to write a `property`.
 
 ```haskell
 import Test.Hspec
@@ -371,7 +372,7 @@ Finished in 0.2299 seconds
 
 #### Complex test suites
 
-It is good practice to separate specs according to your modules including the directories.
+It is a good practice to separate specs according to your modules including the directories.
 
 ```haskell
 import Test.Hspec
@@ -390,14 +391,14 @@ spec = do
   describe "Baz"     BazSpec.spec
 ```
 
-This is quite bothersome and thus [hspec-discover](https://hackage.haskell.org/package/hspec-discover) provides automatic spec discovery. All you need to do in the main spec file is this:
+This may become quite elaborate for big projects, so [hspec-discover](https://hackage.haskell.org/package/hspec-discover) provides an automatic spec discovery. All you need to do in the main spec file is this:
 
 ```haskell
 -- file test/Spec.hs
 {-# OPTIONS_GHC -F -pgmF hspec-discover #-}
 ```
 
-Another interesting and possibly useful thing for bigger projects is [Test.Hspec.Formatters](https://hackage.haskell.org/package/hspec/docs/Test-Hspec-Formatters.html) module. In following example `main` is in a different module than `spec` created by automatic discovery:
+Another useful thing for bigger projects is [Test.Hspec.Formatters](https://hackage.haskell.org/package/hspec/docs/Test-Hspec-Formatters.html) module. In the following example, `main` is in a different module than `spec` created by automatic discovery:
 
 ```haskell
 import Test.Hspec
@@ -439,7 +440,7 @@ Finished in 0.2056 seconds
 
 ### MuCheck
 
-Mutation Testing is a special type of software testing where certain statements in the source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck) that is dealing with this are of software testing.
+Mutation Testing is a special type of software testing where certain statements in a source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck).
 
 ```haskell
 -- https://github.com/vrthra/mucheck
@@ -485,11 +486,11 @@ Total mutants: 19 (basis for %)
         Killed: 12/19 (63%)
 ```
 
-Sadly this interesting project with published [paper](https://www.researchgate.net/publication/266659188_MuCheck_An_extensible_tool_for_mutation_testing_of_haskell_programs) is dead for some years. Hopefully, someone will take a look at it and become a maintainer or at least contributor (:wink: term project). It also has some interesting integrations like [MuCheck-QuickCheck](https://hackage.haskell.org/package/MuCheck-QuickCheck), [MuCheck-HUnit](https://hackage.haskell.org/package/MuCheck-HUnit), or [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec).
+Sadly this interesting project with a [paper](https://www.researchgate.net/publication/266659188_MuCheck_An_extensible_tool_for_mutation_testing_of_haskell_programs) published is dead for some years. Hopefully, someone will take over its maintenance or at least fork it and contribute to it (:wink: term project). It also has some interesting integrations like [MuCheck-QuickCheck](https://hackage.haskell.org/package/MuCheck-QuickCheck), [MuCheck-HUnit](https://hackage.haskell.org/package/MuCheck-HUnit), or [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec).
 
 ## Haddock (documentation)
 
-Haskell projects, like any other projects, should have good documentation of source code. In Haskell is the tool for documentation called [Haddock](https://www.haskell.org/haddock/).
+Haskell projects, like any other projects, should have good documentation of source code. In Haskell,  the tool for documentation is called [Haddock](https://www.haskell.org/haddock/) and works similarly to JavaDoc or JSDoc or other XYDoc by annotating the code using comments with special meaning:
 
 ```haskell
 {-|
@@ -531,13 +532,13 @@ data S a b =
     }
 ```
 
-For more information about using Haddock and writing the documentation of source code in Haskell check http://haskell-haddock.readthedocs.io/en/latest/index.html or https://www.haskell.org/haddock/doc/html/ (examples above are from this documentation).
+For more information about using Haddock and writing the documentation of source code in Haskell check http://haskell-haddock.readthedocs.io/en/latest/index.html or https://www.haskell.org/haddock/doc/html/ (the examples above are from this documentation).
 
-For building the documentation within *stack project*, you can use `stack haddock` command. Then you have to locate generated documentation and open `index.html` file.
+For building the documentation within a *stack project*, you can use `stack haddock` command, which generates `index.html` file.
 
-## Publish project
+## Publish your project
 
-If you think that other people might be interested in your project and want to use it standalone or as part of their project (as a dependency), you can publish your project on GitHub and also on Hackage! Stack will help you to make nice projects and then just follow:
+If you think that other people might be interested in your project and want to use it standalone or as part of their project (as a dependency), you can publish your project on GitHub and also on Hackage:
 
 * [GitHub - create a repo](https://help.github.com/articles/create-a-repo/)
 * [Hackage - upload](https://hackage.haskell.org/upload)
@@ -545,13 +546,13 @@ If you think that other people might be interested in your project and want to u
 Your project should be:
 * tested (write tests for your project so you can prove that it is working properly),
 * documented (try to describe everything in your code to "strangers" with low Haskell knowledge),
-* licensed (pick suitable license - https://choosealicense.com can help you).
+* licensed (pick a suitable license - https://choosealicense.com can help you).
 
-Another advantage of publishing is that your project can get attention and community can help you improve it - they will create issues, forks and pull requests!
+Another advantage of publishing is that your project can get attention and community can help you improve it -- they create issues, forks and pull requests.
 
 ## Using CI (Travis CI)
 
-When you are developing the project and sharing it with a community, you want to show that it is working well and also check if contributions to your code are not breaking the functionality. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
+When you are developing a project and sharing it with a community, you want to show that it is working well and you also want to check if contributions to your code are not breaking it. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Jenkins, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
 
 All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of the good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
 
