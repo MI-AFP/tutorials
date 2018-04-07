@@ -155,7 +155,7 @@ It is possible to write own instances of `Monoid` or other typeclasses. However,
 A functor is a way to apply a function on values inside some structure, while the structure remains intact. For example, if you want to change values in a list, tree or in Either without dealing with complexity and internal structure.
 
 ```haskell
-class Functor f where
+class Functor f where                -- f is type constructor of kind * -> *
   fmap :: (a -> b) -> f a -> f b
 ```
 
@@ -186,9 +186,57 @@ Just as with Monoid, you can take a look at the documentation of [Data.Functor](
 
 ### Lifting
 
+[Lifting](https://wiki.haskell.org/Lifting) is a concept which allows you to transform a function into a corresponding function within another (usually more general) setting. Lifting is again concept taken from mathematics and category theory (see [wikipedia](https://en.wikipedia.org/wiki/Lift_(mathematics)).
+
+```haskell
+
+data Point2D a = Point2D a a 
+               deriving Show
+
+instance Functor Point2D where
+    fmap f (Point2D x y) = Point2D (f x) (f y)
+
+liftF0 :: a -> Point2D a
+liftF0 x = Point2D x x
+
+liftF1 :: (a -> b) -> Point2D a -> Point2D b
+liftF1 = fmap
+ 
+liftF2 :: (a -> b -> r) -> Point2D a -> Point2D b -> Point2D r
+liftF2 f (Point2D x1 x2) (Point2D y1 y2) = Point2D (f x1 y1) (f x2 y2)
+
+origin :: Point2D Int
+origin = liftF0 0
+
+doublePoint :: Point2D Int -> Point2D Int
+doublePoint = liftF1 (*2)
+
+plusPoints :: Point2D Int -> Point2D Int -> Point2D Int
+plusPoints = liftF2 (+)
+```
+
+
 ### Functors on Hask category
 
-### forall quantification
+In mathematics, a functor is a type of mapping between categories arising in category theory. Functors can be thought of as homomorphisms between categories. In the category of small categories, functors can be thought of more generally as morphisms. ([wikipedia](https://en.wikipedia.org/wiki/Functor))
+
+We have some categories which have objects and morphisms that relate our objects together. Functor *F: C → D* relates categories *C* and *D* together - it is a transformation between categories:
+
+- maps every object *A* from category *C* to object *F(A)* in category *D*
+- maps every morphism *f: A → B* from category *C* to morphism *F(f): F(A) → F(B)* in category *D*
+
+```haskell
+class Functor (f :: * -> *) where
+  fmap :: (a -> b) -> f a -> f b    -- maps A->B to F(A) -> F(B) as well as A to F(A)
+```
+
+There is also identity for functions and they must be homomorphic that, of course, apply for functors in Haskell:
+
+```haskell
+fmap id == id
+
+fmap (f . g) = fmap f . fmap g
+```
 
 ## Applicative
 
