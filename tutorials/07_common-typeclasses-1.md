@@ -71,7 +71,7 @@ If you take a look at the documentation of [Data.Monoid](https://hackage.haskell
 * multiple newtypes for specifying monoid for basic type, like `Sum` and `Product` for numeric types, `All` and `Any` for booleans, `First` and `Last` for maybes and few more.
 
 
-```haskell
+```
 Prelude> import Data.Monoid
 Prelude Data.Monoid> :info Sum
 newtype Sum a = Sum {getSum :: a} 	-- Defined in ‘Data.Monoid’
@@ -261,14 +261,16 @@ fmap (f . g) = fmap f . fmap g
 
 ## Applicative
 
-Another important typeclass is [Control.Applicate](https://hackage.haskell.org/package/base/docs/Control-Applicative.html). Notice that it is not "Data" anymore, but "Control" instead! It is an intermediate structure between a `Functor` and a `Monad`. It is simpler than `Monad`, not so powerful, but sufficient in many use cases, and also easier to understand.
+Another important typeclass is [Control.Applicate](https://hackage.haskell.org/package/base/docs/Control-Applicative.html). Notice that it is not "Data" anymore, but "Control" instead! It is an intermediate structure between a `Functor` and a `Monad`. It is simpler than `Monad`, not so powerful, but sufficient in many use cases, and also easier to understand - it is **Applicative functor**.
 
-In monoid, we applied a function over a "wrapped" value to get a resulting "wrapped" value. In applicative, we have the function wrapped, as well:
+In fucntor, we applied a function over a "wrapped" value to get a resulting "wrapped" value. In applicative, we have the function wrapped, as well:
 
 ```haskell
 class Functor f => Applicative f where
-  pure  :: a -> f a
-  (<*>) :: f (a -> b) -> f a -> f b
+  pure  :: a -> f a                   -- lift a
+  (<*>) :: f (a -> b) -> f a -> f b   -- sequential application
+
+--(<$>) ::   (a -> b) -> f a -> f b   -- this is from functor
 ```
 
 Function `pure` only lifts something into applicative structure `f`. The more interesting part is the ["tie-fighter"](http://starwars.wikia.com/wiki/TIE/LN_starfighter) operator `<*>` that applies a lifted function over an applicative. You can find out in the documentation following similar functions and partial functions as in [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html):
@@ -296,11 +298,47 @@ u <*> pure y = pure ($ y) <*> u
 ```
 
 ```
--- TODO play with applicative and operators
+Prelude> linfunc x = 2 * x + 10
+Prelude> (Just lin
+lines    linfunc
+Prelude> (Just linfunc) <*> (Just 5)
+Just 20
+Prelude> pure linfunc <*> (Just 5)
+Just 20
+Prelude> pure linfunc <*> Nothing
+Nothing
+Prelude> Nothing <*> (Just 5)
+Nothing
+Prelude> (Just 5) <* (Just 10)
+Just 5
+Prelude> (Just 5) *> (Just 10)
+Just 10
+
+Prelude> pure linfunc <*> (Left 7)
+Left 7
+Prelude> pure linfunc <*> (Right 15)
+Right 40
+Prelude> (Right 5) *> (Left 10)
+Left 10
+Prelude> (Right 5) <* (Left 10)
+Left 10
+Prelude Control.Applicative> (Right 15) <**> pure linfunc 
+Right 40
+
+-- Lifts are already prepared in Control.Applicative
+Prelude Control.Applicative> liftA2 (+) (Just 5) (Just 10)
+Just 15
+Prelude Control.Applicative> liftA2 (+) (Just 5) Nothing
+Nothing
+Prelude Control.Applicative> liftA2 (+) (Left "error") (Right 7)
+Left "error"
+Prelude Control.Applicative> liftA2 (+) (Right 15) (Right 7)
+Right 22
 ```
 
-### Lifting
+### Actions vs. functions
 
+In Haskell terminology, we call `Functor f => f a` an **action**. Actions have the power to do some side effect but not necessarily (e.g., `Just "no effect"`). For example, `liftA2` is described as function that lifts a binary function to actions. Special sort of actions are I/O actions with do something with input and output, but there can be also other actions making side effects.
 
 ## Monad
 
@@ -308,12 +346,16 @@ The most famous (and scary :-) typeclass for Haskell students is [Control.Monad]
 
 ```haskell
 class Applicative m => Monad m where
-  (>>=)  :: m a -> (a -> m b) -> m b
-  (>>)   :: m a -> m b -> m b
-  return :: a -> m a
+  (>>=)  :: m a -> (a -> m b) -> m b  -- compose two actions, passing the result
+  (>>)   :: m a -> m b -> m b         -- compose two actions, discarding the result
+  return :: a -> m a                  -- inject a value into the monadic type.
+
+-- (<**>):: f a -> f (a -> b) -> f b  -- from Controll.Applicative
+-- (*>)  :: f a -> f b -> f b         -- from Controll.Applicative
+-- pure  :: a -> f a                  -- from Controll.Applicative
 ```
 
-Function `return` works just as `pure` in `Functor`. Why having two same functions? Historically; PureScript for instance has just `pure` both for the Functor and Monad.
+Function `return` works just as `pure` in `Applicative`. Why having two same functions? Historically; PureScript for instance has just `pure` both for the Applicative and Monad.
 
 `>>=` is bind, which takes a monadic value (again, this is some "wrapped value") and a function, which takes an unwrapped value and transforms it into a monadic value.
 
@@ -330,7 +372,15 @@ m >>= return   ==  m
 ```
 
 ```
--- TODO play with applicative and operators
+Prelude Control.Monad> (Just 5) >> (Just 10)
+Just 10
+Prelude Control.Monad> (Just 5) >>= \x -> (Just (x+10))
+Just 15
+Prelude Control.Monad> return 5 >>= \x -> (Just (x+10))
+Just 15
+
+Prelude Control.Monad> (Left "err") >>= (\x -> return (x+10))
+Left "err"
 ```
 
 ### Do syntax
@@ -376,7 +426,12 @@ do { action2
 
 ### Monads in category theory
 
-### IO Monad
+Again, monad comes from math and more specifically from category theory. A monad is a special type of functor, from a category to that same category (i.e., it is *endofunctor*), that supports some additional structure. Monad is a functor *M: C → C* with two morphisms for every object *X* from *C*: 
+
+1. *unit: X → M(X)* ~ `return :: Monad m => a -> m a`
+2. *join: M(M(X)) →  M(X)* ~ `(>>=) :: Monad m => m a -> (a -> m b) -> m b`
+
+## IO - What is it?
 
 Haskell separates pure functions from computations where side effects must be considered by encoding those side effects as values of a particular type. Specifically, a value of type (IO a) is an action, which executed produces a value of type a.
 
@@ -397,6 +452,7 @@ The homework to practice typeclasses from this tutorial is in repository [MI-AFP
 * [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
 * [Haskell and Category Theory](https://en.wikibooks.org/wiki/Haskell/Category_theory)
 * [Category Theory for Programmers by Bartosz Milewski](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface)
+* [LYAH - Functors, Applicative Functors and Monoids](http://learnyouahaskell.com/functors-applicative-functors-and-monoids)
 * [Haskell - Typoclassopedia](https://wiki.haskell.org/Typeclassopedia)
 * [Haskell - Monad](https://wiki.haskell.org/Monad)
 * [Haskell - IO Monad](https://wiki.haskell.org/Introduction_to_IO)
