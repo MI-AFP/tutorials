@@ -168,21 +168,43 @@ fmap id == id
 fmap (f . g) == fmap f . fmap g
 ```
 
-Let's try it:
+Let's try it with basic containers like list, `Maybe`, and `Either`:
 
 ```
--- TODO play with functors
+Prelude> fmap (*2) [1..5]   -- just like map!
+[2,4,6,8,10]
+Prelude> fmap (show . (*2)) [1..5]   -- just like map!
+["2","4","6","8","10"]
+Prelude> fmap (*2) (Just 7)
+Just 14
+Prelude> fmap (*2) Nothing
+Nothing
+Prelude> fmap (+10) (Left 5)
+Left 5     -- no change!
+Prelude> fmap (+10) (Right 5)
+Right 10   -- changed, because "Either c" is functor for whatever "c" - it doesnt care
 ```
 
-Just as with Monoid, you can take a look at the documentation of [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html). Again, there is an operator alias, in this case `(<$>)` for `fmap` (denoting a sort of "wrapped" or "inside" apply). There are two more similar -- `<$` and `$>` (just flipped `<$`).
+Just as with Monoid, you can take a look at the documentation of [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html). Again, there is an operator alias, in this case `(<$>)` for `fmap` (denoting a sort of "wrapped" or "inside" apply). There are two more -- `<$` and `$>` (just flipped `<$`). Flipped version of `(<$>)` is `(<&>)`.
 
 ```
--- TODO play with functors and operators
+Prelude Data.Functor> (*2) <$> [1..5]
+[2,4,6,8,10]
+Prelude Data.Functor>  [1..5] <&> (*2)
+[2,4,6,8,10]
+Prelude Data.Functor> 2 <$ [1..5]
+[2,2,2,2,2]
+Prelude Data.Functor> [1..5] $> 2
+[2,2,2,2,2]
+Prelude> (*2) <$> (Just 7)
+Just 14
+Prelude> 2 <$ (Just 7)
+Just 2
+Prelude> (Just 7) $> 2
+Just 2
 ```
 
-```diff
-+klidne pouzij neco z LYAH nebo Haskell book
-```
+These examples might seem bit too simple, but you can have any instance of `Functor` without knowing the structure and implementation of it and affect what is inside by these two (four if counting also flipped) simple operators.
 
 ### Lifting
 
@@ -202,7 +224,7 @@ liftF0 x = Point2D x x
 liftF1 :: (a -> b) -> Point2D a -> Point2D b
 liftF1 = fmap
  
-liftF2 :: (a -> b -> r) -> Point2D a -> Point2D b -> Point2D r
+liftF2 :: (a -> b -> c) -> Point2D a -> Point2D b -> Point2D c
 liftF2 f (Point2D x1 x2) (Point2D y1 y2) = Point2D (f x1 y1) (f x2 y2)
 
 origin :: Point2D Int
@@ -214,7 +236,6 @@ doublePoint = liftF1 (*2)
 plusPoints :: Point2D Int -> Point2D Int -> Point2D Int
 plusPoints = liftF2 (+)
 ```
-
 
 ### Functors on Hask category
 
@@ -279,6 +300,7 @@ u <*> pure y = pure ($ y) <*> u
 ```
 
 ### Lifting
+
 
 ## Monad
 
