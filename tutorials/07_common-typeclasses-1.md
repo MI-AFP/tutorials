@@ -36,16 +36,22 @@ In Haskell, we have the **Hask** category where:
 
 The identity function is for every *o ∈ ob(Hask)* the polymorphic `id` function. The associativity of composition is assured and in *hom(C)* there are all the functions, even those created by composition. That's it for now -- now we will show some typeclasses, their laws and come back to **Hask** when necessary...
 
-## Monoid (and others from basic algebra)
+## Semigroup, Monoid, ...
 
 Monoid is the most simple typeclass we will learn. You can recall the [monoid](https://en.wikipedia.org/wiki/Monoid) from the algebra -- it is an algebraic structure with one binary operation that is associate and there is also one identity element. The same goes for Haskell -- the operation is called `mappend` and the identity is `mempty` (first letter `m` if for **m**onoid).
 
+Since `base-4.11.0.0`, the `Monoid` is subclass of `Semigroup` (just like in algebra). `Semigroup` defines just binary operation which is associative. In Haskell, the binary operation is `(<>)` (infixr 6)
+
 ```haskell
-class Monoid m where
-  mempty  :: m
+class Semigroup s where
+  (<>) :: s -> s -> s               -- binary associative operation
+
+class Semigroup m => Monoid m where
+  mempty  :: m                      -- identity of mappend
   mappend :: m -> m -> m
+  mappend = (<>)                    -- binary operation from Semigroup
   mconcat :: [m] -> m
-  mconcat = foldr mappend mempty
+  mconcat = foldr mappend mempty    -- fold with mappend (catamorphism)
 ```
 
 The law of monoid says that `mappend` must be associative and `mempty` is a real identity when working with `mappend`:
@@ -64,10 +70,30 @@ If you take a look at the documentation of [Data.Monoid](https://hackage.haskell
 * synonym for `mappend` is `(<>)` so you can simply use it as operator `x <> b` (notice that it is not the same as not-equals in other languages),
 * multiple newtypes for specifying monoid for basic type, like `Sum` and `Product` for numeric types, `All` and `Any` for booleans, `First` and `Last` for maybes and few more.
 
+
 ```haskell
--- TODO: Sum & Product
--- TODO: First & Last
+Prelude> import Data.Monoid
+Prelude Data.Monoid> :info Sum
+newtype Sum a = Sum {getSum :: a} 	-- Defined in ‘Data.Monoid’
+...
+Prelude Data.Monoid> :info Product
+newtype Product a = Product {getProduct :: a}
+...
+Prelude Data.Monoid> (Product 5) <> (Product 2)
+Product {getProduct = 10}
+Prelude Data.Monoid> mempty :: Product  Int
+Product {getProduct = 1}
+Prelude Data.Monoid> (Sum 5) <> (Sum 2)
+Sum {getSum = 7}
+Prelude Data.Monoid> mempty :: Sum Int
+Sum {getSum = 0}
+Prelude Data.Monoid> mconcat (map Sum [1..5])
+Sum {getSum = 15}
+Prelude Data.Monoid> mconcat (map Product [1..5])
+Product {getProduct = 120}
 ```
+
+### Example: textual types
 
 One of very practical usages of `mappend` is string concatenation, which is independent on its concrete implementation:
 
@@ -91,10 +117,36 @@ t1 <> ", " <> t2 -- works the same for text!
 
 Here, obviously `mappend` is string concatenation and `mempty = ""`.
 
+### Example: Maybe
+
+From `:info Monoid`, we can see that `Maybe a` is instance of `Monoid` iff (=if and only if) `a` is instance of `Monoid`. Then, the `(<>)` is "propagated" inside and obviously the identity is `Nothing`.
+
+```
+Prelude Data.Maybe Data.Semigroup> (Just "a") <> (Just "b")
+Just "ab"
+Prelude Data.Maybe Data.Semigroup> (Just "a") <> Nothing
+Just "a"
+Prelude Data.Maybe Data.Semigroup> (Just "a") <> Nothing <> (Just "b")
+Just "ab"
+Prelude Data.Maybe Data.Semigroup> Nothing <> Nothing
+Nothing
+Prelude Data.Maybe Data.Semigroup> mconcat [Just "a", Nothing, Just "b"]
+Just "ab"
+Prelude Data.Maybe Data.Semigroup> mempty :: Maybe String
+Nothing
+```
+
+### Verify the laws
+
+As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler can not enforce it. Whenever you are introducing your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
+
+### Others from basic algebra
+
 Apart from basic `Monoid` from algebra, there are also other variants. You might find interesting to learn more about:
 
-* [Data.Semigroup](https://hackage.haskell.org/package/base/docs/Data-Semigroup.html) (no identity as is in Monoid),
-* [Data.Group, Data.Abelian](https://hackage.haskell.org/package/groups-0.4.0.0/docs/Data-Group.html) (inversions and commutative operation).
+* [semigrupoids](https://hackage.haskell.org/package/semigroupoids/docs/Data-Groupoid.html) (Semigrupoid, Grupoid),
+* [groups](https://hackage.haskell.org/package/groups/docs/Data-Group.html) (Group, Abelian),
+* etc.
 
 It is possible to write own instances of `Monoid` or other typeclasses. However, mind that compiler *won't* check if laws are valid in your instance. For such checks you can use testing frameworks (esp. property testing), which will be covered later on.
 
