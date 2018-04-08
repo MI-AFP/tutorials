@@ -342,7 +342,7 @@ In Haskell terminology, we call `Functor f => f a` an **action**. Actions have t
 
 ## Monad
 
-The most famous (and scary :-) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions.
+The most famous (and scary :-) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases. 
 
 ```haskell
 class Applicative m => Monad m where
@@ -424,6 +424,47 @@ do { action2
    ; action3 }
 ```
 
+In `do`, you can also use `>>=` operator by binding `<-` and `let` instead of `let-in`:
+
+```haskell
+main = do
+    putStrLn "Enter name:"
+    name <- getLine                       -- getLine >>= (\name -> ...)
+    putStrLn ("Hello, " ++ name ++ "!")
+    let answer = 42                       -- let answer = 42 in (...)
+    putStrLn "The answer to life, the universe and everything is..."
+    print answer                          -- let and binding cannot be the last in do!
+```
+
+### Loops
+
+You might hear that "do" provides imperative-like way of programming... That's true but it is really just *imperative-like* from visual point of view, it is still purely functional! But even in math and functions you can introduce something like `for` or `while` loops. When you want to compute some result like factorial, sum, length of list it is natural to use recursion. With actions, it might give more sence to use loops (even when they are actually done by recursion):
+
+```haskell
+import System.Random
+import Control.Monad.Loops
+
+promptAnswer :: IO Int
+promptAnswer = do
+            putStrLn "Guess the answer: "
+            x <- getLine
+            return (read x)
+
+guessAnswer :: Int -> IO Bool
+guessAnswer x = do
+             guess <- promptAnswer
+             return (guess /= x)
+
+main = do
+    putStrLn "Welcome to GUESS 1 to 10 game"
+    answer <- randomRIO (1, 10)
+    whileM_ (guessAnswer answer) $ do         -- whileM_ :: Monad m => m Bool -> m a -> m ()
+        putStrLn "Incorrect!"
+    putStrLn "Good job!"
+```
+
+For other loops, visit [Control.Monad.Loops](https://hackage.haskell.org/package/monad-loops/docs/Control-Monad-Loops.html) and this [article](https://conscientiousprogrammer.com/blog/2015/12/11/24-days-of-hackage-2015-day-11-monad-loops-avoiding-writing-recursive-functions-by-refactoring/).
+
 ### Monads in category theory
 
 Again, monad comes from math and more specifically from category theory. A monad is a special type of functor, from a category to that same category (i.e., it is *endofunctor*), that supports some additional structure. Monad is a functor *M: C → C* with two morphisms for every object *X* from *C*: 
@@ -442,6 +483,61 @@ getLine :: IO String
 putStrLn :: String -> IO () -- note that the result value is an empty tuple.
 randomRIO :: (Random a) => (a,a) -> IO a
 ```
+
+We tried to play with IO last time, but what is it?
+
+```haskell
+Prelude> :info IO
+newtype IO a
+  = GHC.Types.IO (GHC.Prim.State# GHC.Prim.RealWorld
+                  -> (# GHC.Prim.State# GHC.Prim.RealWorld, a #))
+  	-- Defined in ‘GHC.Types’
+instance Monad IO -- Defined in ‘GHC.Base’
+instance Functor IO -- Defined in ‘GHC.Base’
+instance Applicative IO -- Defined in ‘GHC.Base’
+instance Monoid a => Monoid (IO a) -- Defined in ‘GHC.Base’
+```
+
+It is instance of `Monad`, but also `Functor`, `Aplicative`, and `Monoid` (iff `a` is also `Monoid`):
+
+```haskell
+import System.Random
+import Control.Applicative
+
+main0 :: IO ()
+main0 = mempty
+
+main1 :: IO ()
+main1 = putStrLn "a" `mappend` putStrLn "b"
+
+main2 :: IO ()
+main2 = mconcat (map print [1..5])
+
+main3 :: IO ()
+main3 = do
+     rname <- reverse <$> getLine  -- fmap reverse getLine
+     print rname
+
+main4 :: IO ()
+main4 = print 1 *> print 2 *> print 3
+
+main5 :: IO ()
+main5 = print 1 <* print 2 <* print 3
+
+main6 :: IO ()
+main6 = do
+     res <- (+) <$> randomInt <*> randomInt
+     print res
+       where randomInt = randomRIO (1, 10) :: IO Integer
+
+main7 :: IO ()
+main7 = do
+    res <- liftA2 (\x y -> x + read y) randomInt getLine
+    print res
+      where randomInt = randomRIO (1, 10) :: IO Integer
+```
+
+A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need monad", "Monad bring imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). What does something with input and output are IO actions = how is the type IO implemented, not that it is instance of `Monad`, `Applicative`, and `Functor`. Those just allows you to do some pure things with `IO` type and actions. Great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
 
 ## Task assignment
 
