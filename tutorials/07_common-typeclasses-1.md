@@ -1,14 +1,14 @@
 # Common typeclasses I
 
-Now we are going to spend some time with predefined and important typeclasses that capture important concepts in Haskell that are widely used in many projects. Typeclass always says something about the structure of type and what you can do with that. Also, there are some laws and it is very tightly related to math -- specifically the algebra and the category theory.
+Now we are going to spend some time with predefined and important typeclasses that capture important concepts in Haskell that are widely used in many projects. Typeclass always says something about the structure of the type and what you can do with that. Also, there are some laws and it is very tightly related to math -- specifically the algebra and the category theory.
 
-After learning common typeclasses, it is not just easier to use them and understand a code written by other developer, but it also helps with designing own custom typeclasses. You can always find out more about typeclass and instances with GHCi `:info` command.
+After learning common typeclasses, it is not just easier to use them and understand a code written by other developers, but it also helps with designing own custom typeclasses. You can always find out more about a typeclass and instances with GHCi `:info` command.
 
 ## Intro: Mathematical foundations
 
-The relation between math and Haskell is very strong. You can observe it everywhere. Haskell functions are very similar to mathematical functions when you talk about their type, definitions with `let` and `where` keywords, guards with `otherwise`, function compositions, and so on. In this tutorial we are going to see this relation even more -- with typeclasses that come from mathematical world. You should be already familiar with [basic abstract algebra](https://en.wikipedia.org/wiki/Algebra#Abstract_algebra) (esp. algebraic structures with a single binary operation).
+The relation between math and Haskell is very strong. You can observe it everywhere. Haskell functions are very similar to mathematical functions when you talk about their type, definitions with `let` and `where` keywords, guards with `otherwise`, function compositions, and so on. In this tutorial, we are going to see this relation even more -- with typeclasses that come from the mathematical world. You should be already familiar with [basic abstract algebra](https://en.wikipedia.org/wiki/Algebra#Abstract_algebra) (esp. algebraic structures with a single binary operation).
 
-When getting into math, you should know that Haskell is based not just on the basic algebra, set theory, and logic, but also on the category theory. In order to sometimes mention the relation, we will briefly explain what it is about. If you want to know more, please refer to some mathematical tutorials on your own.
+When getting into the math, you should know that Haskell is based not just on the basic algebra, set theory, and logic, but also on the category theory. In order to sometimes mention the relation, we will briefly explain what it is about. If you want to know more, please refer to some mathematical tutorials on your own.
 
 ### Category theory
 
@@ -34,13 +34,13 @@ In Haskell, we have the **Hask** category where:
 * *hom(C)* are **functions** (`show`, `id`, `length`, `words`, `flip`, `reverse`, etc.),
 * composition is **function composition** `(.)`.
 
-The identity function is for every *o ∈ ob(Hask)* the polymorphic `id` function. The associativity of composition is assured and in *hom(C)* there are all the functions, even those created by composition. That's it for now -- now we will show some typeclasses, their laws and come back to **Hask** when necessary...
+The identity function is for every *o ∈ ob(Hask)* the polymorphic `id` function. The associativity of the composition is assured and in *hom(C)* there are all the functions, even those created by composition. That's it for now -- now we will show some typeclasses, their laws and come back to **Hask** when necessary...
 
 ## Semigroup, Monoid, ...
 
-Monoid is the most simple typeclass we will learn. You can recall the [monoid](https://en.wikipedia.org/wiki/Monoid) from the algebra -- it is an algebraic structure with one binary operation that is associate and there is also one identity element. The same goes for Haskell -- the operation is called `mappend` and the identity is `mempty` (first letter `m` if for **m**onoid).
+`Monoid` is the most simple typeclass we will learn. You can recall the [monoid](https://en.wikipedia.org/wiki/Monoid) from the algebra -- it is an algebraic structure with one binary operation that is associative and there is also one identity element. The same goes for Haskell -- the operation is called `mappend` and the identity is `mempty` (the first letter `m` if for **m**onoid).
 
-Since `base-4.11.0.0`, the `Monoid` is subclass of `Semigroup` (just like in algebra). `Semigroup` defines just binary operation which is associative. In Haskell, the binary operation is `(<>)` (infixr 6)
+Since `base-4.11.0.0`, the `Monoid` is a subclass of `Semigroup` (just like in algebra). `Semigroup` defines just binary operation which is associative. In Haskell, the binary operation is `(<>)` (infixr 6)
 
 ```haskell
 class Semigroup s where
@@ -67,8 +67,8 @@ mappend mempty x == x
 
 If you take a look at the documentation of [Data.Monoid](https://hackage.haskell.org/package/base/docs/Data-Monoid.html), you might notice few more things:
 
-* synonym for `mappend` is `(<>)` so you can simply use it as operator `x <> b` (notice that it is not the same as not-equals in other languages),
-* multiple newtypes for specifying monoid for basic type, like `Sum` and `Product` for numeric types, `All` and `Any` for booleans, `First` and `Last` for maybes and few more.
+* by default, a synonym for `mappend` is `(<>)` so you can simply use it as operator `x <> b` (notice that it is not the same as not-equals in other languages),
+* multiple newtypes for specifying monoid for basic types, like `Sum` and `Product` for numeric types, `All` and `Any` for booleans, `First` and `Last` for maybes and few more.
 
 
 ```
@@ -95,7 +95,7 @@ Product {getProduct = 120}
 
 ### Example: textual types
 
-One of very practical usages of `mappend` is string concatenation, which is independent on its concrete implementation:
+One of the very practical usages of `mappend` is string concatenation, which is independent of its concrete implementation:
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -119,7 +119,7 @@ Here, obviously `mappend` is string concatenation and `mempty = ""`.
 
 ### Example: Maybe
 
-From `:info Monoid`, we can see that `Maybe a` is instance of `Monoid` iff (=if and only if) `a` is instance of `Monoid`. Then, the `(<>)` is "propagated" inside and obviously the identity is `Nothing`.
+From `:info Monoid`, we can see that `Maybe a` is an instance of `Monoid` iff (=if and only if) `a` is an instance of `Monoid`. Then, the `(<>)` is "propagated" inside and obviously the identity is `Nothing`.
 
 ```
 Prelude Data.Maybe Data.Semigroup> (Just "a") <> (Just "b")
@@ -138,31 +138,31 @@ Nothing
 
 ### Verify the laws
 
-As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler can not enforce it. Whenever you are introducing your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
+As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler cannot enforce it. Whenever you are introducing your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
 
 ### Others from basic algebra
 
 Apart from basic `Monoid` from algebra, there are also other variants. You might find interesting to learn more about:
 
-* [semigrupoids](https://hackage.haskell.org/package/semigroupoids/docs/Data-Groupoid.html) (Semigrupoid, Grupoid),
+* [semigroupoids](https://hackage.haskell.org/package/semigroupoids/docs/Data-Groupoid.html) (Semigroupoid, Grupoid),
 * [groups](https://hackage.haskell.org/package/groups/docs/Data-Group.html) (Group, Abelian),
 * etc.
 
-It is possible to write own instances of `Monoid` or other typeclasses. However, mind that compiler *won't* check if laws are valid in your instance. For such checks you can use testing frameworks (esp. property testing), which will be covered later on.
+It is possible to write own instances of `Monoid` or other typeclasses. However, mind that compiler *won't* check if laws are valid in your instance. For such checks, you can use testing frameworks (esp. property testing), which will be covered later on.
 
 ## Functor
 
-A functor is a way to apply a function on values inside some structure, while the structure remains intact. For example, if you want to change values in a list, tree or in Either without dealing with complexity and internal structure.
+A functor is a way to apply a function to values inside some structure, while the structure remains intact. For example, if you want to change values in a list, tree or in Either without dealing with complexity and internal structure.
 
 ```haskell
 class Functor f where                -- f is type constructor of kind * -> *
   fmap :: (a -> b) -> f a -> f b
 ```
 
-The definition says that there is a function `fmap` which applies a function of type `a -> b` on elements in functor `f` with inner type `a` and the result will be functor `f` with inner type `b`. Moreover there are two laws:
+The definition says that there is a function `fmap` which applies a function of type `a -> b` on elements in functor `f` with inner type `a` and the result will be functor `f` with inner type `b`. Moreover, there are two laws:
 
 ```haskell
--- identity (fmap doesn't do nothing more than applying given function)
+-- identity (fmap doesn't do anything more than applying given function)
 fmap id == id
 -- composition
 fmap (f . g) == fmap f . fmap g
@@ -182,7 +182,7 @@ Nothing
 Prelude> fmap (+10) (Left 5)
 Left 5     -- no change!
 Prelude> fmap (+10) (Right 5)
-Right 10   -- changed, because "Either c" is functor for whatever "c" - it doesnt care
+Right 10   -- changed, because "Either c" is functor for whatever "c" - it doesn't care
 ```
 
 Just as with Monoid, you can take a look at the documentation of [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html). Again, there is an operator alias, in this case `(<$>)` for `fmap` (denoting a sort of "wrapped" or "inside" apply). There are two more -- `<$` and `$>` (just flipped `<$`). Flipped version of `(<$>)` is `(<&>)`.
@@ -204,7 +204,7 @@ Prelude> (Just 7) $> 2
 Just 2
 ```
 
-These examples might seem bit too simple, but you can have any instance of `Functor` without knowing the structure and implementation of it and affect what is inside by these two (four if counting also flipped) simple operators.
+These examples might seem a bit too simple, but you can have any instance of `Functor` without knowing the structure and implementation of it and affect what is inside by these two (four if counting also flipped) simple operators.
 
 ### Lifting
 
@@ -251,7 +251,7 @@ class Functor (f :: * -> *) where
   fmap :: (a -> b) -> f a -> f b    -- maps A->B to F(A) -> F(B) as well as A to F(A)
 ```
 
-There is also identity for functions and they must be homomorphic that, of course, apply for functors in Haskell:
+There is also the identity law for functions and they must be homomorphic that, of course, apply for functors in Haskell:
 
 ```haskell
 fmap id == id
@@ -263,7 +263,7 @@ fmap (f . g) = fmap f . fmap g
 
 Another important typeclass is [Control.Applicate](https://hackage.haskell.org/package/base/docs/Control-Applicative.html). Notice that it is not "Data" anymore, but "Control" instead! It is an intermediate structure between a `Functor` and a `Monad`. It is simpler than `Monad`, not so powerful, but sufficient in many use cases, and also easier to understand - it is **Applicative functor**.
 
-In fucntor, we applied a function over a "wrapped" value to get a resulting "wrapped" value. In applicative, we have the function wrapped, as well:
+In functor, we applied a function over a "wrapped" value to get a resulting "wrapped" value. In applicative, we have the function wrapped, as well:
 
 ```haskell
 class Functor f => Applicative f where
@@ -338,7 +338,7 @@ Right 22
 
 ### Actions vs. functions
 
-In Haskell terminology, we call `Functor f => f a` an **action**. Actions have the power to do some side effect but not necessarily (e.g., `Just "no effect"`). For example, `liftA2` is described as function that lifts a binary function to actions. Special sort of actions are I/O actions with do something with input and output, but there can be also other actions making side effects.
+In Haskell terminology, we call `Functor f => f a` an **action**. Actions have the power to do some side effect but not necessarily (e.g., `Just "no effect"`). For example, `liftA2` is described as a function that lifts a binary function to actions. Special sort of actions are I/O actions that do something with input and output, but there can be also other actions making side effects.
 
 ## Monad
 
@@ -355,7 +355,7 @@ class Applicative m => Monad m where
 -- pure  :: a -> f a                  -- from Controll.Applicative
 ```
 
-Function `return` works just as `pure` in `Applicative`. Why having two same functions? Historically; PureScript for instance has just `pure` both for the Applicative and Monad.
+Function `return` works just as `pure` in `Applicative`. Why having two same functions? Historically; PureScript, for instance, has just `pure` both for the Applicative and Monad.
 
 `>>=` is bind, which takes a monadic value (again, this is some "wrapped value") and a function, which takes an unwrapped value and transforms it into a monadic value.
 
@@ -385,7 +385,7 @@ Left "err"
 
 ### Do syntax
 
-Using `do` blocks as an alternative monad syntax was first introduced way back in the :"Simple input and output" chapter. There, we used do to sequence input/output operations, but we hadn't introduced monads yet. Now, we can see that IO is yet another monad.
+Using `do` blocks as an alternative monad syntax was first introduced way back in the "Simple input and output" chapter. There, we used it to sequence input/output operations, but we hadn't introduced monads yet. Now, we can see that IO is yet another monad.
 
 Imagine we have a sequence operation like this:
 
@@ -438,7 +438,7 @@ main = do
 
 ### Loops
 
-You might hear that "do" provides imperative-like way of programming... That's true but it is really just *imperative-like* from visual point of view, it is still purely functional! But even in math and functions you can introduce something like `for` or `while` loops. When you want to compute some result like factorial, sum, length of list it is natural to use recursion. With actions, it might give more sence to use loops (even when they are actually done by recursion):
+You might hear that "do" provides an imperative-like way of programming... That's true but it is really just *imperative-like* from a visual point of view, it is still purely functional! But even in math and functions, you can introduce something like `for` or `while` loops. When you want to compute some result like factorial, sum, length of a list it is natural to use recursion. With actions, it might give more sense to use loops (even when they are actually done by recursion):
 
 ```haskell
 import System.Random
@@ -537,7 +537,7 @@ main7 = do
       where randomInt = randomRIO (1, 10) :: IO Integer
 ```
 
-A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need monad", "Monad bring imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). What does something with input and output are IO actions = how is the type IO implemented, not that it is instance of `Monad`, `Applicative`, and `Functor`. Those just allows you to do some pure things with `IO` type and actions. Great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
+A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need monad", "Monad bring imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). What does something with input and output are IO actions = how is the type IO implemented, not that it is an instance of `Monad`, `Applicative`, and `Functor`. Those just allow you to do some pure things with `IO` type and actions. A great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
 
 ## Task assignment
 
