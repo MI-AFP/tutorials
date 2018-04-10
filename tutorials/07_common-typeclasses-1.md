@@ -74,7 +74,7 @@ If you take a look at the documentation of [Data.Monoid](https://hackage.haskell
 ```
 Prelude> import Data.Monoid
 Prelude Data.Monoid> :info Sum
-newtype Sum a = Sum {getSum :: a} 	-- Defined in ‘Data.Monoid’
+newtype Sum a = Sum {getSum :: a}       -- Defined in ‘Data.Monoid’
 ...
 Prelude Data.Monoid> :info Product
 newtype Product a = Product {getProduct :: a}
@@ -138,7 +138,7 @@ Nothing
 
 ### Verify the laws
 
-As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler cannot enforce it. Whenever you are introducing your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
+As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler cannot enforce it. Whenever you introduce your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
 
 ### Others from basic algebra
 
@@ -208,11 +208,11 @@ These examples might seem a bit too simple, but you can have any instance of `Fu
 
 ### Lifting
 
-[Lifting](https://wiki.haskell.org/Lifting) is a concept which allows you to transform a function into a corresponding function within another (usually more general) setting. Lifting is again concept taken from mathematics and category theory (see [wikipedia](https://en.wikipedia.org/wiki/Lift_(mathematics)).
+[Lifting](https://wiki.haskell.org/Lifting) is a concept that allows you to transform a function into a corresponding function within another (usually a more general) setting. Lifting is again a concept taken from mathematics and category theory (see [wikipedia](https://en.wikipedia.org/wiki/Lift_(mathematics)).
 
 ```haskell
 
-data Point2D a = Point2D a a 
+data Point2D a = Point2D a a
                deriving Show
 
 instance Functor Point2D where
@@ -223,7 +223,7 @@ liftF0 x = Point2D x x
 
 liftF1 :: (a -> b) -> Point2D a -> Point2D b
 liftF1 = fmap
- 
+
 liftF2 :: (a -> b -> c) -> Point2D a -> Point2D b -> Point2D c
 liftF2 f (Point2D x1 x2) (Point2D y1 y2) = Point2D (f x1 y1) (f x2 y2)
 
@@ -322,7 +322,7 @@ Prelude> (Right 5) *> (Left 10)
 Left 10
 Prelude> (Right 5) <* (Left 10)
 Left 10
-Prelude Control.Applicative> (Right 15) <**> pure linfunc 
+Prelude Control.Applicative> (Right 15) <**> pure linfunc
 Right 40
 
 -- Lifts are already prepared in Control.Applicative
@@ -342,7 +342,7 @@ In Haskell terminology, we call `Functor f => f a` an **action**. Actions have t
 
 ## Monad
 
-The most famous (and scary :-) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases. 
+The most famous (and [scary](https://camo.githubusercontent.com/f2c3667a2cdf19c0cf203fad44c81d197c4cd740/68747470733a2f2f692e696d67666c69702e636f6d2f317a6e707a622e6a7067) :-)) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases.
 
 ```haskell
 class Applicative m => Monad m where
@@ -384,6 +384,11 @@ Left "err"
 ```
 
 ### Do syntax
+
+```diff
+-spis to vysvetlit jako v http://learnyouahaskell.com/a-fistful-of-monads#getting-our-feet-wet-with-maybe (sekce do notation).
+-Klidne to vezmi copy-paste a ocituj ;-)
+```
 
 Using `do` blocks as an alternative monad syntax was first introduced way back in the "Simple input and output" chapter. There, we used it to sequence input/output operations, but we hadn't introduced monads yet. Now, we can see that IO is yet another monad.
 
@@ -467,7 +472,7 @@ For other loops, visit [Control.Monad.Loops](https://hackage.haskell.org/package
 
 ### Monads in category theory
 
-Again, monad comes from math and more specifically from category theory. A monad is a special type of functor, from a category to that same category (i.e., it is *endofunctor*), that supports some additional structure. Monad is a functor *M: C → C* with two morphisms for every object *X* from *C*: 
+Again, monad comes from math and more specifically from category theory. A monad is a special type of functor, from a category to that same category (i.e., it is *endofunctor*), that supports some additional structure. Monad is a functor *M: C → C* with two morphisms for every object *X* from *C*:
 
 1. *unit: X → M(X)* ~ `return :: Monad m => a -> m a`
 2. *join: M(M(X)) →  M(X)* ~ `(>>=) :: Monad m => m a -> (a -> m b) -> m b`
@@ -491,7 +496,7 @@ Prelude> :info IO
 newtype IO a
   = GHC.Types.IO (GHC.Prim.State# GHC.Prim.RealWorld
                   -> (# GHC.Prim.State# GHC.Prim.RealWorld, a #))
-  	-- Defined in ‘GHC.Types’
+        -- Defined in ‘GHC.Types’
 instance Monad IO -- Defined in ‘GHC.Base’
 instance Functor IO -- Defined in ‘GHC.Base’
 instance Applicative IO -- Defined in ‘GHC.Base’
@@ -537,9 +542,9 @@ main7 = do
       where randomInt = randomRIO (1, 10) :: IO Integer
 ```
 
-A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need monad", "Monad bring imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). What does something with input and output are IO actions = how is the type IO implemented, not that it is an instance of `Monad`, `Applicative`, and `Functor`. Those just allow you to do some pure things with `IO` type and actions. A great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
+A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need a monad", "Monad brings imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). IO actions manipulate and output, this is their essence. And BY THE WAY, they are (very conveniently) an instance of `Monad`, `Applicative`, and `Functor`. Those  allow you to do some pure composition and other tricks with `IO` type and actions. A great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
 
-## Task assignment
+## The task assignment
 
 The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw07](https://github.com/MI-AFP/hw07).
 
