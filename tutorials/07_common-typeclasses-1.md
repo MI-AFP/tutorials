@@ -385,51 +385,41 @@ Left "err"
 
 ### Do syntax
 
-```diff
--spis to vysvetlit jako v http://learnyouahaskell.com/a-fistful-of-monads#getting-our-feet-wet-with-maybe (sekce do notation).
--Klidne to vezmi copy-paste a ocituj ;-)
-```
-
-Using `do` blocks as an alternative monad syntax was first introduced way back in the "Simple input and output" chapter. There, we used it to sequence input/output operations, but we hadn't introduced monads yet. Now, we can see that IO is yet another monad.
+Monads in Haskell are so useful that they got their own special syntax called `do` notation. We first introduced it way back in the "Simple input and output" chapter. There, we used it to sequence input/output operations, but we hadn't introduced monads yet. Now, we can see that IO is yet another monad.
 
 Imagine we have a sequence operation like this:
 
 ```haskell
-    putStr "Hello" >>
-    putStr " " >>
-    putStr "world!" >>
-    putStr "\n"
+Prelude> Just 7 >>= (\x -> Just (show x ++ "!"))  
+Just "7!"
+Prelude> Just 7 >>= (\x -> Just "!" >>= (\y -> Just (show x ++ y)))  
+Just "7!"
+Prelude> print 3 >> print 5 >> print 7
+3
+5
+7
 ```
 
-Now we can chain it using do:
+Haskell provides the `do` notation so we can avoid writing all the lambdas:
 
 ```haskell
-main = do
-   { putStr "Hello"
-   ; putStr " "
-   ; putStr "world!"
-   ; putStr "\n" }
+foo :: Maybe String  
+foo = do  
+    x <- Just 7 
+    y <- Just "!"  
+    Just (show x ++ y)  
 ```
 
 or
 
 ```haskell
 main = do
-    putStr "Hello"
-    putStr " "
-    putStr "world!"
-    putStr "\n"
+    print 3
+    print 5
+    print 7
 ```
 
-This becomes translated to:
-
-```haskell
-action1 >>
-do { action2
-   ; action3 }
-```
-
-In `do`, you can also use `>>=` operator by binding `<-` and `let` instead of `let-in`:
+In `do`, you can use basic sequencing `>>`, `>>=` operator by binding `<-` and `let` instead of `let-in`:
 
 ```haskell
 main = do
@@ -554,6 +544,7 @@ The homework to practice typeclasses from this tutorial is in repository [MI-AFP
 * [Haskell and Category Theory](https://en.wikibooks.org/wiki/Haskell/Category_theory)
 * [Category Theory for Programmers by Bartosz Milewski](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface)
 * [LYAH - Functors, Applicative Functors and Monoids](http://learnyouahaskell.com/functors-applicative-functors-and-monoids)
+* [LYAH - A Fistful of Monads](http://learnyouahaskell.com/a-fistful-of-monads)
 * [Haskell - Typoclassopedia](https://wiki.haskell.org/Typeclassopedia)
 * [Haskell - Monad](https://wiki.haskell.org/Monad)
 * [Haskell - IO Monad](https://wiki.haskell.org/Introduction_to_IO)
