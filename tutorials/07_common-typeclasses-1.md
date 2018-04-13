@@ -248,7 +248,8 @@ We have some categories which have objects and morphisms that relate our objects
 
 ```haskell
 class Functor (f :: * -> *) where
-  fmap :: (a -> b) -> f a -> f b    -- maps A->B to F(A) -> F(B) as well as A to F(A)
+   fmap :: (a -> b) -> f a -> f b
+-- fmap :: (a -> b) -> (f a -> f b)
 ```
 
 There is also the identity law for functions and they must be homomorphic that, of course, apply for functors in Haskell:
