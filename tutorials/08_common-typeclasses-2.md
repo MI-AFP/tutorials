@@ -2,12 +2,30 @@
 
 ## Foldable
 
-A Foldable type is a container. The class does not require Functor superclass in order to allow containers like Set or StorableVector that have additional constraints on the element type. But many interesting Foldables are also Functors. A foldable container is a container with the added property that its items can be 'folded' to a summary value. Recall what `foldr` and `foldl` do...
+Recall the time when we were talking about folds... The `Foldable` type class provides a generalisation of list folding (`foldr` and friends) and operations derived from it to arbitrary data structures. The class does not require Functor superclass in order to allow containers like Set or StorableVector that have additional constraints on the element type. But many interesting Foldables are also Functors. A foldable container is a container with the added property that its items can be 'folded' to a summary value. Recall what `foldr` and `foldl` do...
 
 In other words, it is a type which supports "foldr". Once you support foldr, of course, it can be turned into a list, by using `toList = foldr (:) []`. This means that all Foldables have a representation as a list, but the order of the items may or may not have any particular significance. However, if a Foldable is also a Functor, parametricity and the Functor law guarantee that `toList` and `fmap` commute. Further, in the case of [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html), there is a well defined order and it is exposed as expected by `toList`. A particular kind of fold well-used by Haskell programmers is `mapM_`, which is a kind of fold over `(>>)`, and Foldable provides this along with the related `sequence_`.
 
 ```haskell
--- TODO: example
+class Foldable t where
+    foldMap :: Monoid m => (a -> m) -> t a -> m
+    foldr :: (a -> b -> b) -> b -> t a -> b
+
+    -- All of the following have default implementations:
+    fold :: Monoid m => t m -> m -- generalised mconcat
+    foldr' :: (a -> b -> b) -> b -> t a -> b
+    foldl :: (b -> a -> b) -> b -> t a -> b
+    foldl' :: (b -> a -> b) -> b -> t a -> b
+    foldr1 :: (a -> a -> a) -> t a -> a
+    foldl1 :: (a -> a -> a) -> t a -> a
+    toList :: t a -> [a]
+    null :: t a -> Bool
+    length :: t a -> Int
+    elem :: Eq a => a -> t a -> Bool
+    maximum :: Ord a => t a -> a
+    minimum :: Ord a => t a -> a
+    sum :: Num a => t a -> a
+    product :: Num a => t a -> a
 ```
 
 ## Traversable
@@ -35,6 +53,9 @@ Typical example where you use State is when you want to parse something. So for 
 newtype Parser a = Parser (String -> [(a,String)])
 -- TODO: example
 ```
+
+## Alternative and MonadPlus
+
 
 ## Monad Transformers
 
@@ -72,8 +93,16 @@ The homework to practice typeclasses from this tutorial is in repository [MI-AFP
 
 ## Further reading
 
-* [State monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State)
+* [Haskell - Foldable](https://en.wikibooks.org/wiki/Haskell/Foldable)
+* [Haskell - Traversable](https://en.wikibooks.org/wiki/Haskell/Traversable)
+* [Haskell - State monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State)
+* [Haskell - Monad transformers](https://en.wikibooks.org/wiki/Haskell/Monad_transformers)
+* [Haskell - Arrow tutorial](https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial)
+* [Haskell - Lenses and functional references](https://en.wikibooks.org/wiki/Haskell/Lenses_and_functional_references)
+* [Haskell Wiki - Foldable and Traversable](https://wiki.haskell.org/Foldable_and_Traversable)
+* [Haskell Wiki - State monad](https://wiki.haskell.org/State_Monad)
 * [Monadic parsing combinators](http://eprints.nottingham.ac.uk/223/1/pearl.pdf)
+* [LYAH - For a Few Monads More](http://learnyouahaskell.com/for-a-few-monads-more)
 * [Arrows](https://www.haskell.org/arrows/)
 * [Lens](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
 
