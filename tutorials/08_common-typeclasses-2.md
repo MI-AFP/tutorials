@@ -303,21 +303,81 @@ arrow3 :: Arrow a => a [a1] [a1]
 
 Good explanation with nice visualization is in the chapter [Understanding Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows) at wikibooks.
 
-## Lens (and Template Haskell intro)
+## Lens (and the taste of Template Haskell)
 
-The combinators in [Control.Lens](https://hackage.haskell.org/package/lens) provide a highly generic toolbox for composing families of getters, folds, isomorphisms, traversals, setters and lenses and their indexed variants.
+Last thing we are going to get into this time are *Lenses*. It is something that can make you way more productive while working with records and especially nested records - which is something really common in non-trivial programs.
 
-A lens is a first-class reference to a subpart of some data type. For instance, we have `_1` which is the lens that "focuses on" the first element of a pair. Given a lens there are essentially three things you might want to do
+The combinators in [Control.Lens](https://hackage.haskell.org/package/lens) provide a highly generic toolbox for composing families of getters, folds, isomorphisms, traversals, setters and lenses and their indexed variants. A lens is a first-class reference to a subpart of some data type. For instance, we have `_1` which is the lens that "focuses on" the first element of a pair. Given a lens there are essentially three things you might want to do:
 
 1. View the subpart
 2. Modify the whole by changing the subpart
 3. Combine this lens with another lens to look even deeper
 
-The first and the second give rise to the idea that lenses are getters and setters like you might have on an object. This intuition is often morally correct and it helps to explain the lens laws.
+If you are interested in `Control.Lens`, follow links in *Further reading* sections...
+
+### Lens example
+
+First, let's try example without lens:
 
 ```haskell
--- TODO: example
+data Point2D = Point2D { x, y :: Int } deriving Show
+data Line = Line { pA, pB :: Point2D } deriving Show
 ```
+
+```
+Main*> :type x
+x :: Point2D -> Int
+Main*> :type pA
+pA :: Line -> Point2D
+Main*> line = Line { pA = Point2D { x = 0, y = 0 }, pB = Point2D { x = 5, y = 7 } }
+Main*> line
+Line {pA = Point2D {x = 0, y = 0}, pB = Point2D {x = 5, y = 7}}
+Main*> pA line
+Point2D {x = 0, y = 0}
+Main*> x . pA $ line
+0
+Main*> x . pB $ line
+5
+Main*> line { pA = ((pA line) { y = 2 }) }  -- change y of first point
+Line {pA = Point2D {x = 0, y = 2}, pB = Point2D {x = 5, y = 7}}
+```
+
+And now with lens - it will help us:
+
+```haskell
+{-# LANGUAGE TemplateHaskell, RankNTypes #-}
+
+import Control.Lens
+
+data Point2D = Point2D { _x, _y :: Int } deriving Show
+data Line = Line { _pA, _pB :: Point2D } deriving Show
+
+makeLenses ''Point2D -- magic
+makeLenses ''Line    -- magic
+```
+
+```
+*Main> :type x
+x :: Functor f => (Int -> f Int) -> Point2D -> f Point2D
+*Main> :type pA
+pA :: Functor f => (Point2D -> f Point2D) -> Line -> f Line
+*Main> view pA line       -- view~get
+Point2D {_x = 0, _y = 0}
+*Main> view (pA.x) line   -- view~get
+0
+*Main> set (pA.y) 2 line
+Line {_pA = Point2D {_x = 0, _y = 2}, _pB = Point2D {_x = 5, _y = 7}}
+*Main> set (pA.y) 2 line
+Line {_pA = Point2D {_x = 0, _y = 2}, _pB = Point2D {_x = 5, _y = 7}}
+*Main> over (pB.x) (+5) line
+Line {_pA = Point2D {_x = 0, _y = 0}, _pB = Point2D {_x = 10, _y = 7}}
+```
+
+### What is `makeLenses`
+
+The function `makeLenses` indeed does some magic! From its type signature `makeLenses :: Language.Haskell.TH.Syntax.Name -> Language.Haskell.TH.Lib.DecsQ`, you can see it has something to do with [Template Haskell](https://wiki.haskell.org/Template_Haskell). It is GHC extension that allows metaprogramming. In this case the function `makeLenses` builds lenses (and traversals) with a sensible default configuration. You need to provide the data type name where the record start with underscore and it will basically generate lenses for you. 
+
+Template Haskell is very powerful and allows you to do interesting stuff, but is very advanced and we will leave it up to you if you want to look at it...
 
 ## Task assignment
 
@@ -336,5 +396,9 @@ The homework to practice typeclasses from this tutorial is in repository [MI-AFP
 * [Monadic parsing combinators](http://eprints.nottingham.ac.uk/223/1/pearl.pdf)
 * [LYAH - For a Few Monads More](http://learnyouahaskell.com/for-a-few-monads-more)
 * [Arrows](https://www.haskell.org/arrows/)
-* [Lens](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
+* [Lens](http://lens.github.io/tutorial.html)
+* [Control.Lens.Tutorial](https://hackage.haskell.org/package/lens-tutorial/docs/Control-Lens-Tutorial.html)
+* [SchoolOfHaskell - Lens tutorial](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
+* [Lenses In Pictures](http://adit.io/posts/2013-07-22-lenses-in-pictures.html)
+* [Next Level MTL - George Wilson - BFPG 2016-06 (Lens, Monad transformers)](https://www.youtube.com/watch?v=GZPup5Iuaqw)
 
