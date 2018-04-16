@@ -163,21 +163,76 @@ ciao
 
 ## State
 
-As you might have noticed, in Haskell it is not so easy to maintain state because the lack of immutable global variable. For working with state is here the State monad used as follows:
+As you know Haskell is great, there is no mutability, everything has mathematical background, and it works well. Not having some mutable state is one of the biggest problems for programmers used to imperative style. When you want to do same "stateful computation", you need to pass the state (or context) to the function, do something, and get the result with **new** (*new - next one, no mutability*)  state that you can pass further. This creates a pattern and it is [State Monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State). You can write your own or use [Control.Monad.State](https://hackage.haskell.org/package/mtl/docs/Control-Monad-State.html) and (little bit different) [Control.Monad.Trans.State](https://hackage.haskell.org/package/transformers/docs/Control-Monad-Trans-State.html)
 
 ```haskell
+import Control.Monad
+
 newtype State s a = State { runState :: s -> (a, s) }
--- TODO: example
+
+instance Functor (State s) where
+  fmap = Control.Monad.liftM
+
+instance Applicative (State s) where
+  pure = return
+  (<*>) = Control.Monad.ap
+
+instance Monad (State s) where
+  return x  = State (\s -> (x, s))
+  p >>= k   = State $ \s0 ->                       -- Sequencing:
+                      let (x, s1) = runState p s0  -- Running p on s0.
+                      in runState (k x) s1         -- Running k on s1.
 ```
 
-## Parser
+There are two interesting things. First, `State` is record type with one field of type `s -> (a, s)`. Then `(>>=)` operator returns a `State` with function that first runs `p` on given state `s0`, get intermediary result `(x, s)` and returns result of running `k x` on `s1`
 
-Typical example where you use State is when you want to parse something. So for this purpose we have Parser monadic combinator as follows:
+### Example: simple counter
+
+If it is not clear yes, it is not so weird - let's look at an simple example.
 
 ```haskell
-newtype Parser a = Parser (String -> [(a,String)])
--- TODO: example
+import Control.Monad.State
+
+type Counter = State Int Int
+
+tick :: Counter
+tick = state (\x -> (x + 1, x + 1))
+
+tick3 :: Counter
+tick3 = do
+          tick
+          tick
+          tick
+
+main = do
+          print (evalState tick3 0)
+          print (evalState tick3 5)
 ```
+
+If still not clear, try to read about `Reader` and `Writer` monads and looks [here](http://adit.io/posts/2013-06-10-three-useful-monads.html).
+
+### Random in Haskell
+
+When you are using `System.Random`, you work with `State` - `State` is the generator for pseudorandom numbers (some equation with "memory"). 
+
+```haskell
+import System.Random
+
+main = do
+   gen <- newStdGen   -- state
+   let ns = randoms gen :: [Int]
+   print $ take 10 ns
+```
+
+### Parser
+
+Another typical example where you use `State` is when you want to parse something. So for this purpose we have Parser monadic combinator as follows:
+
+```haskell
+newtype Parser a = Parser (parse :: String -> [(a,String)])
+```
+
+A very nice example is [here](http://dev.stephendiehl.com/fun/002_parsers.html).
 
 ## Alternative and MonadPlus
 
@@ -225,6 +280,53 @@ main = do
 ```
 
 ## Monad Transformers
+
+We have seen how monads can help handling IO actions, Maybe, lists, and state. With monads providing a common way to use such useful general-purpose tools, a natural thing we might want to do is using the capabilities of several monads at once. For instance, a function could use both I/O and Maybe exception handling. While a type like `IO (Maybe a)` would work just fine, it would force us to do pattern matching within `IO` do-blocks to extract values, something that the `Maybe` monad was meant to spare us from. Sounds like a lot of pain, right?!
+
+Luckily, we have monad transformers that can be used to combine monads in this way, safe us time, and make the code easier to read.
+
+### MaybeT
+
+Consider following simple program:
+
+```haskell
+getPassphrase :: IO (Maybe String)
+getPassphrase = do s <- getLine
+                   if isValid s then return $ Just s
+                                else return Nothing
+
+-- The validation test could be anything we want it to be.
+isValid :: String -> Bool
+isValid s = length s >= 8
+            && any isAlpha s
+            && any isNumber s
+            && any isPunctuation s
+
+askPassphrase :: IO ()
+askPassphrase = do putStrLn "Insert your new passphrase:"
+                   maybe_value <- getPassphrase
+                   case maybe_value of
+                       Just value -> do putStrLn "Storing in database..."  -- do stuff
+                       Nothing -> putStrLn "Passphrase invalid."
+```
+
+Not nice even for a simple example. Now, we will get rid of the complexity with [MaybeT](https://hackage.haskell.org/package/transformers/docs/Control-Monad-Trans-Maybe.html).
+
+```haskell
+-- newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+
+getPassphrase :: MaybeT IO String
+getPassphrase = do s <- lift getLine
+                   guard (isValid s) -- Alternative provides guard.
+                   return s
+
+askPassphrase :: MaybeT IO ()
+askPassphrase = do lift $ putStrLn "Insert your new passphrase:"
+                   value <- getPassphrase
+                   lift $ putStrLn "Storing in database..."
+```
+
+For more about monad transformers visit [this](https://en.wikibooks.org/wiki/Haskell/Monad_transformers) and the [transformers](https://hackage.haskell.org/package/transformers) package.
 
 ## Category and Arrow
 
