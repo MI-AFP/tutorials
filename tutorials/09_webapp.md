@@ -86,6 +86,38 @@ main = withSocketsDo $ do
 
 ### Specialized libraries
 
+Naturally, there are many specialized libraries that provide simpler interface for network communication than are plain sockets when you want to work with some specific protocol (POP3, SMTP, SSH, or HTTP). Some are listed [here](https://wiki.haskell.org/Applications_and_libraries/Network) but you can find more on [Hackage](https://hackage.haskell.org).
+
+The need of REST API client is something very common. For writting simple one, you may use [wreq](https://hackage.haskell.org/package/wreq) package. It provides simple but powerful lens-based API, is capable of simple but powerful lens-based API, and supports often used techniques like OAuth, decompression, file upload, etc.
+
+```haskell
+-- GitHub API: list public repositories of user
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Lens
+import Data.Aeson.Lens
+import Data.ByteString.Char8 hiding (putStrLn, getLine)
+import qualified Data.Text as T (unpack)
+import Data.Foldable
+import Network.Wreq
+
+
+mkURI :: String -> String
+mkURI username = "https://api.github.com/users/" ++ username ++ "/repos"
+
+getRepos :: String -> IO [String]
+getRepos username = do
+  r <- get (mkURI username)
+  return . fmap T.unpack $ r ^.. responseBody . values . key "full_name" . _String
+
+main :: IO ()
+main = do
+  putStrLn "Enter GitHub username:"
+  username <- getLine
+  repos <- getRepos username
+  putStrLn $ "## First 25 public repos: "
+  traverse_ putStrLn repos
+```
+
 ## Web Frameworks overview
 
 As with other languages, you usually don't want to build web application from scratch which would bind ports, listen and parse requests and compose responses. For better abstraction you want to use a web framework.
@@ -189,7 +221,60 @@ Surprisingly easy, right?!
 
 #### Blaze templates
 
+One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is a blazingly fast HTML combinator library for the Haskell programming language.
+
+-- TODO: výhoda psaní "HTML" markup v Haskellu -> typová kontrola
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Text as T
+import Text.Blaze.Html5 as H hiding (main)
+import Text.Blaze.Html5.Attributes as A
+import Text.Blaze.Html.Renderer.Pretty (renderHtml)
+
+type User = String
+
+userInfo :: Maybe User -> Html
+userInfo u = H.div ! A.id "user-info" $ case u of
+    Nothing ->
+        a ! href "/login" $ "Please login."
+    Just user -> do
+        "Logged in as "
+        toHtml $ T.pack user
+
+somePage :: Maybe User -> Html
+somePage u = html $ do
+    H.head $ do
+        H.title "Some page."
+    H.body $ do
+        userInfo u
+        "The rest of the page."
+
+main :: IO ()
+main = putStr . renderHtml $ somePage (Just "Marek")
+```
+
+Interesting tool, that you might find useful, is [blaze-from-html](https://hackage.haskell.org/package/blaze-from-html).
+
 #### Hastache templates
+
+If you are already familiar with some web development, you've probably heard about [{{ mustache }}](http://mustache.github.io) templates. In Haskell, we have Haskell implementation of Mustache templates called [hastache](https://hackage.haskell.org/package/hastache).
+
+```haskell
+import Text.Hastache 
+import Text.Hastache.Context 
+import qualified Data.Text.Lazy.IO as TL 
+
+main = hastacheStr defaultConfig (encodeStr template) (mkStrContext context)
+    >>= TL.putStrLn
+
+template = "Hello, {{#reverse}}world{{/reverse}}! We know you, {{name}}!" 
+
+context "reverse" = MuLambda (reverse . decodeStr)
+context "name" = MuVariable "Haskell"
+```
+
+Useful source of information what can you do in this template are [examples](https://github.com/lymar/hastache/tree/master/examples).
 
 #### Persistence with Persistent
 
