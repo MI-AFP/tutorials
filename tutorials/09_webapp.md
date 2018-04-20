@@ -4,9 +4,85 @@ Haskell can be (of course) used for network communication and also for building 
 
 ## Network communication
 
+On they way to web applications, it is good to know how you can work with network communication on lower levels than is some web framework.
+
 ### Sockets
 
-### Server-client demo
+The most low level solutions for you is working directly with sockets via [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) module. With that, you have full control over the communication. Essentially the entire C socket API is exposed through this module, so if you are familiar with sockets from C, then it will be easy for you in Haskell: `bind`, `listen`, `receive`, `send`, `getAddrInfo`, etc.
+
+### Server-client demo with sockets
+
+There is demo with echo server and client in the [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) documentation. We will show a bit simpler example without forking.
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+module Main (main) where
+
+import qualified Control.Exception as E
+import Control.Monad (unless, forever, void)
+import qualified Data.ByteString as S
+import qualified Data.ByteString.Char8 as C
+import Network.Socket hiding (recv)
+import Network.Socket.ByteString (recv, sendAll)
+
+main :: IO ()
+main = withSocketsDo $ do
+    addr <- mkAddr "localhost" "3000"
+    E.bracket (open addr) close loop
+  where
+    mkAddr host port = do
+        let hints = defaultHints {
+                addrFlags = [AI_PASSIVE]
+              , addrSocketType = Stream
+              }
+        addr:_ <- getAddrInfo (Just hints) (Just host) (Just port)
+        return addr
+    open addr = do
+        sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+        setSocketOption sock ReuseAddr 1
+        bind sock (addrAddress addr)
+        listen sock 10
+        return sock
+    loop sock = forever $ do
+        (conn, peer) <- accept sock
+        putStrLn $ "Connection from " ++ show peer
+        msg <- recv conn 1024
+        C.putStrLn $ msg
+        unless (S.null msg) $ do
+          sendAll conn (S.reverse msg)
+        close conn
+```
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+module Main (main) where
+
+import qualified Control.Exception as E
+import qualified Data.ByteString.Char8 as C
+import Network.Socket hiding (recv)
+import Network.Socket.ByteString (recv, sendAll)
+
+main :: IO ()
+main = withSocketsDo $ do
+    addr <- mkAddr "localhost" "3000"
+    E.bracket (open addr) close talk
+  where
+    mkAddr host port = do
+        let hints = defaultHints { addrSocketType = Stream }
+        addr:_ <- getAddrInfo (Just hints) (Just host) (Just port)
+        return addr
+    open addr = do
+        sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+        connect sock $ addrAddress addr
+        return sock
+    talk sock = do
+        putStrLn "What do you want to send?"
+        toSend <- getLine
+        sendAll sock (C.pack toSend)
+        msg <- recv sock 1024
+        putStr "You received: "
+        C.putStrLn msg
+```
 
 ### Specialized libraries
 
