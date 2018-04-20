@@ -202,6 +202,8 @@ main :: IO ()
 main = warp 3000 HelloWorld
 ``` 
 
+As you can see from the last line, Yesod uses web server [warp](https://hackage.haskell.org/package/warp).
+
 ### Scotty
 
 [Scotty](https://github.com/scotty-web/scotty) is another Haskell web framework inspired by Ruby's [Sinatra](http://sinatrarb.com), using [WAI](https://hackage.haskell.org/package/wai) and [Warp](https://hackage.haskell.org/package/warp) (a fast, light-weight web server for WAI applications). You can write your own application just with WAI (Web Application Interface), but Scotty provides you better abstractions from low-level communication. Sadly there is not so much documentation about Scotty, everything is just on [GitHub](https://github.com/scotty-web/scotty). Scotty uses [Blaze HTML](https://hackage.haskell.org/package/blaze-html) for HTML "templates".
@@ -325,6 +327,59 @@ main = runSqlite ":memory:" $ do
 ```
 
 Persistent uses *Template Haskell* for declaration of persistent model.
+
+## WAI and testing wep apps
+
+There must be some interface between a web application and the web server where the application is running. You may have heard about something like [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface), [FastCGI](https://en.wikipedia.org/wiki/FastCGI), [WSGI](https://cs.wikipedia.org/wiki/Web_Server_Gateway_Interface), or similar. As is [WSGI](https://cs.wikipedia.org/wiki/Web_Server_Gateway_Interface) for Python web applications, we have [Web Application Interface (WAI)](https://www.stackage.org/package/wai) in Haskell.
+
+### Web app with plain WAI
+
+It is possible to write simple web application with just WAI and without any additional web framework.
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.HTTP.Types
+import Network.Wai.Handler.Warp (run)
+
+app :: Application
+app _ respond = do
+    putStrLn "I've done some IO here"
+    respond $ responseLBS
+        status200
+        [("Content-Type", "text/plain")]
+        "Hello, Web!"
+
+main :: IO ()
+main = do
+    putStrLn $ "http://localhost:8080/"
+    run 8080 app
+```
+
+### HSpec & WAI
+
+https://github.com/hspec/hspec-wai
+https://begriffs.com/posts/2014-10-19-warp-server-controller-test.html
+
+```haskell
+app :: IO Application
+app = S.scottyApp $ do
+  S.get "/" $ do
+    S.text "hello"
+
+spec :: Spec
+spec = with app $
+  describe "GET /" $ do
+    it "responds with 200" $
+      get "/" `shouldRespondWith` 200
+
+    it "responds with 'hello'" $
+      get "/" `shouldRespondWith` "hello"
+
+    it "responds with 200 / 'hello'" $
+      get "/" `shouldRespondWith` "hello" {matchStatus = 200}
+```
+
 
 ## Example app: Simple blog with Scotty
 
