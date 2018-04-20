@@ -1,6 +1,6 @@
 # Web application in Haskell
 
-Haskell is possible to use web applications and it has some advantages when compared to others like PHP, Python or Java.
+Haskell can be (of course) used for network communication and also for building various web applications. In this tutorial, we are going to look at basics of network communication in Haskell, some specialized libraries making it simplet, and then at web frameworks. 
 
 ## Network communication
 
