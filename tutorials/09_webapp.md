@@ -221,9 +221,7 @@ Surprisingly easy, right?!
 
 #### Blaze templates
 
-One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is a blazingly fast HTML combinator library for the Haskell programming language.
-
--- TODO: výhoda psaní "HTML" markup v Haskellu -> typová kontrola
+One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is a blazingly fast HTML combinator library for the Haskell programming language. Huge advantage of Blaze is that you write HTML via HTML-like lightweight DSL in Haskell with great type system. Blaze and Haskell won't allow you to do non-sense HTML.
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -278,7 +276,55 @@ Useful source of information what can you do in this template are [examples](htt
 
 #### Persistence with Persistent
 
-https://wiki.haskell.org/Web/Databases_and_Persistence
+Again, there are several prepared libraries for working with persistence (DB) - take a look [here](https://wiki.haskell.org/Web/Databases_and_Persistence) or search the [Hackage](https://hackage.haskell.org). One of the most used is [persistent](https://hackage.haskell.org/package/persistent) also with various [extensions](https://hackage.haskell.org/packages/search?terms=persistent). There is nice documentation of this package in Yesod [book](https://www.yesodweb.com/book/persistent), but you can use it with any framework or even without any framework - just whenever you need to persist some data in database.
+
+```haskell
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    deriving Show
+BlogPost
+    title String
+    authorId PersonId
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite ":memory:" $ do
+      runMigration migrateAll :: IO ()
+
+    johnId <- insert $ Person "John Doe" $ Just 35
+    janeId <- insert $ Person "Jane Doe" Nothing
+
+    insert $ BlogPost "My fr1st p0st" johnId
+    insert $ BlogPost "One more for good measure" johnId
+
+    oneJohnPost <- selectList [BlogPostAuthorId ==. johnId] [LimitTo 1]
+    liftIO $ print (oneJohnPost :: [Entity BlogPost])
+
+    john <- get johnId
+    liftIO $ print (john :: Maybe Person)
+
+    delete janeId
+    deleteWhere [BlogPostAuthorId ==. johnId]
+```
+
+Persistent uses *Template Haskell* for declaration of persistent model.
 
 ## Example app: Simple blog with Scotty
 
@@ -290,6 +336,9 @@ The homework to complete a simple web app is in repository [MI-AFP/hw09](https:/
 
 ## Further reading
 
+* [YesodBook - Persistent](https://www.yesodweb.com/book/persistent)
+* [adit.io - Making A Website With Haskell](http://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
+* [24 Days of Hackage: blaze-html](https://ocharles.org.uk/blog/posts/2012-12-22-24-days-of-hackage-blaze.html)
 * [Haskell web frameworks](https://wiki.haskell.org/Web/Frameworks)
 * [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem)
 * [Reddit: Web development using Haskell](https://www.reddit.com/r/haskell/comments/2wfap0/web_development_using_haskell/)
