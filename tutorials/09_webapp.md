@@ -1,18 +1,18 @@
 # Web application in Haskell
 
-Haskell can be (of course) used for network communication and also for building various web applications. In this tutorial, we are going to look at basics of network communication in Haskell, some specialized libraries making it simplet, and then at web frameworks. 
+Haskell can be (of course) used for network communication and also for building various web applications. In this tutorial, we are going to look at basics of network communication in Haskell, some specialized libraries making it simpler, and then at web frameworks. 
 
 ## Network communication
 
-On they way to web applications, it is good to know how you can work with network communication on lower levels than is some web framework.
+On the way to web applications, it is good to know how you can work with network communication on lower levels than is some web framework.
 
 ### Sockets
 
-The most low level solutions for you is working directly with sockets via [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) module. With that, you have full control over the communication. Essentially the entire C socket API is exposed through this module, so if you are familiar with sockets from C, then it will be easy for you in Haskell: `bind`, `listen`, `receive`, `send`, `getAddrInfo`, etc.
+The most low-level solutions for you are working directly with sockets via [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) module. With that, you have full control over the communication. Essentially the entire C socket API is exposed through this module, so if you are familiar with sockets from C, then it will be easy for you in Haskell: `bind`, `listen`, `receive`, `send`, `getAddrInfo`, etc.
 
 ### Server-client demo with sockets
 
-There is demo with echo server and client in the [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) documentation. We will show a bit simpler example without forking.
+There is a demo with echo server and client in the [Network.Socket](https://hackage.haskell.org/package/network/docs/Network-Socket.html) documentation. We will show a bit simpler example without forking.
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -86,9 +86,9 @@ main = withSocketsDo $ do
 
 ### Specialized libraries
 
-Naturally, there are many specialized libraries that provide simpler interface for network communication than are plain sockets when you want to work with some specific protocol (POP3, SMTP, SSH, or HTTP). Some are listed [here](https://wiki.haskell.org/Applications_and_libraries/Network) but you can find more on [Hackage](https://hackage.haskell.org).
+Naturally, there are many specialized libraries that provide a simpler interface for network communication than are plain sockets when you want to work with some specific protocol (POP3, SMTP, SSH, or HTTP). Some are listed [here](https://wiki.haskell.org/Applications_and_libraries/Network) but you can find more on [Hackage](https://hackage.haskell.org).
 
-The need of REST API client is something very common. For writting simple one, you may use [wreq](https://hackage.haskell.org/package/wreq) package. It provides simple but powerful lens-based API, is capable of simple but powerful lens-based API, and supports often used techniques like OAuth, decompression, file upload, etc.
+The need of REST API client is something very common. For writing a simple one, you may use [wreq](https://hackage.haskell.org/package/wreq) package. It provides simple but powerful lens-based API, is capable of simple but powerful lens-based API, and supports often used techniques like OAuth, decompression, file upload, etc.
 
 ```haskell
 -- GitHub API: list public repositories of user
@@ -120,7 +120,7 @@ main = do
 
 ## Web Frameworks overview
 
-As with other languages, you usually don't want to build web application from scratch which would bind ports, listen and parse requests and compose responses. For better abstraction you want to use a web framework.
+As with other languages, you usually don't want to build a web application from scratch which would bind ports, listen and parse requests and compose responses. For better abstraction, you might want to use a web framework.
 
 There are several frameworks in Haskell (see [here](https://wiki.haskell.org/Web/Frameworks)) and here is our list of well-known:
 
@@ -135,7 +135,7 @@ We are going to show briefly Snap and Yesod because they are used quite often an
 
 ### Snap
 
-[Snap](http://snapframework.com) is a simple web development framework for unix systems, written in the Haskell programming language. It consists of:
+[Snap](http://snapframework.com) is a simple web development framework for UNIX systems, written in the Haskell programming language. It consists of:
 
 * A fast HTTP server library
 * A sensible and clean monad for web programming
@@ -168,13 +168,13 @@ main = quickHttpServe site
 
 #### Snaplets
 
-Snap also has very nice philosophy in form of an optional system for building reusable pieces web functionality called “snaplets”. Snaplets make it easy to share and reuse common code across multiple web apps. The default snaplets let you get a full-featured web application up and running in no time.
+Snap also has a very nice philosophy in form of an optional system for building reusable pieces web functionality called “snaplets”. Snaplets make it easy to share and reuse common code across multiple web apps. The default snaplets let you get a full-featured web application up and running in no time.
 
 If you want to build such application read [this](http://snapframework.com/docs/tutorials/snaplets-tutorial).
 
 ### Yesod
 
-[Yesod](https://www.yesodweb.com) is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications. It build on Haskell features such as compile-time errors (instead of runtime), seamlessly asynchronous computation, scalability, good performance and light-weight syntax.
+[Yesod](https://www.yesodweb.com) is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications. It builds on Haskell features such as compile-time errors (instead of runtime), seamlessly asynchronous computation, scalability, good performance and light-weight syntax.
 
 Another advantage of Yesod is comprehensive documentation including:
 
@@ -187,7 +187,7 @@ If that is not enough you can ask the [community](https://www.yesodweb.com/page/
 
 #### "Hello World"
 
-From the following example, you can see that Yesod uses a lot of *Template Haskell* which makes it little bit hard to get at the beginning. 
+From the following example, you can see that Yesod uses a lot of *Template Haskell* which makes it a little bit hard to get at the beginning. 
 
 ```haskell
 {-# LANGUAGE OverloadedStrings     #-}
@@ -232,7 +232,7 @@ Surprisingly easy, right?!
 
 #### Blaze templates
 
-One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is a blazingly fast HTML combinator library for the Haskell programming language. Huge advantage of Blaze is that you write HTML via HTML-like lightweight DSL in Haskell with great type system. Blaze and Haskell won't allow you to do non-sense HTML.
+One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is a blazingly fast HTML combinator library for the Haskell programming language. A huge advantage of Blaze is that you write HTML via HTML-like lightweight DSL in Haskell with the great type system. Blaze and Haskell won't allow you to do non-sense HTML.
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -265,6 +265,8 @@ main = putStr . renderHtml $ somePage (Just "Marek")
 
 Interesting tool, that you might find useful, is [blaze-from-html](https://hackage.haskell.org/package/blaze-from-html).
 
+You might ask "What about styles?" or "What if want to have some JavaScript there?". For styles, there is [clay](https://hackage.haskell.org/package/clay) - a CSS preprocessor like LESS and Sass, but implemented as an embedded domain specific language (EDSL) in Haskell. Similarly to Blaze, you write CSS but in Haskell. For JavaScript, stay tuned for next tutorial.
+
 #### Hastache templates
 
 If you are already familiar with some web development, you've probably heard about [{{ mustache }}](http://mustache.github.io) templates. In Haskell, we have Haskell implementation of Mustache templates called [hastache](https://hackage.haskell.org/package/hastache).
@@ -283,7 +285,7 @@ context "reverse" = MuLambda (reverse . decodeStr)
 context "name" = MuVariable "Haskell"
 ```
 
-Useful source of information what can you do in this template are [examples](https://github.com/lymar/hastache/tree/master/examples).
+A useful source of information what can you do in this template are [examples](https://github.com/lymar/hastache/tree/master/examples).
 
 #### Databases
 
@@ -296,7 +298,7 @@ First, you can work with database with low-level approach where you have own *CR
 - [Database.Redis](http://hackage.haskell.org/package/redis)
 - etc.
 
-For higher level, you can then use [Haskell Database Connectivity (HDBC)](http://hackage.haskell.org/package/HDBC) for SQL databases. A good introduction into HDBC is in [Chapter 21 - Using Databases](http://book.realworldhaskell.org/read/using-databases.html) of the [Real World Haskell](http://book.realworldhaskell.org/) book.
+For higher level, you can then use [Haskell Database Connectivity (HDBC)](http://hackage.haskell.org/package/HDBC) for SQL databases. A good introduction to HDBC is in [Chapter 21 - Using Databases](http://book.realworldhaskell.org/read/using-databases.html) of the [Real World Haskell](http://book.realworldhaskell.org/) book.
 
 ```sql
 CREATE TABLE test(id INTEGER PRIMARY KEY, str TEXT);\
@@ -326,7 +328,7 @@ main = do
 
 #### Persistence with Persistent
 
-Again, there are several prepared libraries for working with persistence (DB) - take a look [here](https://wiki.haskell.org/Web/Databases_and_Persistence) or search the [Hackage](https://hackage.haskell.org). One of the most used is [persistent](https://hackage.haskell.org/package/persistent) also with various [extensions](https://hackage.haskell.org/packages/search?terms=persistent). There is nice documentation of this package in Yesod [book](https://www.yesodweb.com/book/persistent), but you can use it with any framework or even without any framework - just whenever you need to persist some data in database.
+Again, there are several prepared libraries for working with persistence (DB) - take a look [here](https://wiki.haskell.org/Web/Databases_and_Persistence) or search the [Hackage](https://hackage.haskell.org). One of the most used is [persistent](https://hackage.haskell.org/package/persistent) also with various [extensions](https://hackage.haskell.org/packages/search?terms=persistent). There is nice documentation of this package in Yesod [book](https://www.yesodweb.com/book/persistent), but you can use it with any framework or even without any framework - just whenever you need to persist some data in a database.
 
 ```haskell
 {-# LANGUAGE EmptyDataDecls             #-}
@@ -374,15 +376,15 @@ main = runSqlite ":memory:" $ do
     deleteWhere [BlogPostAuthorId ==. johnId]
 ```
 
-Persistent uses *Template Haskell* for declaration of persistent model.
+Persistent uses *Template Haskell* for a declaration of a persistent model.
 
-## WAI and testing wep apps
+## WAI and testing web apps
 
 There must be some interface between a web application and the web server where the application is running. You may have heard about something like [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface), [FastCGI](https://en.wikipedia.org/wiki/FastCGI), [WSGI](https://cs.wikipedia.org/wiki/Web_Server_Gateway_Interface), or similar. As is [WSGI](https://cs.wikipedia.org/wiki/Web_Server_Gateway_Interface) for Python web applications, we have [Web Application Interface (WAI)](https://www.stackage.org/package/wai) in Haskell.
 
 ### Web app with plain WAI
 
-It is possible to write simple web application with just WAI and without any additional web framework.
+It is possible to write a simple web application with just WAI and without any additional web framework.
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -406,32 +408,59 @@ main = do
 
 ### HSpec & WAI
 
-https://github.com/hspec/hspec-wai
-https://begriffs.com/posts/2014-10-19-warp-server-controller-test.html
+Web applications in Haskell can be tested via WAI. All applications that conform with WAI can be tested in the same way like a black box - send a request and check the response. In our favorite [Hspec](https://hspec.github.io), there is an extension [hspec-wai](https://github.com/hspec/hspec-wai) that allows you to test web applications in very easy and readable way as we are used to with hspec.
 
 ```haskell
+{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
+module Main (main) where
+
+import           Test.Hspec
+import           Test.Hspec.Wai
+import           Test.Hspec.Wai.JSON
+
+import           Network.Wai (Application)
+import qualified Web.Scotty as S
+import           Data.Aeson (Value(..), object, (.=))
+
+main :: IO ()
+main = hspec spec
+
 app :: IO Application
 app = S.scottyApp $ do
   S.get "/" $ do
     S.text "hello"
 
+  S.get "/some-json" $ do
+    S.json $ object ["foo" .= Number 23, "bar" .= Number 42]
+
 spec :: Spec
-spec = with app $
+spec = with app $ do
   describe "GET /" $ do
-    it "responds with 200" $
+    it "responds with 200" $ do
       get "/" `shouldRespondWith` 200
 
-    it "responds with 'hello'" $
+    it "responds with 'hello'" $ do
       get "/" `shouldRespondWith` "hello"
 
-    it "responds with 200 / 'hello'" $
+    it "responds with 200 / 'hello'" $ do
       get "/" `shouldRespondWith` "hello" {matchStatus = 200}
+
+    it "has 'Content-Type: text/plain; charset=utf-8'" $ do
+      get "/" `shouldRespondWith` 200 {matchHeaders = ["Content-Type" <:> "text/plain; charset=utf-8"]}
+
+  describe "GET /some-json" $ do
+    it "responds with some JSON" $ do
+      get "/some-json" `shouldRespondWith` [json|{foo: 23, bar: 42}|]
 ```
 
+This is just a simple (but often sufficient) example. Of course, you can test much more:
 
-## Example app: Simple blog with Scotty
+- https://begriffs.com/posts/2014-10-19-warp-server-controller-test.html
+- https://www.spock.li/tutorials/testing
 
-Now let's put it all together and look at the development of simple blog app with database, authentication, and simple templates. 
+## Example app: a simple blog with Scotty
+
+Now let's put it all together and look at the development of simple blog app with a database, authentication, and simple templates. 
 
 * [MI-AFP/scotty-blog](https://github.com/MI-AFP/scotty-blog)
 
