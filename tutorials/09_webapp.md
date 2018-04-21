@@ -122,7 +122,16 @@ main = do
 
 As with other languages, you usually don't want to build web application from scratch which would bind ports, listen and parse requests and compose responses. For better abstraction you want to use a web framework.
 
-There are several frameworks in Haskell (see [here](https://wiki.haskell.org/Web/Frameworks)). We are going to show briefly Snap and Yesod because they are used quite often and then we will show more with our favorite Scotty. 
+There are several frameworks in Haskell (see [here](https://wiki.haskell.org/Web/Frameworks)) and here is our list of well-known:
+
+- [Happstack](http://happstack.com)
+- [Scotty](https://github.com/scotty-web/scotty)
+- [Servant](https://haskell-servant.github.io)
+- [Snap](http://snapframework.com)
+- [Spock](https://www.spock.li)
+- [Yesod](https://www.yesodweb.com)
+
+We are going to show briefly Snap and Yesod because they are used quite often and then we will show more with our favorite Scotty. Next time, we will look at different one to build quickly REST API for our front-end app(s).
 
 ### Snap
 
@@ -276,6 +285,45 @@ context "name" = MuVariable "Haskell"
 
 Useful source of information what can you do in this template are [examples](https://github.com/lymar/hastache/tree/master/examples).
 
+#### Databases
+
+First, you can work with database with low-level approach where you have own *CREATE* script and then other SQL (or other) parametric scripts in the code. For that, you can usually use module `Database.X` where `X` is type of datase:
+
+- [Database.SQLite](http://hackage.haskell.org/package/sqlite-simple)
+- [Database.MySQL](http://hackage.haskell.org/package/mysql)
+- [Database.PostgreSQL](http://hackage.haskell.org/package/PostgreSQL)
+- [Database.MongoDB](http://hackage.haskell.org/package/mongoDB)
+- [Database.Redis](http://hackage.haskell.org/package/redis)
+- etc.
+
+For higher level, you can then use [Haskell Database Connectivity (HDBC)](http://hackage.haskell.org/package/HDBC) for SQL databases. A good introduction into HDBC is in [Chapter 21 - Using Databases](http://book.realworldhaskell.org/read/using-databases.html) of the [Real World Haskell](http://book.realworldhaskell.org/) book.
+
+```sql
+CREATE TABLE test(id INTEGER PRIMARY KEY, str TEXT);\
+INSERT INTO test(str) VALUES ('test string 1');
+INSERT INTO test(str) VALUES ('test string 2');
+```
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import Control.Applicative
+import Database.SQLite.Simple
+import Database.SQLite.Simple.FromRow
+
+data TestField = TestField Int String deriving (Show)
+
+instance FromRow TestField where
+  fromRow = TestField <$> field <*> field
+
+main :: IO ()
+main = do
+  conn <- open "test.db"
+  execute conn "INSERT INTO test (str) VALUES (?)"
+    (Only ("test string 2" :: String))
+  r <- query_ conn "SELECT * from test" :: IO [TestField]
+  mapM_ print r
+```
+
 #### Persistence with Persistent
 
 Again, there are several prepared libraries for working with persistence (DB) - take a look [here](https://wiki.haskell.org/Web/Databases_and_Persistence) or search the [Hackage](https://hackage.haskell.org). One of the most used is [persistent](https://hackage.haskell.org/package/persistent) also with various [extensions](https://hackage.haskell.org/packages/search?terms=persistent). There is nice documentation of this package in Yesod [book](https://www.yesodweb.com/book/persistent), but you can use it with any framework or even without any framework - just whenever you need to persist some data in database.
@@ -383,7 +431,11 @@ spec = with app $
 
 ## Example app: Simple blog with Scotty
 
-//TODO: GitHub link to application and interesting parts commented here
+Now let's put it all together and look at the development of simple blog app with database, authentication, and simple templates. 
+
+* [MI-AFP/scotty-blog](https://github.com/MI-AFP/scotty-blog)
+
+Next time, we will deal a bit with frontend technologies for Haskell, functional reactive programming and [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem). So you will also see how to develop server-side and client-side separately and connect them thru some (REST) API.
 
 ## Task assignment
 
@@ -395,6 +447,6 @@ The homework to complete a simple web app is in repository [MI-AFP/hw09](https:/
 * [adit.io - Making A Website With Haskell](http://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
 * [24 Days of Hackage: blaze-html](https://ocharles.org.uk/blog/posts/2012-12-22-24-days-of-hackage-blaze.html)
 * [Haskell web frameworks](https://wiki.haskell.org/Web/Frameworks)
-* [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem)
+* [Reddit: What Haskell web framework do you use and why? ](https://www.reddit.com/r/haskell/comments/332s1k/what_haskell_web_framework_do_you_use_and_why/)
 * [Reddit: Web development using Haskell](https://www.reddit.com/r/haskell/comments/2wfap0/web_development_using_haskell/)
 * [Is Haskell a Good Choice for Web Applications?](http://jekor.com/article/is-haskell-a-good-choice-for-web-applications)
