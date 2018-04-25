@@ -458,11 +458,13 @@ This is just a simple (but often sufficient) example. Of course, you can test mu
 - https://begriffs.com/posts/2014-10-19-warp-server-controller-test.html
 - https://www.spock.li/tutorials/testing
 
-## Example app: a simple blog with Scotty
+## Example apps: 
 
-Now let's put it all together and look at the development of simple blog app with a database, authentication, and simple templates. 
+There are few examples of simple and complex web apps:
 
-* [MI-AFP/scotty-blog](https://github.com/MI-AFP/scotty-blog)
+* [dbushenko/scotty-blog](https://github.com/dbushenko/scotty-blog)
+* [DataStewardshipWizard/ds-wizard](https://github.com/DataStewardshipWizard/ds-wizard/tree/master/DSServer)
+* [DataStewardshipWizard/dsw-server](https://github.com/DataStewardshipWizard/dsw-server)
 
 Next time, we will deal a bit with frontend technologies for Haskell, functional reactive programming and [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem). So you will also see how to develop server-side and client-side separately and connect them thru some (REST) API.
 
