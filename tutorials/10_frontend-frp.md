@@ -18,6 +18,17 @@ Take a look at [Slant - What are the best solutions to "The JavaScript Problem"?
 
 ### Haste
 
+[Haste](https://haste-lang.org) is an implementation of the Haskell functional programming language, geared towards web applications. Haste is based on the GHC, which means that it supports the full Haskell language, including GHC extensions and produces highly optimized code but comes with an extended set of standard libraries. Haste support modern web technologies such as WebSockets, LocalStorage, Canvas, etc. out of the box. In addition, Haste comes prepackaged with facilities for preemptive multitasking, working with binary data and other niceties.
+
+A Haste program can be compiled into a single JavaScript file, much like traditional browser-side programs, or into a JavaScript file and a server-side binary, with strongly typed communication between the two. In essence, Haste lets you write your client-server web application as a single, type-safe program, rather than two separate programs that just happen to talk to each other over some web API as is traditional.
+
+You don’t need to throw away all of your old code to start using Haste. In addition to the standard Haskell FFI, Haste provides its own flexible mechanism for easy Haskell-JavaScript integration, using fancy type magic to allow data of any type to be used by both Haskell and JavaScript code with minimal effort.
+
+Haste programs are compact. While a certain increase in code size over hand-rolled JavaScript is unavoidable, an optimized but uncompressed Haste program is normally less than 3x the size of an equivalent hand-written program and the compiler takes special care to produce minifiable code, making the latency penalty of using Haste minimal.
+
+- Examples: [valderman/haste-compiler](https://github.com/valderman/haste-compiler/tree/master/examples)
+- API doc: [haste-compiler-0.5.5.0: Haskell To ECMAScript compiler](https://haste-lang.org/docs/haddock/0.5.5/)
+
 ### Miso
 
 ### PureScript
