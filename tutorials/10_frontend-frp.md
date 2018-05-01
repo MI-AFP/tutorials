@@ -48,6 +48,7 @@ Haste programs are compact. While a certain increase in code size over hand-roll
 
 - Examples: [valderman/haste-compiler](https://github.com/valderman/haste-compiler/tree/master/examples)
 - API doc: [haste-compiler-0.5.5.0: Haskell To ECMAScript compiler](https://haste-lang.org/docs/haddock/0.5.5/)
+- Our example: [DataStewardshipWizard/ds-wizard](https://github.com/DataStewardshipWizard/ds-wizard) and [DataStewardshipWizard/ds-form-engine](https://github.com/DataStewardshipWizard/ds-form-engine)
 
 ### Miso
 
@@ -66,16 +67,17 @@ Elm is a functional language that compiles to JavaScript. It is not a Haskell bu
 
 - Guide: [guide.elm-lang.org](https://guide.elm-lang.org)
 - Examples: [elm-lang.org/examples](http://elm-lang.org/examples)
+- Our example: [DataStewardshipWizard/dsw-client](https://github.com/DataStewardshipWizard/dsw-client)
 
 ## FRP - Functional Reactive Programming
 
-Functional reactive programming (FRP) is a programming paradigm for reactive programming (asynchronous dataflow programming) using the building blocks of functional programming (e.g. map, reduce, filter). FRP has been used for programming graphical user interfaces (GUIs), robotics, and music, aiming to simplify these problems by explicitly modeling time. 
+Functional reactive programming (FRP) is a programming paradigm for asynchronous dataflow programming using the building blocks of functional programming (such as `map`, `filter`, `fold`s, higher-order functions, etc.). It has been used often for programming graphical user interfaces (GUIs), robotics, and music, aiming to simplify these problems by explicitly modeling time. Good example to imagine what is it about is spreadsheet calculator. You have cells that computes something from different cells and when you edit some, related will recalculate - you do not tell what should be recalculated nor recalculate all but just those where the change will propagate. See? It is action and reaction!
 
 There are several libraries for working with the FRP in Haskell with slightly different approaches. You can see the list [here](https://wiki.haskell.org/Functional_Reactive_Programming#Libraries).
 
 ### FRP principles
 
-For better understanding what is FRP about and what are the basic concepts, please read https://gist.github.com/staltz/868e7e9bc2a7b8c1f754...
+For better understanding what is FRP about and what are the basic concepts, please read [The introduction to Reactive Programming you've been missing (by @andrestaltz)](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)...
 
 ### Reactive
 
@@ -99,10 +101,17 @@ The goal of the library is to provide a solid foundation.
 
 ![Signals in Yampa](https://wiki.haskell.org/wikiupload/thumb/1/10/Yampa_signal_functions.svg/624px-Yampa_signal_functions.svg.png)
 
+## Reactive programming with Elm
+
+//TODO: example of simple reactive app with Elm (converting units)
+
 ## Task assignment
 
 The homework to create a simple frontend for described REST API is in repository [MI-AFP/hw10](https://github.com/MI-AFP/hw10).
 
 ## Further reading
 
-* 
+* [Haskell on the front end](https://www.reddit.com/r/haskell/comments/7ax2ji/haskell_on_the_front_end/)
+* [Zdroják.cz - Elm (czech only)](https://www.zdrojak.cz/clanky/elm-uvod/)
+* [gelisam/frp-zoo (FRP libs comparison)](https://github.com/gelisam/frp-zoo)
+* [FRP explanation using reactive-banana](https://wiki.haskell.org/FRP_explanation_using_reactive-banana)
