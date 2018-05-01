@@ -8,9 +8,9 @@ In the previous tutorial, we focused on web frameworks and especially on buildin
 
 We all know what is JavaScript -- it is a dynamic, weakly typed, prototype-based and multi-paradigm programming language. Together with HTML and CSS, it is one of the three core technologies of the World Wide Web. JavaScript is used for interactive web pages and thus is an essential part of the most of modern web applications. These days, JavaScript is often also used for the server-side or even desktop applications...
 
-As obvious from above, we need JavaScript. On the other hand, JavaScript has some issues that make working with it inconvenient and make developing software harder. Some things are improving with time (newer versions of [ECMAScript](https://en.wikipedia.org/wiki/ECMAScript)) but most of them remains from the very basic principles of the language: weak-typing, late binding, weird automatic conversions, `this` behaviour, and lack of static types. There are some solutions like [CoffeeScript](http://coffeescript.org) and [TypeScript](https://www.typescriptlang.org) that are dealing with some of those...
+As obvious from above, we need JavaScript. On the other hand, JavaScript has some issues that make working with it inconvenient and make developing software harder. Some things are improving with time (newer versions of [ECMAScript](https://en.wikipedia.org/wiki/ECMAScript)) but most of them remain from the very basic principles of the language: weak-typing, late binding, weird automatic conversions, `this` behavior, and lack of static types. There are some solutions like [CoffeeScript](http://coffeescript.org) and [TypeScript](https://www.typescriptlang.org) that are dealing with some of those...
 
-But since we are now Haskellists, we would like to have something even better - Haskell-like JavaScript to solve these problems. Luckilly, we are not only ones and there are already many solutions how to compile Haskell to JavaScript or even some other languages based on Haskell that are adapted for this very specific purpose.
+But since we are now Haskellists, we would like to have something even better - Haskell-like JavaScript to solve these problems. Luckily, we are not only ones and there are already many solutions how to compile Haskell to JavaScript or even some other languages based on Haskell that are adapted for this very specific purpose.
 
 Take a look at [Slant - What are the best solutions to "The JavaScript Problem"?](https://www.slant.co/topics/1515/~solutions-to-the-javascript-problem). We are going to look at some now!
 
@@ -52,7 +52,7 @@ Haste programs are compact. While a certain increase in code size over hand-roll
 
 ### Miso
 
-**Miso** is a small "[isomorphic](http://nerds.airbnb.com/isomorphic-javascript-future-web-apps/)" [Haskell](https://www.haskell.org/) front-end framework for quickly building highly interactive single-page web applications. It features a virtual-dom, diffing / patching algorithm, attribute and property normalization, event delegation, event batching, SVG, Server-sent events, Websockets, type-safe [servant](https://haskell-servant.github.io/)-style routing and an extensible Subscription-based subsystem. Inspired by [Elm](http://elm-lang.org/), [Redux](http://redux.js.org/) and [Bobril](http://github.com/bobris/bobril). **Miso** is pure by default, but side effects (like `XHR`) can be introduced into the system via the `Effect` data type. **Miso** makes heavy use of the [GHCJS](https://github.com/ghcjs/ghcjs) FFI and therefore has minimal dependencies. **Miso** can be considered a shallow [embedded domain-specific language](https://wiki.haskell.org/Embedded_domain_specific_language) for modern web programming. ([dmjio/miso](https://github.com/dmjio/miso/edit/master/README.md))
+**Miso** is a small "[isomorphic](http://nerds.airbnb.com/isomorphic-javascript-future-web-apps/)" [Haskell](https://www.haskell.org/) front-end framework for quickly building highly interactive single-page web applications. It features a virtual-dom, diffing / patching algorithm, attribute, and property normalization, event delegation, event batching, SVG, Server-sent events, Websockets, type-safe [servant](https://haskell-servant.github.io/)-style routing and an extensible Subscription-based subsystem. Inspired by [Elm](http://elm-lang.org/), [Redux](http://redux.js.org/) and [Bobril](http://github.com/bobris/bobril). **Miso** is pure by default, but side effects (like `XHR`) can be introduced into the system via the `Effect` data type. **Miso** makes heavy use of the [GHCJS](https://github.com/ghcjs/ghcjs) FFI and therefore has minimal dependencies. **Miso** can be considered a shallow [embedded domain-specific language](https://wiki.haskell.org/Embedded_domain_specific_language) for modern web programming. ([dmjio/miso](https://github.com/dmjio/miso/edit/master/README.md))
 
 ### PureScript
 
@@ -63,7 +63,7 @@ PureScript is a strict, purely functional programming language inspired by Haske
 
 ### Elm
 
-Elm is a functional language that compiles to JavaScript. It is not a Haskell but language inspired and in some ways very similar to Haskell (see [main differences](https://gist.github.com/cobalamin/c1b83f5626df1409b512ce2faf05cf84)) - it is more different from Haskell than PureScript. It competes with projects like React as a tool for creating websites and web apps. Elm has a very strong emphasis on simplicity, ease-of-use, and quality tooling. Compiler of Elm is written in Haskell and you can work with Elm in Haskell with [Language.Elm](https://hackage.haskell.org/package/Elm).
+Elm is a functional language that compiles to JavaScript. It is not a Haskell but language inspired and in some ways very similar to Haskell (see [main differences](https://gist.github.com/cobalamin/c1b83f5626df1409b512ce2faf05cf84)) - it is more different from Haskell than PureScript. It competes with projects like React as a tool for creating websites and web apps. Elm has a very strong emphasis on simplicity, ease-of-use, and quality tooling. The compiler of Elm is written in Haskell and you can work with Elm in Haskell with [Language.Elm](https://hackage.haskell.org/package/Elm).
 
 - Guide: [guide.elm-lang.org](https://guide.elm-lang.org)
 - Examples: [elm-lang.org/examples](http://elm-lang.org/examples)
@@ -71,7 +71,7 @@ Elm is a functional language that compiles to JavaScript. It is not a Haskell bu
 
 ## FRP - Functional Reactive Programming
 
-Functional reactive programming (FRP) is a programming paradigm for asynchronous dataflow programming using the building blocks of functional programming (such as `map`, `filter`, `fold`s, higher-order functions, etc.). It has been used often for programming graphical user interfaces (GUIs), robotics, and music, aiming to simplify these problems by explicitly modeling time. Good example to imagine what is it about is spreadsheet calculator. You have cells that computes something from different cells and when you edit some, related will recalculate - you do not tell what should be recalculated nor recalculate all but just those where the change will propagate. See? It is action and reaction!
+Functional reactive programming (FRP) is a programming paradigm for asynchronous dataflow programming using the building blocks of functional programming (such as `map`, `filter`, `fold`s, higher-order functions, etc.). It has been used often for programming graphical user interfaces (GUIs), robotics, and music, aiming to simplify these problems by explicitly modeling time. A good example to imagine what is it about is spreadsheet calculator. You have cells that compute something from different cells and when you edit some, related will recalculate - you do not tell what should be recalculated nor recalculate all but just those where the change will propagate. See? It is action and reaction!
 
 There are several libraries for working with the FRP in Haskell with slightly different approaches. You can see the list [here](https://wiki.haskell.org/Functional_Reactive_Programming#Libraries).
 
@@ -81,9 +81,9 @@ For better understanding what is FRP about and what are the basic concepts, plea
 
 ### Reactive
 
-[Reactive](https://hackage.haskell.org/package/reactive) is a simple foundation for programming reactive systems functionally. Like Fran/FRP, it has a notions of (reactive) behaviors and events. Unlike most previous FRP implementations, Reactive has a hybrid demand/data-driven implementation, as described in the paper "Push-pull functional reactive programming", http://conal.net/papers/push-pull-frp/.
+[Reactive](https://hackage.haskell.org/package/reactive) is a simple foundation for programming reactive systems functionally. Like Fran/FRP, it has a notion of (reactive) behaviors and events. Unlike most previous FRP implementations, Reactive has a hybrid demand/data-driven implementation, as described in the paper "Push-pull functional reactive programming", http://conal.net/papers/push-pull-frp/.
 
-Sadly the documentation, tutorials and examples are not currently in a good condition.
+Sadly the documentation, tutorials, and examples are not currently in a good condition.
 
 ### Reactive-banana
 
