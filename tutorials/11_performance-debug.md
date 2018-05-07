@@ -1,55 +1,8 @@
 # Performance and Debugging
 
-## Performance
+## Measuring time and memory 
 
-### Measuring time and memory
-
-### Basic ideas
-
-### Boxed and unboxed types
-
-### Strictness
-
-### GHC optimization flags
-
-### Other optimization techniques
-
-### Paralelism
-
-## Debugging
-
-You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result.
-
-For example:
-
-```haskell
-func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
-```
-
-If you need more than just that, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
-
-* setting breakpoints and stepping,
-* inspecting variables,
-* tracing,
-* working with exceptions,
-* and so on.
-
-## Concurrency and optimizations
-
-Just like with GCC, you can use optimization flags with GHC. You can also drill deeper in your source code and optimize it by hand, use FFI, parallelism or concurrency, and so on in order to achieve faster computation. Good resource for that is [wiki.haskell.org/Performance](https://wiki.haskell.org/Performance) where you can look up hints for specific parts of you app and/or your compiler.
-
-For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
-
-* run parallel threads with Control.Parallel,
-* run simultaneous IO actions with forks.
-
-It is also possible to do distributed computations on clusters but it is far beyond the scope of this course.
-
-```haskell
---TODO: Control.Parallel simple example
-```
-
-## Benchmarking with Criterion
+### Benchmarking with Criterion
 
 If you are interested in such optimizations and improving your application or comparing various algorithms or their implementations, then you might find interesting to use benchmarking library. In Haskell is the most used one called [Criterion](http://www.serpentine.com/criterion/). It provides a powerful but simple way to measure software performance. It provides both a framework for executing and analysing benchmarks and a set of driver functions that makes it easy to build and run benchmarks, and to analyse their results.
 
@@ -72,6 +25,51 @@ main = defaultMain [
   ]
 ```
 It has very nice outputs with form of interactive HTML pages with charts and comparisons and have many options to use.
+
+## Performance
+
+### Basic ideas
+
+### Boxed and unboxed types
+
+### Strictness
+
+### GHC optimization flags
+
+### Other optimization techniques
+
+### Concurrency and optimizations
+
+Just like with GCC, you can use optimization flags with GHC. You can also drill deeper in your source code and optimize it by hand, use FFI, parallelism or concurrency, and so on in order to achieve faster computation. Good resource for that is [wiki.haskell.org/Performance](https://wiki.haskell.org/Performance) where you can look up hints for specific parts of you app and/or your compiler.
+
+For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
+
+* run parallel threads with Control.Parallel,
+* run simultaneous IO actions with forks.
+
+It is also possible to do distributed computations on clusters but it is far beyond the scope of this course.
+
+```haskell
+--TODO: Control.Parallel simple example
+```
+
+## Debugging
+
+You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result.
+
+For example:
+
+```haskell
+func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
+```
+
+If you need more than just that, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
+
+* setting breakpoints and stepping,
+* inspecting variables,
+* tracing,
+* working with exceptions,
+* and so on.
 
 ## Further reading
 
