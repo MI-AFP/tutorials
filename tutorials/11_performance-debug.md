@@ -11,6 +11,7 @@ fibonacci 0 = 0
 fibonacci 1 = 1
 fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 
+main :: IO ()
 main = do
     args <- getArgs
     show . fibonacci . read . head $ args
@@ -63,6 +64,7 @@ fibonacci 0 = 0
 fibonacci 1 = 1
 fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 
+main :: IO ()
 main = defaultMain [
   bgroup "fib" [ bench " 5" $ whnf fibonacci 5
                , bench "10" $ whnf fibonacci 10
@@ -111,6 +113,7 @@ fibonacci 0 = 0
 fibonacci 1 = 1
 fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 
+main :: IO ()
 main = mainWith $ do
         func "fib  5" fibonacci 5
         func "fib 10" fibonacci 10
@@ -143,11 +146,12 @@ import System.Environment
 
 -- | Improved recursive algorithm for n-th Fibonacci number
 fibonacci :: Integer -> Integer
-fibonacci n = fib 0 1 n
+fibonacci = fib 0 1
   where
     fib x _ 0 = x
-    fib x y rem = fib y (x+y) (rem-1)    -- just "one-way" recursion!
+    fib x y n = fib y (x+y) (n-1)    -- just "one-way" recursion!
 
+main :: IO ()
 main = do
     args <- getArgs
     print . fibonacci . read . head $ args
@@ -251,21 +255,76 @@ If you know optimization with GCC, then you won't be surprised how it works with
 
 Then there are also `-f*`  platform-independent flags, that allows you turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html). 
 
+### Concurrency and Parallelism
 
-### Concurrency
+Haskell (of course) supports parallelism or concurrency in order to achieve faster and efficient computation. For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
 
-Just like with GCC, you can use optimization flags with GHC. You can also drill deeper in your source code and optimize it by hand, use FFI, parallelism or concurrency, and so on in order to achieve faster computation. Good resource for that is [wiki.haskell.org/Performance](https://wiki.haskell.org/Performance) where you can look up hints for specific parts of you app and/or your compiler.
-
-For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
-
-* run parallel threads with Control.Parallel,
+* run parallel threads with [Control.Parallel](http://hackage.haskell.org/package/parallel/docs/Control-Parallel.html),
 * run simultaneous IO actions with forks.
 
 It is also possible to do distributed computations on clusters but it is far beyond the scope of this course.
 
 ```haskell
---TODO: Control.Parallel simple example
+import Control.Parallel
+
+parfib 0 = return 1
+parfib 1 = return 1
+parfib n = do
+              n1 <- parfib (n - 1)
+              n2 <- parfib (n - 2)
+              n3 <- (n1 `par` (n2 `seq` (return (n1 + n2 + 1))))
+              return n3
+
+main = do x <- parfib 30; print x
 ```
+
+GHC supports running programs in parallel on an SMP (symmetric multiprocessor) or multi-core machine. Just compile your program using the `-threaded` switch and then run it with RTS option `-N <x>` (where `<x>` is number of simultaneous threads). See [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/parallel.html) for more information.
+
+### FFI
+
+As many other programming languages, Haskell supports [FFI (Foreign Function Interface)](https://wiki.haskell.org/Foreign_Function_Interface) that allows to to cooperate with programs written with other languages. We've already could see that in the example of Haste in DS Wizard where there were some JS bindings. But you can also use it to call some functions from C++ or Rust:
+
+```cpp
+extern "C"{   // need to expose with extern, could use header file .h or .hpp for that
+    extern int fib(int n) {
+        if(n < 0) return -1;
+        int x = 0, y = 1, tmp;
+        while(n-- > 0) {
+            tmp = x;
+            x = y;
+            y = tmp + x;
+        }
+        return x;
+    }
+}
+```
+
+```haskell
+{-# LANGUAGE ForeignFunctionInterface #-}
+
+import Foreign.C
+import System.Environment
+
+foreign import ccall "fib" cfib :: CInt -> CInt
+
+main :: IO ()
+main = do
+    args <- getArgs
+    print . cfib . read . head $ args
+```
+
+```
+% gcc -c -o fib.o fib.cpp
+% ghc --make -o ffi_fib FibonacciFFI.hs fib.o
+Linking ffi_fib ...
+% /usr/bin/time -p ./ffi_fib 25
+75025
+real 0.00
+user 0.00
+sys 0.00
+```
+
+Simirarly, there is `foreign export` to expose some Haskell functions to other FFIs. Nice example is here: [jarrett/cpphs](https://github.com/jarrett/cpphs).
 
 ## Debugging
 
@@ -273,7 +332,7 @@ Even if you are a good Haskell programmer, things can go wrong and especially in
 
 ### Tracing with `Debug.Trace`
 
-You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result.
+You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result. There are many more *traces* defined for different cases: `traceShow`, `traceId`, `traceStack`, `traceIO`, `traceM`, etc. So you can use it for custom debugging output anywhere in the code.
 
 For example:
 
@@ -281,7 +340,57 @@ For example:
 func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
 ```
 
-If you need more than just that, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
+Or better usage with our example of fibonacci numbers to see the calls:
+
+```haskell
+module Main where
+
+import Debug.Trace
+
+-- | Naive recursive algorithm for n-th Fibonacci number
+fib1 :: Integer -> Integer
+fib1 0 = trace "fib1 0" 0
+fib1 1 = trace "fib1 1" 1
+fib1 n = trace ("fib1 " ++ show n) (fib1 (n-1) + fib1 (n-2))
+
+-- | Improved recursive algorithm for n-th Fibonacci number
+fib2 :: Integer -> Integer
+fib2 = fib 0 1
+  where
+    fib x _ 0 = trace "fib2 0" x
+    fib x y n = trace ("fib2 " ++ show n) (fib y (x+y) (n-1))
+
+main :: IO ()
+main = do
+    print (fib1 4)
+    putStrLn "------------"
+    print (fib2 4)
+```
+
+```
+% runhaskell FibonacciTrace.hs
+fib1 4
+fib1 2
+fib1 0
+fib1 1
+fib1 3
+fib1 1
+fib1 2
+fib1 0
+fib1 1
+3
+------------
+fib2 4
+fib2 3
+fib2 2
+fib2 1
+fib2 0
+3
+```
+
+### GHCi debugger
+
+If you need better debugger, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
 
 * setting breakpoints and stepping,
 * inspecting variables,
@@ -289,14 +398,51 @@ If you need more than just that, you can use [GHCi debugger](https://downloads.h
 * working with exceptions,
 * and so on.
 
+```
+Prelude> :l FibonacciNaive.hs
+[1 of 1] Compiling Main             ( FibonacciNaive.hs, interpreted )
+Ok, modules loaded: Main.
+*Main> :break 9
+Breakpoint 0 activated at FibonacciNaive.hs:9:10-60
+*Main> fib1 5
+Stopped in Main.fib1, FibonacciNaive.hs:9:10-60
+_result :: Integer = _
+n :: Integer = 5
+[FibonacciNaive.hs:9:10-60] *Main> :continue
+fib1 5
+Stopped in Main.fib1, FibonacciNaive.hs:9:10-60
+_result :: Integer = _
+n :: Integer = 3
+[FibonacciNaive.hs:9:28-33] *Main> :show breaks
+[0] Main FibonacciNaive.hs:9:10-60
+[FibonacciNaive.hs:9:28-33] *Main> :abandon 
+*Main> 
+```
+
 ### `debug` package
 
-### GHCi debugger
+An intersting solution brins also the [debug](https://hackage.haskell.org/package/debug) package (and related extensions). It uses *Template Haskell* to examine the code and algorithms.
+
+```haskell
+{-# LANGUAGE TemplateHaskell, ViewPatterns, PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+module QuickSort(quicksort) where
+import Data.List
+import Debug
+
+debug [d|
+   quicksort :: Ord a => [a] -> [a]
+   quicksort [] = []
+   quicksort (x:xs) = quicksort lt ++ [x] ++ quicksort gt
+       where (lt, gt) = partition (<= x) xs
+   |]
+```
 
 ## Further reading
 
 * [Haskell - Debugging](https://wiki.haskell.org/Debugging)
 * [Haskell - Performance](https://wiki.haskell.org/Performance)
 * [Haskell - Concurrency](https://wiki.haskell.org/Concurrency)
+* [Real World Haskell - Concurrent and Multicore Programming](http://book.realworldhaskell.org/read/concurrent-and-multicore-programming.html)
 * [GHC - Concurrent and Parallel Haskell](https://downloads.haskell.org/~ghc/7.0.3/docs/html/users_guide/lang-parallel.html)
 
