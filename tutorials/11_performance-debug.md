@@ -2,11 +2,35 @@
 
 During this tutorial we will take a look how to improve performance of Haskell program and how to debug it. We will use very simple example everywhere - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
 
+```haskell
+module Main where
+
+-- | Naive recursive algorithm for n-th Fibonacci number 
+fibonacci :: Integer -> Integer
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n-1) + fibonacci (n-2)
+
+main = do
+    args <- getArgs
+    show . fibonacci . read . head $ args
+```
+
 ## Measuring time and memory 
 
 When you want to check performance of program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
 
 ### Basic `time`
+
+The `time` command is one of the well-known Linux commands for programmers. It can be used to show how long a command takes to run. That makes it Very useful if you are a developer and you want to test the performance of your program or script. Especially to compare time of programs written in other languages "from outside". For basic usage, you will get three numbers:
+
+- `real` = total time is taken to run the command (the same as if you use your normal stopwatch)
+- `user` = amount of time that was spent in user mode
+- `sys` = amount of time spent in kernel mode
+
+Then `user`+`sys` gives information how much actual CPU time your process used - in total on all cores. This number can be then higher than `real` if your program uses multiple threads.
+
+But `time` can do a bit more, you can tell how output should look like with additional "numbers" - number of page faults, average total memory use of the process in kilobytes, number of signals delivered to the process, number of socket messages received/send by the process, exit status of the command, and many others.
 
 ### Benchmarking with Criterion
 
@@ -34,6 +58,7 @@ It has very nice outputs with form of interactive HTML pages with charts and com
 
 ### Measure allocations with Weigh
 
+The package [weigh](https://hackage.haskell.org/package/weigh) provides simple interface to mesure the memory usage of a Haskell value or function.
 
 ## Performance
 
@@ -62,8 +87,6 @@ import GHC.Exts
 showUnboxedInt   :: Int# -> String
 showUnboxedInt n = "Unboxed: " ++ (show $ I# n) ++ "#"
 ```
-
-(If you find kinds interesting, try to examine `:kind Maybe` and `:kind Either`.)
 
 ### Strictness with types
 
@@ -101,9 +124,7 @@ If you know optimization with GCC, then you won't be surprised how it works with
 Then there are also `-f*`  platform-independent flags, that allows you turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html). 
 
 
-### Other optimization techniques
-
-### Concurrency and optimizations
+### Concurrency
 
 Just like with GCC, you can use optimization flags with GHC. You can also drill deeper in your source code and optimize it by hand, use FFI, parallelism or concurrency, and so on in order to achieve faster computation. Good resource for that is [wiki.haskell.org/Performance](https://wiki.haskell.org/Performance) where you can look up hints for specific parts of you app and/or your compiler.
 
@@ -120,6 +141,10 @@ It is also possible to do distributed computations on clusters but it is far bey
 
 ## Debugging
 
+Even if you are a good Haskell programmer, things can go wrong and especially in big projects it is a nontrivial challenge to find out where you did some mistake. Going thru the code in multiple functions, inner functions, various modules, etc. can be painful. Luckilly there are some ways how to debug Haskell program and some are pretty easy and similar to well-known.
+
+### Tracing with `Debug.Trace`
+
 You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result.
 
 For example:
@@ -135,6 +160,10 @@ If you need more than just that, you can use [GHCi debugger](https://downloads.h
 * tracing,
 * working with exceptions,
 * and so on.
+
+### `debug` package
+
+### GHCi debugger
 
 ## Further reading
 
