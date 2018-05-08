@@ -3,9 +3,9 @@
 During this tutorial we will take a look how to improve performance of Haskell program and how to debug it. We will use very simple example everywhere - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
 
 ```haskell
-module Main where
+import System.Environment
 
--- | Naive recursive algorithm for n-th Fibonacci number 
+-- | Naive recursive algorithm for n-th Fibonacci number
 fibonacci :: Integer -> Integer
 fibonacci 0 = 0
 fibonacci 1 = 1
@@ -30,7 +30,23 @@ The `time` command is one of the well-known Linux commands for programmers. It c
 
 Then `user`+`sys` gives information how much actual CPU time your process used - in total on all cores. This number can be then higher than `real` if your program uses multiple threads.
 
+```
+% /usr/bin/time -p runhaskell FibonacciNaive.hs 25
+75025
+real 0.33
+user 0.31
+sys 0.01
+```
+
 But `time` can do a bit more, you can tell how output should look like with additional "numbers" - number of page faults, average total memory use of the process in kilobytes, number of signals delivered to the process, number of socket messages received/send by the process, exit status of the command, and many others.
+
+```
+% /usr/bin/time -f "Elapsed Time: %E\nExit Status: %X\nPage Faults: %F" runhaskell FibonacciNaive.hs 25
+75025
+Elapsed Time: 0:00.34
+Exit Status: 0
+Page Faults: 0
+```
 
 ### Benchmarking with Criterion
 
@@ -41,24 +57,76 @@ For simple usage, you just need to work with the `defaultMain` from [Criterion.M
 ```haskell
 import Criterion.Main
 
-fib m | m < 0     = error "negative!"
-      | otherwise = go m
-  where go 0 = 0
-        go 1 = 1
-        go n = go (n-1) + go (n-2)
+-- | Naive recursive algorithm for n-th Fibonacci number
+fibonacci :: Integer -> Integer
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 
 main = defaultMain [
-  bgroup "fib" [ bench "1"  $ whnf fib 1
-               , bench "5"  $ whnf fib 5
-               , bench "11" $ whnf fib 11
+  bgroup "fib" [ bench " 5" $ whnf fibonacci 5
+               , bench "10" $ whnf fibonacci 10
+               , bench "25" $ whnf fibonacci 25
                ]
   ]
 ```
+
 It has very nice outputs with form of interactive HTML pages with charts and comparisons and have many options to use.
+
+```
+% runhaskell FibonacciNaiveCriterion.hs
+benchmarking fib/ 5
+time                 7.319 μs   (6.980 μs .. 7.821 μs)
+                     0.966 R²   (0.934 R² .. 0.995 R²)
+mean                 7.248 μs   (6.966 μs .. 7.847 μs)
+std dev              1.321 μs   (805.8 ns .. 2.043 μs)
+variance introduced by outliers: 96% (severely inflated)
+
+benchmarking fib/10
+time                 81.34 μs   (81.15 μs .. 81.54 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 81.58 μs   (81.38 μs .. 81.85 μs)
+std dev              811.3 ns   (577.5 ns .. 1.191 μs)
+
+benchmarking fib/25
+time                 111.6 ms   (110.5 ms .. 112.2 ms)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 112.1 ms   (111.7 ms .. 112.9 ms)
+std dev              853.6 μs   (534.0 μs .. 1.215 ms)
+variance introduced by outliers: 11% (moderately inflated)
+
+runhaskell FibonacciNaiveCriterion.hs  15.98s user 0.04s system 99% cpu 16.055 total
+```
 
 ### Measure allocations with Weigh
 
 The package [weigh](https://hackage.haskell.org/package/weigh) provides simple interface to mesure the memory usage of a Haskell value or function.
+
+```haskell
+import Weigh
+
+-- | Naive recursive algorithm for n-th Fibonacci number
+fibonacci :: Integer -> Integer
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n-1) + fibonacci (n-2)
+
+main = mainWith $ do
+        func "fib  5" fibonacci 5
+        func "fib 10" fibonacci 10
+        func "fib 25" fibonacci 25
+```
+
+It provides nice output as plain text table, but it is also possible to change format to markdown.
+
+```
+% ./FibonacciNaiveWeigh
+
+Case     Allocated  GCs
+fib  5       1,968    0
+fib 10      24,304    0
+fib 25  33,509,936   63
+```
 
 ## Performance
 
@@ -69,6 +137,66 @@ Now we are able to measure something and compare algorithms, but how to improve 
 When you are not satisfied with the perfomance of your application, then before any sophisticated optimization steps by using strictness, unboxed types, calling FFI, etc., you should consider if you prefer faster application over better readability. Then another important thing to think about is design, if it is not slow by using "naive" algorithm, using inappropriate data structure (List instead of Set or Map), etc.
 
 **Always** rethink your own code before using other optimization techniques!
+
+```haskell
+import System.Environment
+
+-- | Improved recursive algorithm for n-th Fibonacci number
+fibonacci :: Integer -> Integer
+fibonacci n = fib 0 1 n
+  where
+    fib x _ 0 = x
+    fib x y rem = fib y (x+y) (rem-1)    -- just "one-way" recursion!
+
+main = do
+    args <- getArgs
+    print . fibonacci . read . head $ args
+```
+
+Just a very simple re-thinking can have some impact:
+
+```
+% /usr/bin/time -p runhaskell FibonacciBetter.hs 25
+75025
+real 0.24
+user 0.22
+sys 0.02
+```
+
+```
+% runhaskell FibonacciBetterCriterion.hs
+benchmarking fib/ 5
+time                 3.412 μs   (3.235 μs .. 3.591 μs)
+                     0.988 R²   (0.983 R² .. 0.998 R²)
+mean                 3.191 μs   (3.129 μs .. 3.277 μs)
+std dev              253.6 ns   (168.4 ns .. 360.9 ns)
+variance introduced by outliers: 82% (severely inflated)
+
+benchmarking fib/10
+time                 5.930 μs   (5.871 μs .. 6.013 μs)
+                     0.997 R²   (0.994 R² .. 0.998 R²)
+mean                 6.209 μs   (6.075 μs .. 6.464 μs)
+std dev              625.6 ns   (377.2 ns .. 1.088 μs)
+variance introduced by outliers: 87% (severely inflated)
+
+benchmarking fib/25
+time                 14.53 μs   (14.31 μs .. 14.90 μs)
+                     0.990 R²   (0.972 R² .. 0.999 R²)
+mean                 14.78 μs   (14.40 μs .. 15.89 μs)
+std dev              1.953 μs   (712.6 ns .. 4.110 μs)
+variance introduced by outliers: 91% (severely inflated)
+
+runhaskell FibonacciBetterCriterion.hs  15.90s user 0.07s system 100% cpu 15.954 total
+```
+
+```
+% ./FibonacciBetterWeigh
+
+Case    Allocated  GCs
+fib  5        872    0
+fib 10      1,712    0
+fib 25     37,000    0
+```
 
 ### Boxed vs. Unboxed types
 
