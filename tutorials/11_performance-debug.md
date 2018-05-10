@@ -1,6 +1,6 @@
 # Performance and Debugging
 
-During this tutorial we will take a look how to improve performance of Haskell program and how to debug it. We will use very simple example everywhere - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
+During this tutorial, we will take a look how to improve the performance of Haskell program and how to debug it. We will use very simple example everywhere - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
 
 ```haskell
 import System.Environment
@@ -19,11 +19,11 @@ main = do
 
 ## Measuring time and memory 
 
-When you want to check performance of program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
+When you want to check the performance of a program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
 
 ### Basic `time`
 
-The `time` command is one of the well-known Linux commands for programmers. It can be used to show how long a command takes to run. That makes it Very useful if you are a developer and you want to test the performance of your program or script. Especially to compare time of programs written in other languages "from outside". For basic usage, you will get three numbers:
+The `time` command is one of the well-known Linux commands for programmers. It can be used to show how long a command takes to run. That makes it Very useful if you are a developer and you want to test the performance of your program or script. Especially to compare the time of programs written in other languages "from outside". For basic usage, you will get three numbers:
 
 - `real` = total time is taken to run the command (the same as if you use your normal stopwatch)
 - `user` = amount of time that was spent in user mode
@@ -39,7 +39,7 @@ user 0.31
 sys 0.01
 ```
 
-But `time` can do a bit more, you can tell how output should look like with additional "numbers" - number of page faults, average total memory use of the process in kilobytes, number of signals delivered to the process, number of socket messages received/send by the process, exit status of the command, and many others.
+But `time` can do a bit more, you can tell how output should look like with additional "numbers" - number of page faults, average total memory use of the process in kilobytes, number of signals delivered to the process, number of socket messages received/sent by the process, exit status of the command, and many others.
 
 ```
 % /usr/bin/time -f "Elapsed Time: %E\nExit Status: %X\nPage Faults: %F" runhaskell FibonacciNaive.hs 25
@@ -51,7 +51,7 @@ Page Faults: 0
 
 ### Benchmarking with Criterion
 
-If you are interested in such optimizations and improving your application or comparing various algorithms or their implementations, then you might find interesting to use benchmarking library. In Haskell is the most used one called [Criterion](http://www.serpentine.com/criterion/). It provides a powerful but simple way to measure software performance. It provides both a framework for executing and analysing benchmarks and a set of driver functions that makes it easy to build and run benchmarks, and to analyse their results.
+If you are interested in such optimizations and improving your application or comparing various algorithms or their implementations, then you might find interesting to use a benchmarking library. In Haskell is the most used one called [Criterion](http://www.serpentine.com/criterion/). It provides a powerful but simple way to measure software performance. It provides both a framework for executing and analyzing benchmarks and a set of driver functions that makes it easy to build and run benchmarks and to analyze their results.
 
 For simple usage, you just need to work with the `defaultMain` from [Criterion.Main](https://hackage.haskell.org/package/criterion/docs/Criterion-Main.html) as they show in their example:
 
@@ -73,7 +73,7 @@ main = defaultMain [
   ]
 ```
 
-It has very nice outputs with form of interactive HTML pages with charts and comparisons and have many options to use.
+It has very nice outputs with a form of interactive HTML pages with charts and comparisons and has many options to use.
 
 ```
 % runhaskell FibonacciNaiveCriterion.hs
@@ -102,7 +102,7 @@ runhaskell FibonacciNaiveCriterion.hs  15.98s user 0.04s system 99% cpu 16.055 t
 
 ### Measure allocations with Weigh
 
-The package [weigh](https://hackage.haskell.org/package/weigh) provides simple interface to mesure the memory usage of a Haskell value or function.
+The package [weigh](https://hackage.haskell.org/package/weigh) provides a simple interface to measure the memory usage of a Haskell value or function.
 
 ```haskell
 import Weigh
@@ -120,7 +120,7 @@ main = mainWith $ do
         func "fib 25" fibonacci 25
 ```
 
-It provides nice output as plain text table, but it is also possible to change format to markdown.
+It provides a nice output as plain text table, but it is also possible to change the format to markdown.
 
 ```
 % ./FibonacciNaiveWeigh
@@ -137,7 +137,7 @@ Now we are able to measure something and compare algorithms, but how to improve 
 
 ### Basic ideas
 
-When you are not satisfied with the perfomance of your application, then before any sophisticated optimization steps by using strictness, unboxed types, calling FFI, etc., you should consider if you prefer faster application over better readability. Then another important thing to think about is design, if it is not slow by using "naive" algorithm, using inappropriate data structure (List instead of Set or Map), etc.
+When you are not satisfied with the performance of your application, then before any sophisticated optimization steps by using strictness, unboxed types, calling FFI, etc., you should consider if you prefer faster application over better readability. Then another important thing to think about is design if it is not slow by using "naive" algorithm, using an inappropriate data structure (List instead of Set or Map), etc.
 
 **Always** rethink your own code before using other optimization techniques!
 
@@ -269,11 +269,11 @@ We mention this just because of differences in performance of types we are going
 
 If you know optimization with GCC, then you won't be surprised how it works with GHC:
 
-* `-O0` = turn off all optimisation
+* `-O0` = turn off all optimization
 * `-O` or `-O1` = generate good-quality code without taking too long about it
-* `-O2` = apply every non-dangerous optimisation, even if it means significantly longer compile times (in most cases, there is no significant difference between `-O1` and `-O2`)
+* `-O2` = apply every non-dangerous optimization, even if it means significantly longer compile times (in most cases, there is no significant difference between `-O1` and `-O2`)
 
-Then there are also `-f*`  platform-independent flags, that allows you turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html). 
+Then there are also `-f*`  platform-independent flags, that allows you to turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html). 
 
 ### Concurrency and Parallelism
 
@@ -298,11 +298,11 @@ parfib n = do
 main = do x <- parfib 30; print x
 ```
 
-GHC supports running programs in parallel on an SMP (symmetric multiprocessor) or multi-core machine. Just compile your program using the `-threaded` switch and then run it with RTS option `-N <x>` (where `<x>` is number of simultaneous threads). See [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/parallel.html) for more information.
+GHC supports running programs in parallel on an SMP (symmetric multiprocessor) or multi-core machine. Just compile your program using the `-threaded` switch and then run it with RTS option `-N <x>` (where `<x>` is the number of simultaneous threads). See [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/parallel.html) for more information.
 
 ### FFI
 
-As many other programming languages, Haskell supports [FFI (Foreign Function Interface)](https://wiki.haskell.org/Foreign_Function_Interface) that allows to to cooperate with programs written with other languages. We've already could see that in the example of Haste in DS Wizard where there were some JS bindings. But you can also use it to call some functions from C++ or Rust:
+As with many other programming languages, Haskell supports [FFI (Foreign Function Interface)](https://wiki.haskell.org/Foreign_Function_Interface) that allows co-operating with programs written with other languages. We've already could see that in the example of Haste in DS Wizard where there were some JS bindings. But you can also use it to call some functions from C++ or Rust:
 
 ```cpp
 extern "C"{   // need to expose with extern, could use header file .h or .hpp for that
@@ -344,11 +344,11 @@ user 0.00
 sys 0.00
 ```
 
-Simirarly, there is `foreign export` to expose some Haskell functions to other FFIs. Nice example is here: [jarrett/cpphs](https://github.com/jarrett/cpphs).
+Similarly, there is `foreign export` to expose some Haskell functions to other FFIs. Nice example is here: [jarrett/cpphs](https://github.com/jarrett/cpphs).
 
 ## Debugging
 
-Even if you are a good Haskell programmer, things can go wrong and especially in big projects it is a nontrivial challenge to find out where you did some mistake. Going thru the code in multiple functions, inner functions, various modules, etc. can be painful. Luckilly there are some ways how to debug Haskell program and some are pretty easy and similar to well-known.
+Even if you are a good Haskell programmer, things can go wrong and especially in big projects it is a nontrivial challenge to find out where you did some mistake. Going thru the code in multiple functions, inner functions, various modules, etc. can be painful. Luckilly, there are some ways how to debug Haskell program and some are pretty easy and similar to well-known.
 
 ### Tracing with `Debug.Trace`
 
@@ -360,7 +360,7 @@ For example:
 func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
 ```
 
-Or better usage with our example of fibonacci numbers to see the calls:
+Or better usage with our example of Fibonacci numbers to see the calls:
 
 ```haskell
 module Main where
@@ -410,7 +410,7 @@ fib2 0
 
 ### GHCi debugger
 
-If you need better debugger, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
+If you need a better debugger, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
 
 * setting breakpoints and stepping,
 * inspecting variables,
@@ -441,7 +441,7 @@ n :: Integer = 3
 
 ### `debug` package
 
-An intersting solution brins also the [debug](https://hackage.haskell.org/package/debug) package (and related extensions). It uses *Template Haskell* to examine the code and algorithms.
+An interesting solution brings also the [debug](https://hackage.haskell.org/package/debug) package (and related extensions). It uses *Template Haskell* to examine the code and algorithms.
 
 ```haskell
 {-# LANGUAGE TemplateHaskell, ViewPatterns, PartialTypeSignatures #-}
