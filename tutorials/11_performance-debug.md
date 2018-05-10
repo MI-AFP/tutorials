@@ -14,7 +14,7 @@ fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 main :: IO ()
 main = do
     args <- getArgs
-    show . fibonacci . read . head $ args
+    print . fibonacci . read . head $ args
 ```
 
 ## Measuring time and memory 
@@ -208,17 +208,37 @@ Now, we are going to briefly mention is the difference between boxed and unboxed
 
 To support laziness, parametric polymorphism, and other properties, by default Haskell data types are represented uniformly as a pointer to a closure on the heap. These are "boxed" values. An unboxed is represented directly by raw value (i.e., without any indirection). Using unboxed types can lead to time/space optimizations. Having always pointers to a heap-allocated object is fairly slow, so compilers attempt to replace these boxed values with unboxed raw values when possible. Unboxed values are a feature of some compilers that allow directly manipulating these low-level values. Since they behave differently than normal Haskell types, generally the type system is extended to type these unboxed values.
 
-In [GHC], unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
+In GHC, unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
 
 * By default, kind of type is `*` (try in GHCi: `:kind Int`)
-* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`, first do `:set -fglasgow-exts`)
+* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`)
 
 ```haskell
+{-# LANGUAGE MagicHash #-}
+module Main where
+
 import GHC.Exts
 
-showUnboxedInt   :: Int# -> String
-showUnboxedInt n = "Unboxed: " ++ (show $ I# n) ++ "#"
+-- | Naive recursive algorithm for n-th Fibonacci number with
+-- unboxed Int types
+fibonacci :: Int# -> Int#
+fibonacci 0# = 0#
+fibonacci 1# = 1#
+fibonacci n  = fibonacci (n -# 1#) +# fibonacci (n -# 2#)
+
+main :: IO ()
+main = print (I# (fibonacci 25#))
 ```
+
+```
+% /usr/bin/time -p runhaskell FibonacciUnboxed.hs
+75025
+real 0.30
+user 0.27
+sys 0.03
+```
+
+For more information, visit [GHC.Exts]() and [GHC.Prim]().
 
 ### Strictness with types
 
@@ -243,7 +263,7 @@ data T1 = T1 {-# UNPACK #-} !(Int, Float)  -- => T1 Int Float
 data T2 = T2 Double {-# UNPACK #-} !Int    -- => T2 Double Int#
 ```
 
-We mention this just because of differences in performance of types we are going to describe now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations...
+We mention this just because of differences in performance of types we are going to describe now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations and if yes, consider reading [Haskell High Performance Programming](https://github.com/TechBookHunter/Free-Haskell-Books/blob/master/book/Haskell%20High%20Performance%20Programming.pdf).
 
 ### GHC optimization flags
 
