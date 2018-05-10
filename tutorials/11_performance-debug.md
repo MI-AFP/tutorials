@@ -1,6 +1,6 @@
 # Performance and Debugging
 
-During this tutorial, we will take a look how to improve the performance of Haskell program and how to debug it. We will use very simple example everywhere - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
+During this tutorial, we will take a look how to improve the performance of a Haskell program and how to debug it. We will use very simple example - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
 
 ```haskell
 import System.Environment
@@ -17,7 +17,7 @@ main = do
     print . fibonacci . read . head $ args
 ```
 
-## Measuring time and memory 
+## Measuring time and memory
 
 When you want to check the performance of a program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
 
@@ -273,7 +273,7 @@ If you know optimization with GCC, then you won't be surprised how it works with
 * `-O` or `-O1` = generate good-quality code without taking too long about it
 * `-O2` = apply every non-dangerous optimization, even if it means significantly longer compile times (in most cases, there is no significant difference between `-O1` and `-O2`)
 
-Then there are also `-f*`  platform-independent flags, that allows you to turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html). 
+Then there are also `-f*`  platform-independent flags, that allows you to turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html).
 
 ### Concurrency and Parallelism
 
@@ -435,8 +435,8 @@ _result :: Integer = _
 n :: Integer = 3
 [FibonacciNaive.hs:9:28-33] *Main> :show breaks
 [0] Main FibonacciNaive.hs:9:10-60
-[FibonacciNaive.hs:9:28-33] *Main> :abandon 
-*Main> 
+[FibonacciNaive.hs:9:28-33] *Main> :abandon
+*Main>
 ```
 
 ### `debug` package
