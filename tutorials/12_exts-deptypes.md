@@ -6,17 +6,151 @@ Language extensions are used to enable language features in Haskell that may see
 
 ### TypeFamilies
 
-### RankNTypes
+This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrised type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same at all type instances, whereas class methods can change their behaviour in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
+
+```haskell
+{-# LANGUAGE TypeFamilies #-}
+
+-- Declare a list-like data family
+data family XList a
+
+-- Declare a list-like instance for Char
+data instance XList Char = XCons !Char !(XList Char) | XNil
+
+-- Declare a number-like instance for ()
+data instance XList () = XListUnit !Int
+
+class XLength a where
+  xlength :: XList a -> Int
+
+instance XLength Char where
+  xlength XNil = 0
+  xlength (XCons _ r) = 1 + xlength r
+
+instance XLength () where
+  xlength (XListUnit _) = 1
+```
 
 ### GADTs
 
-### DeriveGeneric
+[Generalized algebraic data type](https://en.wikipedia.org/wiki/Generalized_algebraic_data_type) are a generalization of the algebraic data types that you are familiar with. Basically, they allow you to explicitly write down the types of the constructors. In this chapter, you'll learn why this is useful and how to declare your own. GADTs are mainly used to implement domain specific languages, and so this section will introduce them with a corresponding example.
+
+```haskell
+{-# LANGUAGE GADTs #-}
+
+data Expr a where
+    I   :: Int  -> Expr Int
+    B   :: Bool -> Expr Bool
+    Add :: Expr Int -> Expr Int -> Expr Int
+    Mul :: Expr Int -> Expr Int -> Expr Int
+    Eq  :: Expr Int -> Expr Int -> Expr Bool
+    And :: Expr Bool -> Expr Bool -> Expr Bool
+
+eval :: Expr a -> a
+eval (I n) = n  -- return Int
+eval (B b) = b  -- returns bool
+eval (Add e1 e2) = eval e1 + eval e2 -- return Int
+eval (Mul e1 e2) = eval e1 * eval e2 -- return Int
+eval (Eq  e1 e2) = eval e1 == eval e2  -- returns bool
+eval (And e1 e2) = eval e1 && eval e2  -- returns bool
+```
+
+Complete example: [Haskell - GADT](https://en.wikibooks.org/wiki/Haskell/GADT)
 
 ### QuasiQuotes
 
-[Quasiquoting](https://wiki.haskell.org/Quasiquotation) allows programmers to use custom, domain-specific syntax to construct fragments of their program. Along with Haskell's existing support for domain specific languages, you are now free to use new syntactic forms for your EDSLs.
+[Quasiquoting](https://wiki.haskell.org/Quasiquotation) allows programmers to use custom, domain-specific syntax to construct fragments of their program. Along with Haskell's existing support for domain specific languages, you are now free to use new syntactic forms for your EDSLs. We've already seen it used in Yesod or Debug. Another simple use is with [Text.RawString.QQ](http://hackage.haskell.org/package/raw-strings-qq/docs/Text-RawString-QQ.html) to allow multiline strings:
+
+```haskell
+{-# LANGUAGE QuasiQuotes #-}
+import Text.RawString.QQ
+
+multiline :: String
+multiline = [r|<HTML>
+<HEAD>
+<TITLE>Auto-generated html formated source</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+</HEAD>
+<BODY LINK="800080" BGCOLOR="#ffffff">
+<P> </P>
+<PRE>|]
+```
+
+You can of course write your own DSL or simplify syntax for yoursef. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create simple string-string map with semicolon and newlines:
+
+```haskell
+{-# LANGUAGE TemplateHaskell #-}
+module MapBuilder (mapBuilder) where
+
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote
+
+-- | Map Builder quasiquoter
+mapBuilder = QuasiQuoter
+    { quoteExp  = mapBuilderParser -- expressions
+    , quotePat  = undefined        -- patterns
+    , quoteType = undefined        -- types
+    , quoteDec  = undefined        -- declarations
+    }
+
+-- | Split string to two parts by given char
+splitByFirst :: String -> Char -> (String, String)
+splitByFirst str sep = splitByFirst' "" str
+  where
+    splitByFirst' a [] = (a, "")
+    splitByFirst' a (x:xs)
+       | x == sep  = (a, xs)
+       | otherwise = splitByFirst' (a++[x]) xs
+
+-- | Trim spaces and tabs from left of the string
+trimLeft :: String -> String
+trimLeft "" = ""
+trimLeft (x:xs)
+  | x `elem` [' ', '\t'] = trimLeft xs
+  | otherwise        = x : trimLeft xs
+
+-- | Parse [(String, String)] map from String
+mapBuilderParser :: String -> Q Exp
+mapBuilderParser = return . ListE . map parseTuples . filter (/="") . map trimLeft . lines
+  where
+    parseTuples :: String -> Exp
+    parseTuples xs = TupE [LitE . StringL $ key, LitE . StringL $ val]
+      where
+        parts = splitByFirst xs ':'
+        key = fst parts
+        val = snd parts
+```
+
+Then you can simply import defined quasiquoter and use it:
+
+```haskell
+{-# LANGUAGE QuasiQuotes #-}
+
+import MapBuilder
+
+mymap1 :: [(String, String)]
+mymap1 = [mapBuilder|
+           a:10
+           b:22
+           c:hello
+           it:has:no:problem
+         |]
+
+mymap2 :: [(String, Int)]
+mymap2 = map strstr2string [mapBuilder|
+           suchama4:1210
+           perglr:1535
+         |]
+
+strstr2string :: (String, String) -> (String, Int)
+strstr2string (x, y) = (x, read y)
+```
+
+Beautiful, right?!
 
 ### Template Haskell
+
+[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are important part of it. Great explanation are [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
 
 ## Dependent and Refinement Types
 
