@@ -204,7 +204,49 @@ app (x :: xs) ys = x :: app xs ys
 
 ### LiquidHaskell
 
+LiquidHaskell is a static verifier for Haskell, based on Liquid Types. It allows to annotate code with invariants that complement the invariants imposed by the types. These invariants are checked with an SMT solver. It is not about dependent types but [refinement types](https://en.wikipedia.org/wiki/Refinement_(computing)#Refinement_types) (you refine some defined type with rules not build it dependent from scratch).
+
+Visit: https://ucsd-progsys.github.io/liquidhaskell-blog/
+
+```haskell
+{--! run liquid with no-termination -}
+
+module SimpleRefinements where
+import Prelude hiding ((!!), length)
+import Language.Haskell.Liquid.Prelude
+
+
+-- |Simple Refinement Types
+
+{-@ zero :: {v:Int | v = 0} @-}
+zero     :: Int
+zero     =  0
+
+{-@ type Even = {v:Int | v mod 2 = 0} @-}
+
+{-@ zero'' :: Even @-}
+zero''     :: Int
+zero''     =  0
+
+-- |Lists
+
+infixr `C`
+data L a = N | C a (L a)
+
+{-@ natList :: L Nat @-}
+natList     :: L Int
+natList     =  0 `C` 1 `C` 3 `C` N
+
+{-@ evenList :: L Even @-}
+evenList     :: L Int
+evenList     =  0 `C` 2 `C` 8 `C` N
+```
+
 ## Further reading
 
 * [Haskell Wiki - Language extensions](https://wiki.haskell.org/Language_extensions)
 * [24 Days of GHC Extensions](https://ocharles.org.uk/blog/pages/2014-12-01-24-days-of-ghc-extensions.html)
+* [Agda](https://github.com/agda/agda)
+* [Idris](https://www.idris-lang.org)
+* [Idris - tutorial](http://docs.idris-lang.org/en/latest/tutorial/)
+* [LiquidHaskell](https://ucsd-progsys.github.io/liquidhaskell-blog/)
