@@ -6,7 +6,7 @@ Language extensions are used to enable language features in Haskell that may see
 
 ### TypeFamilies
 
-This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrised type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same at all type instances, whereas class methods can change their behaviour in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
+This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrized type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same in all type instances, whereas class methods can change their behavior in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
 
 ```haskell
 {-# LANGUAGE TypeFamilies #-}
@@ -33,7 +33,7 @@ instance XLength () where
 
 ### GADTs
 
-[Generalized algebraic data type](https://en.wikipedia.org/wiki/Generalized_algebraic_data_type) are a generalization of the algebraic data types that you are familiar with. Basically, they allow you to explicitly write down the types of the constructors. In this chapter, you'll learn why this is useful and how to declare your own. GADTs are mainly used to implement domain specific languages, and so this section will introduce them with a corresponding example.
+[Generalized algebraic data type](https://en.wikipedia.org/wiki/Generalized_algebraic_data_type) are a generalization of the algebraic data types that you are familiar with. Basically, they allow you to explicitly write down the types of the constructors. In this chapter, you'll learn why this is useful and how to declare your own. GADTs are mainly used to implement domain-specific languages, and so this section will introduce them with a corresponding example.
 
 ```haskell
 {-# LANGUAGE GADTs #-}
@@ -76,7 +76,7 @@ multiline = [r|<HTML>
 <PRE>|]
 ```
 
-You can of course write your own DSL or simplify syntax for yoursef. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create simple string-string map with semicolon and newlines:
+You can, of course, write your own DSL or simplify syntax for yourself. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create a simple string-string map with semicolon and newlines:
 
 ```haskell
 {-# LANGUAGE TemplateHaskell #-}
@@ -137,20 +137,20 @@ mymap1 = [mapBuilder|
          |]
 
 mymap2 :: [(String, Int)]
-mymap2 = map strstr2string [mapBuilder|
+mymap2 = map strstr2strint [mapBuilder|
            suchama4:1210
            perglr:1535
          |]
 
-strstr2string :: (String, String) -> (String, Int)
-strstr2string (x, y) = (x, read y)
+strstr2strint :: (String, String) -> (String, Int)
+strstr2strint (x, y) = (x, read y)
 ```
 
 Beautiful, right?!
 
 ### Template Haskell
 
-[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are important part of it. Great explanation are [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
+[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are an important part of it. Great explanation are [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
 
 ## Dependent and Refinement Types
 
@@ -164,7 +164,7 @@ Dependent types add complexity to a type system. Deciding the equality of depend
 
 ### Agda
 
-[Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with implementation described in his PhD thesis. But current version, Agda 2, is completely rewritten previous Agda from 1999.
+[Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with the implementation described in his PhD thesis. But current version, Agda 2, is completely rewritten in previous Agda from 1999.
 
 Visit https://github.com/agda/agda where are some examples as well!
 
@@ -177,7 +177,7 @@ Its features are influenced by Haskell and ML, and include:
 * Full dependent types with dependent pattern matching
 * Simple foreign function interface (to C)
 * Compiler-supported interactive editing: the compiler helps you write code using the types
-where clauses, with rule, simple case expressions, pattern matching let and lambda bindings
+where clauses, with a rule, simple case expressions, pattern matching let and lambda bindings
 * Dependent records with projection and update
 * Interfaces (similar to type classes in Haskell)
 * Type-driven overloading resolution
@@ -204,7 +204,7 @@ app (x :: xs) ys = x :: app xs ys
 
 ### LiquidHaskell
 
-LiquidHaskell is a static verifier for Haskell, based on Liquid Types. It allows to annotate code with invariants that complement the invariants imposed by the types. These invariants are checked with an SMT solver. It is not about dependent types but [refinement types](https://en.wikipedia.org/wiki/Refinement_(computing)#Refinement_types) (you refine some defined type with rules not build it dependent from scratch).
+LiquidHaskell is a static verifier for Haskell, based on Liquid Types. It allows annotating code with invariants that complement the invariants imposed by the types. These invariants are checked with an SMT solver. It is not about dependent types but [refinement types](https://en.wikipedia.org/wiki/Refinement_(computing)#Refinement_types) (you refine some defined type with rules not build it dependent from scratch).
 
 Visit: https://ucsd-progsys.github.io/liquidhaskell-blog/
 
