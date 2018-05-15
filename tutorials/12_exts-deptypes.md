@@ -1,12 +1,14 @@
 # GHC Extensions and Dependent Types
 
+This lecture is a sort of "gourmet" -- the concepts presented here are not used every day nor are common in production, nor are they topics to speak over coffee with mediocre programmers. Rather they represent cutting-edge topics that may potentially write the future of programming. Enjoy ;-)
+
 ## GHC Language Extensions
 
-Language extensions are used to enable language features in Haskell that may seem useful in certain cases. They can be used to loosen restrictions in the type system or add completely new language constructs to Haskell. As you already know, they can be enabled using the `{-# LANGUAGE <ext> #-}` pragma or using flags `-X<ext>`. You should always consider using those extensions over normal Haskell, because it may also bring some risks.
+Language extensions are used to enable language features in Haskell that may seem useful in certain cases. They can be used to loosen restrictions in the type system or add completely new language constructs to Haskell. As you already know, they can be enabled using the `{-# LANGUAGE <ext> #-}` pragma or using flags `-X<ext>`. You should always consider using those extensions over normal Haskell, because it may potentially bring some risks. It is advisable to read some discussions on forums.
 
 ### TypeFamilies
 
-This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrized type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same in all type instances, whereas class methods can change their behavior in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
+This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrized type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same in all type instances, whereas class methods can change their behaviour in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
 
 ```haskell
 {-# LANGUAGE TypeFamilies #-}
@@ -76,7 +78,7 @@ multiline = [r|<HTML>
 <PRE>|]
 ```
 
-You can, of course, write your own DSL or simplify syntax for yourself. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create a simple string-string map with semicolon and newlines:
+You can, of course, write your own DSL or simplify the syntax for yourself. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create a simple string-string map with semicolon and newlines:
 
 ```haskell
 {-# LANGUAGE TemplateHaskell #-}
@@ -150,7 +152,7 @@ Beautiful, right?!
 
 ### Template Haskell
 
-[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are an important part of it. Great explanation are [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
+[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are an important part of it. Great explanation is [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
 
 ## Dependent and Refinement Types
 
@@ -164,13 +166,13 @@ Dependent types add complexity to a type system. Deciding the equality of depend
 
 ### Agda
 
-[Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with the implementation described in his PhD thesis. But current version, Agda 2, is completely rewritten in previous Agda from 1999.
+[Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with the implementation described in his PhD thesis. But current version, Agda 2, is a completely rewritten previous Agda from 1999.
 
-Visit https://github.com/agda/agda where are some examples as well!
+Visit https://github.com/agda/agda where you find some examples as well!
 
 ### Idris
 
-[Idris](https://www.idris-lang.org) is a general-purpose purely functional programming language with dependent types, strict or optional lazy evaluation and features such as a totality checker. Idris is highly affected by Haskell and Agda which is also possible to see in the syntax.
+[Idris](https://www.idris-lang.org) is a general-purpose purely functional programming language with dependent types, strict or optional lazy evaluation and features such as a totality checker. Idris is highly affected by Haskell and Agda which is visible in its syntax.
 
 Its features are influenced by Haskell and ML, and include:
 
@@ -186,9 +188,9 @@ where clauses, with a rule, simple case expressions, pattern matching let and la
 * Extensible syntax
 * Cumulative universes
 * Totality checking
-* Hugs style interactive environment
+* Hugs-style interactive environment
 
-On their website you can find a documentation with [examples](https://www.idris-lang.org/example/) such as Vectors:
+On their website, you can find a documentation with [examples](https://www.idris-lang.org/example/) such as Vectors:
 
 ```idris
 infixr 5 ::
@@ -204,7 +206,7 @@ app (x :: xs) ys = x :: app xs ys
 
 ### LiquidHaskell
 
-LiquidHaskell is a static verifier for Haskell, based on Liquid Types. It allows annotating code with invariants that complement the invariants imposed by the types. These invariants are checked with an SMT solver. It is not about dependent types but [refinement types](https://en.wikipedia.org/wiki/Refinement_(computing)#Refinement_types) (you refine some defined type with rules not build it dependent from scratch).
+LiquidHaskell is a static verifier for Haskell, based on Liquid Types. It allows annotating code with invariants that complement the invariants imposed by the types. These invariants are checked with a SMT solver. It is not about dependent types but [refinement types](https://en.wikipedia.org/wiki/Refinement_(computing)#Refinement_types) (you refine some defined type with rules, not build it dependent from the scratch).
 
 Visit: https://ucsd-progsys.github.io/liquidhaskell-blog/
 
