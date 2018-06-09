@@ -495,7 +495,7 @@ factorial n = fac' n 1
 2. `fac' 3 1`
 3. `fac' 2 3`
 4. `fac' 1 6`
-5. `fac' 1 6`
+5. `fac' 0 6`
 6. `6`
 
 Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unnecessary to write tail-recursive functions, you should be familiar with the concept as functional programmer. With Haskell, you should more focus on the readability of your code and productivity!
