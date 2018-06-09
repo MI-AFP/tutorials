@@ -8,7 +8,7 @@ Creating new own functions or using the predefined ones from libraries is common
 
 When we talk about "currying", in Haskell it has (almost) nothing to do with dishes or spices. A famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: *translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument*. Technically, the original author of this is [Moses Schönfinkel](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel), so sometimes you may even come across a very nice name ["Schönfinkelization"](http://www.natansh.in/2012/07/27/schonfinkelization/).
 
-Curyying can be achieved in all functional programming languages, but Haskell is special in that *all functions are curried by default*, similarly to pure lambda calculus. Let's se how we parenthesize function types:
+Currying can be achieved in all functional programming languages, but Haskell is special in that *all functions are curried by default*, similarly to pure lambda calculus. Let's se how we parenthesize function types:
 
 ```haskell
 myFunc1 :: a ->  b -> c
@@ -45,7 +45,7 @@ type PSize = Int
 type NoVertices = Int
 data Polygon = -- some representation
 
-mkPolygon :: PSize -> NoVertices -> Polygon
+mkPolygon :: NoVertices -> PSize -> Polygon
 mkPolygon = -- some code to make a polygon
 
 mkHexagon :: PSize -> Polygon
@@ -56,28 +56,28 @@ mkRectangle = mkPolygon 4
 
 --etc.
 ```
-Here we create *specialized* versions of polygon constructor functions by providing the `PSize` parametre. As functions can be parametres, as well, we can reify the behaviour, as well:
+Here we create *specialized* versions of polygon constructor functions by providing the `PSize` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
 
 ```haskell
-generalSort :: (Something -> Something -> Ordering) -> [Something] -> [Int]
+generalSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
 generalSort orderingFn numbers = -- use the orderingFn to sort the numbers
 
-fastOrderingFn :: Something -> Something -> Ordering
+fastOrderingFn :: Ord a => a -> a -> Ordering
 fastOrderingFn = -- a fast, but not too reliable ordering algorithm
 
-slowOrderingFn :: Something -> Something -> Ordering
+slowOrderingFn :: Ord a => a -> a -> Ordering
 slowOrderingFn = -- a slow, but precise ordering algorithm
 
-fastSort :: [Something] -> [Something]
+fastSort :: Ord a => [a] -> [a]
 fastSort = generalSort fastOrderingFn
 
-goodSort :: [Something] -> [Something]
+goodSort :: Ord a => [a] -> [a]
 goodSort = generalSort slowOrderingFn
 ```
 
 This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
 
-As you can see, the "parametrising" parametres must come first, so we can make a curried version of the constructor function. At the same time, the order of parametres can be switched using the `flip` function that takes its (first) two arguments in the reverse order of `f`:
+As you can see, the "parametrising" parameters must come first, so we can make a curried version of the constructor function. At the same time, the order of parameters can be switched using the `flip` function that takes its (first) two arguments in the reverse order of `f`:
 
 ```haskell
 flip :: (a -> b -> c) -> b -> a -> c
@@ -108,7 +108,7 @@ fastSort :: [Something] -> [Something]
 fastSort numbers = generalSort numbers fastOrderingFn
 ```
 
-As we said, all functions in Haskell are curried. In case you want to make them not curried, you can use tuples to "glue" parametres together:
+As we said, all functions in Haskell are curried. In case you want to make them not curried, you can use tuples to "glue" parameters together:
 
 ```haskell
 notCurried :: (a, b) -> (c, d) -> e
@@ -231,7 +231,7 @@ Prelude> 7 `div` 2
 3
 Prelude> foo x y z = x * (y + z)
 Prelude> (5 `foo` 3) 12
-65
+75
 ```
 
 You can define own operator as you would do it with function:
@@ -239,9 +239,9 @@ You can define own operator as you would do it with function:
 ```
 Prelude> (><) xs ys = reverse xs ++ reverse ys
 Prelude> (><) "abc" "xyz"
-"zyxcba"
+"cbazyx"
 Prelude> "abc" >< "xyz"
-"zyxcba"
+"cbazyx"
 Prelude> :info (><)
 (><) :: [a] -> [a] -> [a]
 ```
