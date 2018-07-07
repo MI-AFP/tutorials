@@ -56,7 +56,7 @@ Some might not be absolutely clear to you at the moment, some are familiar from 
 There are several editors you may use for writing Haskell programs, most probably there is some extension for your favorite editor. We recommend one of those:
 
 * [Vim with plugins](https://wiki.haskell.org/Vim)
-* [IntelliJ IDEA with HaskForce](http://haskforce.com)
+* [IntelliJ IDEA with HaskForce](http://haskforce.com) (or visit their [GitHub repo](https://github.com/carymrobbins/intellij-haskforce))
 * [Atom with plugins](https://atom-haskell.github.io/overview/)
 
 Most probably you will need following stuff:
