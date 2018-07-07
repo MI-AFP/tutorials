@@ -354,8 +354,9 @@ GHC has an extension of [Generalized Algebraic Data Types (GADTs)](https://en.wi
 An anonymous function is a function without a name. It is a Lambda abstraction and might look like this: `\x -> x + 1`. Sometimes, it is more convenient to use a lambda expression rather than giving a function a name. You should use anonymous functions only for very simple functions because it decreases readability of the code.
 
 ```haskell
-myFunc1 = (\x y z -> x * y + z)
-myFunc2 x y z = x * y + z
+myFunc1 x y z = x * y + z               -- <= just syntactic sugar!
+myFunc2 = (\x y z -> x * y + z)         -- <= still syntactic sugar!
+myFunc3 = (\x -> \y -> \z -> x * y + z) -- <= desugarized function
 mapFunc1 = map myFunc1
 mapAFunc1 = map (\x y z -> x * y + z)
 ```
@@ -428,8 +429,8 @@ Let's make a generalized higher-order function that also takes an initial value 
 
 ```haskell
 process :: (a -> a -> a) -> a -> [a] -> a
-process _ initValue [] = initValue
-process f _ (x:xs)     = f x (process xs)
+process _ initValue    []  = initValue
+process f initValue (x:xs) = f x (process f initValue xs)
 
 mySum = process (+) 0
 myProduct = process (*) 1
@@ -438,7 +439,14 @@ myProduct = process (*) 1
 But here we are getting into a problem. Both `(+)` and `(*)` use operands and result of the same type - if we want to convert a number to string and join it in one go with `process`, it is not possible!
 
 ```
-Prelude> process (\x str -> show x ++ str) "" [1,2,3,4]
+*Main> process (\x str -> show x ++ str) "" [1,2,3,4]
+
+<interactive>:18:39: error:
+    • No instance for (Num [Char]) arising from the literal ‘1’
+    • In the expression: 1
+      In the third argument of ‘process’, namely ‘[1, 2, 3, 4]’
+      In the expression:
+        process (\ x str -> show x ++ str) "" [1, 2, 3, 4]
 ```
 
 The type of the initial value must be the same as the type which is returned by given function. Now we get this:
@@ -446,11 +454,13 @@ The type of the initial value must be the same as the type which is returned by 
 
 ```haskell
 process :: (a -> b -> b) -> b -> [a] -> b
-process _ initValue [] = initValue
-process f _ (x:xs)     = f x (process xs)
+process _ initValue    []  = initValue
+process f initValue (x:xs) = f x (process f initValue xs)
 
 mySum = process (+) 0
 myProduct = process (*) 1
+
+myToStrJoin :: (Show a) => [a] -> String
 myToStrJoin = process (\x str -> show x ++ str) ""
 ```
 
@@ -459,17 +469,20 @@ Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x
 
 ```haskell
 processr :: (a -> b -> b) -> b -> [a] -> b   -- "accumulates" in the RIGHT operand
-processr _ initValue [] = initValue
-processr f _ (x:xs)     = f x (processl xs)
+processr _ initValue    []  = initValue
+processr f initValue (x:xs) = f x (processr f initValue xs)
 
 processl :: (b -> a -> b) -> b -> [a] -> b   -- "accumulates" in the LEFT operand
-processl _ initValue [] = initValue
-processl f _ (x:xs)     = f (processr xs) x
+processl _ initValue    []  = initValue
+processl f initValue (x:xs) = f (processl f initValue xs) x
 
 mySum = processl (+) 0
 myProduct = processl (*) 1
+
+myToStrJoinR :: (Show a) => [a] -> String
 myToStrJoinR = processr (\x str -> show x ++ str) ""
-myToStrJoinL = processl (\x str -> show x ++ str) ""
+myToStrJoinL :: (Show a) => [a] -> String
+myToStrJoinL = processl (\str x -> show x ++ str) ""
 ```
 
 This is something so generally useful, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl`/`foldr` and related `scanl`/`scanr`, which capture intermediate values in a list:
