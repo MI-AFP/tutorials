@@ -320,9 +320,10 @@ isTriangle :: Double -> Double -> Double -> Bool
 Now we can add another function to the file:
 
 ```haskell
--- Added function
+conforms :: Integer -> Bool
+conforms x = (x > 10 && x < 15) || x == 0
 -- . is function composition (as in math)
-isntTriangle = not . isTriangle
+notConforms = not . conforms
 ```
 
 But you need to recompile the file in GHCi so the change can take effect. You can use `:load` again, but if you don't want to write the filename (and path), you can use `:reload`.
@@ -334,7 +335,8 @@ Ok, modules loaded: Main.
 *Main> :browse
 linear :: Integer -> Integer -> Integer -> Integer
 isTriangle :: Double -> Double -> Double -> Bool
-isntTriangle :: Double -> Double -> Double -> Bool
+conforms :: Integer -> Bool
+notConforms :: Integer -> Bool
 ```
 
 ## First project
