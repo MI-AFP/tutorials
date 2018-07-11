@@ -10,15 +10,15 @@ It might happen that you encounter a more advanced concept or piece of code that
 
 ## Outline
 
-1. FP and Haskell environment
-2. Functions and basics of data types
-3. Structure of code and branching in FP
-4. Important data types, handling errors
-5. Advanced functions
-6. Type classes, general and basics
-7. Advanced type classes 1
-8. Advanced type classes 2
-9. Testing and documentation
-10. Web frameworks
-11. Functional reactive programming
-12. Debugging, benchmarking and dependent types
+1. [FP and Haskell environment](01_fp-env.md)
+2. [Functions and basics of data types](02_functions-types.md)
+3. [Structure of code and branching in FP](03_branching.md)
+4. [Important data types, handling errors](04_types-errors.md)
+5. [Advanced functions, typeclasses intro](05_functions-typeclasses.md)
+6. [IO, testing, and documentation](06_io-test-doc.md)
+7. [Advanced type classes 1](07_common-typeclasses-1.md)
+8. [Advanced type classes 2](08_common-typeclasses-2.md)
+9. [Web application in Haskell](09_webapp.md)
+10. [Frontend and FRP](10_frontend-frp.md)
+11. [Performance and Debugging](11_performance-debug.md)
+12. [GHC Extensions and Dependent Types](12_exts-deptypes.md)
