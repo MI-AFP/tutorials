@@ -159,7 +159,8 @@ Prelude T B C> C.index cstr 2
 In other cases you need to use encoding to encode/decode bytes to/from text:
 
 ```
-E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
+Prelude T B> import qualified Data.Text.Encoding as E
+Prelude T B C E> E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
 "\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
 Prelude T B C E> x = E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
 Prelude T B C E> x
@@ -174,7 +175,7 @@ Prelude T B C E> index x 2
 
 As needing to pack all string literals when using non-base string representations is cumbersome, there is a handy [GHC] language extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html).
 
-Generally, [GHC] language extensions can be enabled in the source file using pragma `LANGUAGE` as the first line in the file::
+Generally, [GHC] language extensions can be enabled in the source file using pragma `LANGUAGE` as the first line in the file:
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -184,13 +185,13 @@ module XY ...
 
 In GHCi, the extension can be enabled using the `:set` directive:
 
-```haskell
+```
 Prelude> :set -XOverloadedStrings
 ```
 
 After that, a string literal type can be inferred by its usage in the source code:
 
-```haskell
+```
 Prelude> import qualified Data.Text as T
 Prelude T> :type "abc"
 "abc" :: [Char]
@@ -498,5 +499,5 @@ The homework to practice working with new types, list comprehensions, containers
 [containers]: https://hackage.haskell.org/package/containers
 [GHC]: https://www.haskell.org/ghc/
 [Hackage]: https://hackage.haskell.org
-[Hayoo!]: https://hayoo.fh-wedel.de
+[Hayoo]: https://hayoo.fh-wedel.de
 [Hoogle]: https://www.haskell.org/hoogle/

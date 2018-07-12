@@ -35,6 +35,12 @@ Some might not be absolutely clear to you at the moment, some are familiar from 
 * **Referential transparency** = expression is said to be referentially transparent if it can be replaced with its corresponding value without changing the program's behavior
 * **Recursion** = recursion occurs when a thing is defined in terms of itself or of its type (applies for functions, for example, factorial, and for types, like tree structure)
 
+Principles [[jdegoes](https://twitter.com/jdegoes/status/974045822424776704?s=09)]:
+
+1. Orthogonal Composability: composable blocks should address a single concern.
+2. Maximum Polymorphism: data types & functions should require minimum structure necessary.
+3. Maximum Deferment: defer types, decisions, effects, evaluation to the last moment.
+
 ## Haskell - the programming language
 
 [Haskell] is a pure functional programming language with strong static typing and non-strict evaluation. It is also standardized (actual standard is [Haskell 2010] and 2020 is under development). Although it is language with academic and strong math background, it is being used in [research][haskell_research], [education][haskell_education] as well as in [industry][haskell_industry] for various projects. It was created as one common language based on many previous functional languages during the 1990s. Main language implementation is [Glasgow Haskell Compiler (GHC)][GHC], which we will use extensively in this course.
@@ -56,7 +62,7 @@ Some might not be absolutely clear to you at the moment, some are familiar from 
 There are several editors you may use for writing Haskell programs, most probably there is some extension for your favorite editor. We recommend one of those:
 
 * [Vim with plugins](https://wiki.haskell.org/Vim)
-* [IntelliJ IDEA with HaskForce](http://haskforce.com)
+* [IntelliJ IDEA with HaskForce](http://haskforce.com) (or visit their [GitHub repo](https://github.com/carymrobbins/intellij-haskforce))
 * [Atom with plugins](https://atom-haskell.github.io/overview/)
 
 Most probably you will need following stuff:
