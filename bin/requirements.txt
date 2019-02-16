@@ -1,4 +1,0 @@
-click
-lxml
-pypandoc
-requests
