@@ -12,7 +12,7 @@ Lambda calculus is good to understand (at least basics) when you want to start w
 * [Lambda calculus (Stanford)](https://plato.stanford.edu/entries/lambda-calculus/)
 * [The Lambda Calculus for Absolute Dummies (like myself)](http://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
 
-For FIT CTU students, there are subjects [BI-PPA](https://edux.fit.cvut.cz/courses/BI-PPA) and [MI-PSL](https://edux.fit.cvut.cz/courses/MI-PSL) which also cover basics of lambda calculus and functional programming.
+For FIT CTU students, there are subjects [BI-PPA](https://courses.fit.cvut.cz/BI-PPA/) and [MI-PSL](https://courses.fit.cvut.cz/MI-PSL/) which also cover basics of lambda calculus and functional programming.
 
 ### Function as first class-object
 
@@ -55,7 +55,7 @@ Principles [[jdegoes](https://twitter.com/jdegoes/status/974045822424776704?s=09
 * [Cabal] = system for building and packaging.
 * [Stack] = managing Haskell projects, works with [Cabal] for you.
 
-:point_right: Please these (or check if installed already) - you can follow instruction on official websites one by one or (better) install [Haskell Platform], which includes all of those and also most common packages.
+:point_right: Please, install these (or check if installed already) - you can follow instruction on official websites one by one or (better) install [Haskell Platform], which includes all of those and also most common packages.
 
 ### Editors and IDEs
 
@@ -72,17 +72,17 @@ Most probably you will need following stuff:
 * [hindent] = indenter, pretty print
 * [stylish-haskell] = code prettifier ("good style")
 
-Install those with [Cabal] (by default it will install just for you to your profile, ensure that you have `~/.cabal/bin` in your `PATH`. The installation might take a while - it has a lot of dependencies and needs to build them from Haskell source code. If you want to install something with [Cabal] to all users, use `--global` flag.
+Install those with [Cabal] (by default it will install just for you to your profile, ensure that you have `~/.cabal/bin` in your `PATH`) or with [Stack]. The installation might take a while - it has a lot of dependencies and needs to build them from Haskell source code. If you want to install something with [Cabal] to all users, use `--global` flag.
 
-```
+```console
 $ cabal update
 $ cabal install hlint stylish-haskell hindent ghc-mod
+$ stack install hlint stylish-haskell hindent ghc-mod
 ```
 
 ### Sites for searing
 
 * [Hoogle] = "Google" for Haskell world
-* [Hayoo!] = "Yahoo" for Haskell world
 * [Hackage] = package archive, there are packages which can you install and use standalone or as modules for your projects (similar to PyPI for Python, RubyGems for Ruby, etc.)
 * [Stackage] = package archive, alternative to [Hackage], only stable packages
 
@@ -103,7 +103,7 @@ This is a nice example of practical usage of Haskell for web projects! It is so 
 
 Now you should have [GHC] installed (and others as well, but we won't need an editor for this time), you can test it out with the following command.
 
-```
+```console
 % ghc --version
 The Glorious Glasgow Haskell Compilation System, version 8.0.2
 ```
@@ -244,7 +244,7 @@ Prelude> 5 `mod` 3
 2
 ```
 
-### Giving name to expression
+### Giving a name to an expression
 
 In GHCi you can name an expression with `let` and assignment.
 
@@ -359,7 +359,7 @@ main = putStrLn "Hello, world!"
 
 Now use `ghc` compiler to compile the file:
 
-```
+```console
 % ghc 01_hw.hs
 [1 of 1] Compiling Main             ( 01_hw.hs, 01_hw.o )
 Linking 01_hw ...
@@ -374,7 +374,7 @@ You can see some similar output as when you were loading a file in GHCi just her
 
 And you can run the executable:
 
-```
+```console
 % ./01_hw
 Hello, world!
 ```
@@ -399,9 +399,9 @@ main = do
     putStrLn (greet name)
 ```
 
-Now how to make it work together? Do you know `Makefile`s from `C/C++`? Don't worry... GHC is a great tool and does such painful work for you (reads imports and looking up the files - you just need to have good naming of modules/files):
+Now how to make it work together? Do you know `Makefile` (for example, from `C/C++`)? Don't worry... GHC is a great tool and does such painful work for you (reads imports and looking up the files - you just need to have a standard naming of modules/files):
 
-```
+```console
 % ghc --make Main.hs
 [1 of 2] Compiling HWLib            ( HWLib.hs, HWLib.o )
 [2 of 2] Compiling Main             ( Main.hs, Main.o )
@@ -418,14 +418,14 @@ Compiling application made from multiple source codes is not so complicated in t
 
 Let's do the *Hello, world!* app with [Stack]. First, verify that you have it installed.
 
-```
+```console
 % stack --version
 Version 1.4.0, Git revision e714f1dd3fade19496d91bd6a017e435a96a6bcd (4640 commits) x86_64 hpack-0.17.0
 ```
 
 Then you can create a new project with default template:
 
-```
+```console
 % stack new HelloWorld
 Downloading template "new-template" to create project "HelloWorld" in HelloWorld/ ...
 
@@ -481,7 +481,7 @@ main = do
 
 Now you don't use GHC directly, but call it via `stack build`:
 
-```
+```console
 % stack build
 No compiler found, expected minor version match with ghc-8.0.2 (x86_64) (based on resolver setting in /home/user/.stack/global-project/stack.yaml).
 To install the correct GHC into /home/user/.stack/programs/x86_64-linux/, try running "stack setup" or use the "--install-ghc" flag. To use your system GHC installation, run "stack config set system-ghc --global true", or use the "--system-ghc" flag.
@@ -489,7 +489,7 @@ To install the correct GHC into /home/user/.stack/programs/x86_64-linux/, try ru
 
 As you see `stack` doesn't want to use system-wide installation of `ghc` but local instead by default. Just run `stack setup` so `stack` will prepare local `ghc` (it will take some time) and then try to build.
 
-```
+```console
 % stack setup
 Preparing to install GHC to an isolated location.
 This will not interfere with any system-level installation.
@@ -535,7 +535,7 @@ Registering HelloWorld-0.1.0.0...
 
 Everything ended up OK and you are finally able to run the application (`HelloWorld-exe` is defined in `package.yaml`, thus also `HelloWorld.cabal`, and you may change it):
 
-```
+```console
 % stack exec HelloWorld-exe
 Enter your name:
 Marek
@@ -544,7 +544,7 @@ Hello, Marek!
 
 For debugging you can run `ghci` with project preloaded:
 
-```
+```console
 % stack ghci
 The following GHC options are incompatible with GHCi and have not been passed to it: -threaded
 Configuring GHCi with the following packages: HelloWorld
@@ -567,7 +567,7 @@ greet :: String -> String
 
 You might have noticed that [Stack] uses `package.yaml` to generate `.cabal` and there is some `stack.yaml`. It also somehow takes care of the needed dependencies. Let's say you need to your collection of type Set. Of course, you could implement it on your own, but reinventing the wheel is unnecessary! Use `Data.Set` which is already here (we will cover details about this and other data structures in Haskell in the future).
 
-If you look up `Data.Set` ([Hoogle], [Hayoo!] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Set.html)). If you now try to do this in your `Lib.hs`:
+If you look up `Data.Set` ([Hoogle], [Stackage] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Set.html)). If you now try to do this in your `Lib.hs`:
 
 ```haskell
 import Data.Set
@@ -577,7 +577,7 @@ namesSet = insert "Robert" (insert "Marek" empty)
 
 After trying to build with `stack build` you should get this error stating that it could not find module `Data.Set`:
 
-```
+```console
 /home/.../HelloWorld/src/Lib.hs:5:1: error:
     Could not find module ‘Data.Set’
     Perhaps you meant Data.Int (from base-4.10.1.0)
@@ -616,7 +616,7 @@ Further, [Stack] also provides [dependency visualization](https://docs.haskellst
 
 To test out the workflow check the dummy homework [MI-AFP/hw00](https://github.com/MI-AFP/hw00) where you will learn how you should get, complete, check, and submit homework (especially useful if you are not familiar with [GitHub] and [Travis CI]). By working on such homework, you might also learn new things which you encounter in tests and skeletons.
 
-For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). The task consists of writing simple expressions, looking up information with [Hoogle], [Hayoo!] and/or GHCi, and working with dependencies of project.
+For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). The task consists of writing simple expressions, looking up information with [Hoogle], [Stackage], [Hackage] and/or GHCi, and working with dependencies of project.
 
 ## Further reading
 
@@ -638,7 +638,6 @@ For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). 
 [Haskell 2010]: https://www.haskell.org/onlinereport/haskell2010/
 [Haskell Platform]: https://www.haskell.org/platform/
 [Haste]: https://haste-lang.org
-[Hayoo!]: https://hayoo.fh-wedel.de
 [hindent]: https://github.com/commercialhaskell/hindent
 [hlint]: https://hackage.haskell.org/package/hlint
 [Hoogle]: https://www.haskell.org/hoogle/
