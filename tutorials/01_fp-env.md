@@ -90,12 +90,12 @@ $ stack install hlint stylish-haskell hindent ghc-mod
 
 ### Haskell, JavaScript and new languages
 
-If you like to build (frontend/backend) JavaScript applications you can do that nicely with Haskell. There are multiple options, most known are:
+If you like to build (frontend/backend) JavaScript applications you can do that nicely with Haskell or similar language. There are multiple options, most known are:
 
 * [GHCJS]
 * [Haste]
 * [PureScript]
-* [Elm]
+* [Elm] (will be covered in later lectures)
 
 This is a nice example of practical usage of Haskell for web projects! It is so much easier (and safer) to write JavaScript in Haskell than just plain JavaScript. Some of those are not just Haskell dialects or libraries but new languages deeply inspired by Haskell. For more information, read about [The JavaScript Problem](https://wiki.haskell.org/The_JavaScript_Problem). We will slightly look at this at the end of this course.
 
