@@ -101,10 +101,12 @@ This is a nice example of practical usage of Haskell for web projects! It is so 
 
 ## Try to be interactive
 
-Now you should have [GHC] installed (and others as well, but we won't need an editor for this time), you can test it out with the following command.
+Now you should have [GHC] installed from package or via Stack (and others as well, but we won't need an editor for this time), you can test it out with the following command.
 
 ```console
 % ghc --version
+The Glorious Glasgow Haskell Compilation System, version 8.0.2
+% stack exec -- ghc --version
 The Glorious Glasgow Haskell Compilation System, version 8.0.2
 ```
 
@@ -420,7 +422,7 @@ Let's do the *Hello, world!* app with [Stack]. First, verify that you have it in
 
 ```console
 % stack --version
-Version 1.4.0, Git revision e714f1dd3fade19496d91bd6a017e435a96a6bcd (4640 commits) x86_64 hpack-0.17.0
+Version 1.9.3, Git revision 40cf7b37526b86d1676da82167ea8758a854953b (6211 commits) x86_64 hpack-0.31.1
 ```
 
 Then you can create a new project with default template:
@@ -429,26 +431,37 @@ Then you can create a new project with default template:
 % stack new HelloWorld
 Downloading template "new-template" to create project "HelloWorld" in HelloWorld/ ...
 
-...
+The following parameters were needed by the template but not provided: author-name
+You can provide them in /home/user/.stack/config.yaml, like this:
+templates:
+  params:
+    author-name: value
+Or you can pass each one as parameters like this:
+stack new HelloWorld new-template -p "author-name:value"
+
+
+The following parameters were needed by the template but not provided: author-email, author-name, category, copyright, github-username
+You can provide them in /home/user/.stack/config.yaml, like this:
+templates:
+  params:
+    author-email: value
+    author-name: value
+    category: value
+    copyright: value
+    github-username: value
+Or you can pass each one as parameters like this:
+stack new HelloWorld new-template -p "author-email:value" -p "author-name:value" -p "category:value" -p "copyright:value" -p "github-username:value"
 
 Looking for .cabal or package.yaml files to use to init the project.
 Using cabal packages:
-- HelloWorld/HelloWorld.cabal
+- HelloWorld/
 
-Selecting the best among 11 snapshots...
+Selecting the best among 15 snapshots...
 
-Downloaded lts-9.11 build plan.
-Missing some cabal revision files, updating indices
-Selected mirror https://s3.amazonaws.com/hackage.fpcomplete.com/
-Downloading timestamp
-Downloading snapshot
-Updating index
-Updated package list downloaded
-Populated index cache.
-* Matches lts-9.11
+* Matches lts-13.8
 
-Selected resolver: lts-9.11
-Initialising configuration using resolver: lts-9.11
+Selected resolver: lts-13.8
+Initialising configuration using resolver: lts-13.8
 Total number of user packages considered: 1
 Writing configuration to file: HelloWorld/stack.yaml
 All done.
@@ -507,30 +520,33 @@ Using cabal packages:
 
 Selecting the best among 11 snapshots...
 
-* Matches lts-9.11
+* Matches lts-13.8
 
-Selected resolver: lts-9.11
+Selected resolver: lts-13.8
 Initialising configuration using resolver: lts-9.11
 Total number of user packages considered: 1
 Writing configuration to file: stack.yaml
 All done.
 
 % stack build
-Linking /home/user/.stack/setup-exe-cache/x86_64-linux/tmp-Cabal-simple_mPHDZzAJ_1.24.2.0_ghc-8.0.2 ...
+Building all executables for `HelloWorld' once. After a successful build of all of them, only specified executables will be rebuilt.
 HelloWorld-0.1.0.0: configure (lib + exe)
 Configuring HelloWorld-0.1.0.0...
 HelloWorld-0.1.0.0: build (lib + exe)
-Preprocessing library HelloWorld-0.1.0.0...
-[1 of 1] Compiling Lib              ( src/Lib.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Lib.o )
-Preprocessing executable 'HelloWorld-exe' for HelloWorld-0.1.0.0...
-[1 of 1] Compiling Main             ( app/Main.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/HelloWorld-exe/HelloWorld-exe-tmp/Main.o )
-Linking .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/HelloWorld-exe/HelloWorld-exe ...
+Preprocessing library for HelloWorld-0.1.0.0..
+Building library for HelloWorld-0.1.0.0..
+[1 of 2] Compiling Lib              ( src/Lib.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/Lib.o )
+[2 of 2] Compiling Paths_HelloWorld ( .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/autogen/Paths_HelloWorld.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/Paths_HelloWorld.o )
+Preprocessing executable 'HelloWorld-exe' for HelloWorld-0.1.0.0..
+Building executable 'HelloWorld-exe' for HelloWorld-0.1.0.0..
+[1 of 2] Compiling Main             ( app/Main.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe-tmp/Main.o )
+[2 of 2] Compiling Paths_HelloWorld ( .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/autogen/Paths_HelloWorld.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe-tmp/Paths_HelloWorld.o )
+Linking .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe ...
 HelloWorld-0.1.0.0: copy/register
-Installing library in
-/home/user/Projects/CTU/FPCourse/files/01_hw_stack/.stack-work/install/x86_64-linux/lts-9.11/8.0.2/lib/x86_64-linux-ghc-8.0.2/HelloWorld-0.1.0.0-GwaTuTuS4ojL8nYytSjUL5
-Installing executable(s) in
-/home/user/Projects/CTU/FPCourse/files/01_hw_stack/.stack-work/install/x86_64-linux/lts-9.11/8.0.2/bin
-Registering HelloWorld-0.1.0.0...
+Installing library in /home/user/Projects/MI-AFP/tests/HelloWorld/.stack-work/install/x86_64-linux-tinfo6/lts-13.8/8.6.3/lib/x86_64-linux-ghc-8.6.3/HelloWorld-0.1.0.0-8b39YCi0nmn4QsoDKix2j8
+Installing executable HelloWorld-exe in /home/user/Projects/MI-AFP/tests/HelloWorld/.stack-work/install/x86_64-linux-tinfo6/lts-13.8/8.6.3/bin
+Registering library for HelloWorld-0.1.0.0..
+stack build  6.16s user 0.94s system 96% cpu 7.329 total
 ```
 
 Everything ended up OK and you are finally able to run the application (`HelloWorld-exe` is defined in `package.yaml`, thus also `HelloWorld.cabal`, and you may change it):
@@ -546,16 +562,16 @@ For debugging you can run `ghci` with project preloaded:
 
 ```console
 % stack ghci
+Using main module: 1. Package `HelloWorld' component exe:HelloWorld-exe with main-is file: /home/user/Projects/MI-AFP/tests/HelloWorld/app/Main.hs
 The following GHC options are incompatible with GHCi and have not been passed to it: -threaded
 Configuring GHCi with the following packages: HelloWorld
-Using main module: 1. Package `HelloWorld' component exe:HelloWorld-exe with main-is file: /home/.../HelloWorld/app/Main.hs
-GHCi, version 8.0.2: http://www.haskell.org/ghc/  :? for help
-[1 of 1] Compiling Lib              ( /home/.../HelloWorld/src/Lib.hs, interpreted )
-Ok, modules loaded: Lib.
-[2 of 2] Compiling Main             ( /home/.../HelloWorld/app/Main.hs, interpreted )
-Ok, modules loaded: Lib, Main.
-Loaded GHCi configuration from /tmp/ghci18580/ghci-script
-*Main Lib> :browse
+GHCi, version 8.6.3: http://www.haskell.org/ghc/  :? for help
+[1 of 2] Compiling Lib              ( /home/user/Projects/MI-AFP/tests/HelloWorld/src/Lib.hs, interpreted )
+[2 of 2] Compiling Main             ( /home/user/Projects/MI-AFP/tests/HelloWorld/app/Main.hs, interpreted )
+Ok, two modules loaded.
+Loaded GHCi configuration from /tmp/haskell-stack-ghci/3b07e5cf/ghci-script
+*Main Lib> 
+ :browse
 main :: IO ()
 *Main Lib> :browse Lib
 greet :: String -> String
