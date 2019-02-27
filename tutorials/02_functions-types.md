@@ -72,16 +72,16 @@ Declaration of a function is simple, just use the prefix notation as you would c
 fibonacci   :: Word -> Integer
 fibonacci 0 = 1
 fibonacci 1 = 1
-fibonacci n = (fibonacci n-1) + (fibonacci n-2)
+fibonacci n = fibonacci (n-1) + fibonacci (n-2)
 ```
 
 ### Type declaration
 
 There are three basic ways how to introduce your own data type:
 
-1. type synonym = you just use a different name for some existing type (for example `String` is type synonym for `[Char]` = list of `Char`)
-2. new data type = declare type with type constructor (before `=`) and one or more data constructors (after `=`, separated by `|`), you may use typeclass constraints, type variables, and recursion
-3. newtype = new data type with exactly one data constructor with one parameter (new type is isomorphic with the "wrapped" type and compiler can do optimizations, can be used also in another way in more advanced code)
+1. `type` synonym = you just use a different name for some existing type (for example `String` is type synonym for `[Char]` = list of `Char`)
+2. new `data` type = declare type with type constructor (before `=`) and one or more data constructors (after `=`, separated by `|`), you may use typeclass constraints, type variables, and recursion
+3. `newtype` = new data type with exactly one data constructor with one parameter (new type is isomorphic with the "wrapped" type and compiler can do optimizations, can be used also in another way in more advanced code)
 
 ```haskell
 type String = [Char]
@@ -125,7 +125,7 @@ Haskell has a strong static type system which is one of the things making it so 
 * `Word` = Unsigned integral number (same size as `Int`)
 * `Char` = Unicode character (ISO/IEC 10646)
 * `Bool` = truth value, only `True` or `False`
-* `String` = literally list of characters
+* `String` = literally list of characters (type synonym for `[Char]`)
 
 ### Type and data constructor
 
@@ -288,7 +288,7 @@ myFunc (a, b, c, d) = (if d then a + d else a - d, b)
 
 There are basic functions for tuples with two elements: `fst`, `snd`, and `swap`.
 
-```
+```haskell
 Prelude> :type fst
 fst :: (a, b) -> a
 Prelude> fst (7, "Hello")
