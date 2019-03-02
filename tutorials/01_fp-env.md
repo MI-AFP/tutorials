@@ -80,7 +80,7 @@ $ cabal install hlint stylish-haskell hindent ghc-mod
 $ stack install hlint stylish-haskell hindent ghc-mod
 ```
 
-### Sites for searing
+### Sites for searching
 
 * [Hoogle] = "Google" for Haskell world
 * [Hackage] = package archive, there are packages which can you install and use standalone or as modules for your projects (similar to PyPI for Python, RubyGems for Ruby, etc.)
