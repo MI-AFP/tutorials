@@ -417,6 +417,80 @@ show $ getSiblingsOf $ getParentOf $ head people    -- A bit nicer
 show . getSiblingsOf . getParentOf . head $ people  -- Haskell way (will be covered later on)
 ```
 
+### List comprehensions
+
+Creation of lists using a constructor (or its syntactic sugar) is pretty straightforward, but there are two more interesting ways for that. First is used basically for basic ranges and it is called "dot dot notation". You have seen it already. It works with types that are instances of type class `Enum` (you can check within GHCi by `:info Enum`. You can specify start, step and end of the range (inclusive), but you need to be careful with floats and doubles because of their precision - the error cumulatively grows.
+
+```
+Prelude> [1..10]
+[1,2,3,4,5,6,7,8,9,10]
+Prelude> [0,5..20]
+[0,5,10,15,20]
+Prelude> ['a' .. 'z']
+"abcdefghijklmnopqrstuvwxyz"
+Prelude> [1.0,1.05 .. 1.2]
+[1.0,1.05,1.1,1.1500000000000001,1.2000000000000002]
+```
+
+A more flexible way is offered by [list comprehensions](https://wiki.haskell.org/List_comprehension). This concept/construct is nowadays used in many other programming languages, as well, such as Python. In "list" you first specify an expression with variables and then after pipe `|`, there are specifications of bindings and restrictions. It is also possible to define local names with `let`.
+
+```
+Prelude> [n*2+1 | n <- [1..5]]
+[3,5,7,9,11]
+Prelude> [(i, j) | i <- [1..5], j <- [0,1]]
+[(1,0),(1,1),(2,0),(2,1),(3,0),(3,1),(4,0),(4,1),(5,0),(5,1)]
+Prelude> [x | x <- [0..10], x `mod` 3 == 1, x /= 7]
+[1,4,10]
+Prelude> take 10 [(i, j) | i <- [1..5], let k=i-5, j <- [k..6]]
+[(1,-4),(1,-3),(1,-2),(1,-1),(1,0),(1,1),(1,2),(1,3),(1,4),(1,5)]
+```
+
+### Lazy Haskell
+
+As we've already seen, Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated, unless the value is needed. One of the possibilities is creating infinite lists. You may use `undefined` for testing when the expression is evaluated.
+
+```
+Prelude> let x = 1:x
+Prelude> take 10 x
+[1,1,1,1,1,1,1,1,1,1]
+Prelude> take 20 x
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+Prelude> x
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,...^C Interrupted.
+Prelude> [1,2..]
+[1,2,3,4,5,6,7,8,9,10,11,12,13,14,...^C Interrupted.
+Prelude> let x = undefined
+Prelude> let y = 1 + x
+Prelude> let z = y * 2 + 15
+Prelude> :type y
+y :: Num a => a
+Prelude> :type x
+x :: a
+Prelude> z
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
+  undefined, called at <interactive>:37:5 in interactive:Ghci23
+```
+
+(For stopping output press CTRL+C in GHCi)
+
+### Strictness with types
+
+In the previous lesson, we touched the topic of enforcing strictness with `!` in patterns ([bang patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)) and in function application with `$!` operator. Similarly, we can use `!` with type fields like this:
+
+```haskell
+data MyType = MyConstr Int !Int
+
+data MyRec = MyRecConstr { xA ::  Int
+                         , xB :: !Int
+                         }
+```
+
+For both cases it means that when data constructor is evaluated, it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
+
+In order to achieve laziness, Haskell wraps all types with some additional information = *boxed types*. If you don't need laziness and other related properties, it is more efficient to use raw *unboxed types*. We will talk about that as a bonus or at the end of course in the *Performance* section. Now you just need to know roughly what is it about, because it is used in some textual types...
+
 ## Modules and imports
 
 A Haskell program consists of a collection of modules (similar to other programming languages). In the top level, you can declare and define data types, function, typeclasses and their instances, pattern bindings and so on.
@@ -521,6 +595,130 @@ myFunc3 = ...
 
 x = myFunc1 10 -- a function from TestModule
 y = FPTM.myFunc1 25
+```
+
+## Textual types
+
+Textual types [(strings)](https://wiki.haskell.org/Strings) are kind of pain in Haskell. This is mostly because of its long legacy and also laziness/strictness trade-offs. However, as everything, they are not really insidious, just not convenient as they could be (and actually are in newer "Haskells", such as PureScript).
+
+### String
+
+[String](https://hackage.haskell.org/package/base/docs/Data-String.html) is the string type in the `base` package. It is just a type synonym for `[Char]`, so it comes with all properties of a [list](https://hackage.haskell.org/package/base/docs/Data-List.html), and as such, it is the most common one, especially for non-performance-sensitive applications. But when it comes to performance (and sometimes even Unicode behavior), then problems arise - `String` has big overhead in time and space.
+
+### Text
+
+[Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html) from [text](https://hackage.haskell.org/package/text) package is a time and space-efficient implementation of Unicode text. You can convert between `Text` and `String` with functions `pack` and `unpack`. The `Data.Text` package exports functions with same names as there are for `String` (`head`, `length`, `map`, `replace`, etc.), so the advised import style is `import qualified Data.Text as T`.
+
+```
+Prelude> import qualified Data.Text as T
+Prelude T> txt = T.pack "my effective text"
+Prelude T> :type txt
+txt :: T.Text
+Prelude T> T.index txt 1
+'y'
+Prelude T> T.replace "my" "your" txt
+
+<interactive>:13:11: error:
+    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
+    • In the first argument of ‘T.replace’, namely ‘"my"’
+      In the expression: T.replace "my" "your" txt
+      In an equation for ‘it’: it = T.replace "my" "your" txt
+
+<interactive>:13:16: error:
+    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
+    • In the second argument of ‘T.replace’, namely ‘"your"’
+      In the expression: T.replace "my" "your" txt
+      In an equation for ‘it’: it = T.replace "my" "your" txt
+Prelude T> T.replace (T.pack "my") (T.pack "your") txt
+"your effective text"
+Prelude T> length txt
+
+<interactive>:11:8: error:
+    • Couldn't match expected type ‘[a0]’ with actual type ‘T.Text’
+    • In the first argument of ‘length’, namely ‘txt’
+      In the expression: length txt
+      In an equation for ‘it’: it = length txt
+Prelude T> T.length txt
+17
+```
+
+There is another variant of the Text package, which is [Data.Text.Lazy](https://hackage.haskell.org/package/text/docs/Data-Text-Lazy.html), which exports same operations and thanks to laziness, it can work with huge texts and it may provide better performance under the right circumstances. [Data.Text.Encoding](https://hackage.haskell.org/package/text/docs/Data-Text-Encoding.html) (and its lazy alternative) may be also useful.
+
+### ByteString
+
+Last of the types mentioned here is [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) from [bytestring](https://hackage.haskell.org/package/bytestring) package. Byte vectors are encoded as strict Word8 arrays of bytes and they are used for interoperability between Haskell and C or other lower-level situations. In many ways, the usage is similar to [text](https://hackage.haskell.org/package/text) package (again `pack` and `unpack`, same basic functions, `Lazy` alternative, and so on). Next, there is an option to use vectors with `Char8` instead of `Word8`, which works as Unicode subset (0-255) strings and it is used when working with pure ASCII string representations.
+
+```
+Prelude T> import Data.ByteString as B
+Prelude T B> bstr = B.pack [97, 98, 99]
+Prelude T B> bstr
+"abc"
+Prelude T B> index bstr 2
+99
+Prelude T B> B.map (+1) bstr
+"bcd"
+
+Prelude T B> import qualified Data.ByteString.Char8 as C
+Prelude T B C> C.pack "abc"
+"abc"
+Prelude T B C> B.pack "abc"
+
+<interactive>:28:8: error:
+    • Couldn't match type ‘Char’ with ‘GHC.Word.Word8’
+      Expected type: [GHC.Word.Word8]
+        Actual type: [Char]
+    • In the first argument of ‘pack’, namely ‘"abc"’
+      In the expression: pack "abc"
+      In an equation for ‘it’: it = pack "abc"
+Prelude T B C> cstr = C.pack "abc"
+Prelude T B C> C.index cstr 2
+'c'
+```
+
+In other cases you need to use encoding to encode/decode bytes to/from text:
+
+```
+Prelude T B> import qualified Data.Text.Encoding as E
+Prelude T B C E> E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
+"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
+Prelude T B C E> x = E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
+Prelude T B C E> x
+"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
+Prelude T B C E> index x 0
+197
+Prelude T B C E> index x 2
+105
+```
+
+### OverloadedStrings
+
+As needing to pack all string literals when using non-base string representations is cumbersome, there is a handy [GHC] language extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html).
+
+Generally, [GHC] language extensions can be enabled in the source file using pragma `LANGUAGE` as the first line in the file:
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+
+module XY ...
+```
+
+In GHCi, the extension can be enabled using the `:set` directive:
+
+```
+Prelude> :set -XOverloadedStrings
+```
+
+After that, a string literal type can be inferred by its usage in the source code:
+
+```
+Prelude> import qualified Data.Text as T
+Prelude T> :type "abc"
+"abc" :: [Char]
+Prelude T> :set -XOverloadedStrings
+Prelude> :type "abc"
+"abc" :: Data.String.IsString p => p
+Prelude T> T.length "abc" -- no need to pack the literal any more!
+3
 ```
 
 ## Task assignment
