@@ -284,11 +284,6 @@ The homework to practice working with new types, list comprehensions, containers
 
 ## Further reading
 
-* [Oh my laziness](http://alpmestan.com/posts/2013-10-02-oh-my-laziness.html)
-* [Haskell - list comprehension](https://wiki.haskell.org/List_comprehension)
-* [Haskell - Lazy evaluation](https://wiki.haskell.org/Lazy_evaluation)
-* [Haskell String Types](http://www.alexeyshmalko.com/2015/haskell-string-types/)
-* [Untangling Haskells strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
 * [Haskell containers](https://haskell-containers.readthedocs.io/en/latest/)
 * [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
 * [Haskell - error](https://wiki.haskell.org/Error)

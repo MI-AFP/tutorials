@@ -1,4 +1,4 @@
-# Structuration and branching
+# Structuration, branching, and evaluation
 
 ## If and case
 
@@ -730,8 +730,13 @@ The homework to practice branching and slightly working with modules is in repos
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com) (chapters 4, 7)
 * [Haskell: Pattern matching](https://en.wikibooks.org/wiki/Haskell/Pattern_matching)
 * [Haskell: Control structures](https://en.wikibooks.org/wiki/Haskell/Control_structures)
+* [Haskell: List comprehension](https://wiki.haskell.org/List_comprehension)
+* [Haskell: Lazy evaluation](https://wiki.haskell.org/Lazy_evaluation)
 * [Haskell: Laziness](https://en.wikibooks.org/wiki/Haskell/Lazines)
 * [Haskell: Modules](https://en.wikibooks.org/wiki/Haskell/Modules)
 * [Haskell: Import](https://wiki.haskell.org/Import)
 * [Haskell: Import modules properly](https://wiki.haskell.org/Import_modules_properly).
 * [24 Days of GHC Extensions: Bang Patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)
+* [Oh my laziness](http://alpmestan.com/posts/2013-10-02-oh-my-laziness.html)
+* [Haskell String Types](http://www.alexeyshmalko.com/2015/haskell-string-types/)
+* [Untangling Haskells strings](https://mmhaskell.com/blog/2017/5/15/untangling-haskells-strings)
