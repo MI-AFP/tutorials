@@ -11,8 +11,8 @@ In most programming languages, there is a notion of `null` or `nil` or even `Non
 If we were to design such a solution, we may use ADTs like that:
 
 ```haskell
-data IntOrNull = I Int | Null
-data StringOrNull = S String | Null
+data IntOrNull = I Int | NullInt
+data StringOrNull = S String | NullString
 data ValueOrNull a = Value a | Null
 
 myDiv     :: Int -> Int -> ValueOrNull Int
@@ -21,8 +21,8 @@ myDiv x y = Value (x `div` y)
 
 divString     :: Int -> Int -> String
 divString x y = case (myDiv x y) of
-                  Null -> "Division by zero is not allowed!"
-                  Value res -> "Result: " ++ (show res)
+                  Null      -> "Division by zero is not allowed!"
+                  Value res -> "Result: " ++ show res
 ```
 
 In Haskell, we have a pretty structure called `Maybe` which does exactly that for us and there are some functions helping with common usage. It is a very important structure and you will be dealing with it very often. You can find more about in the documentation of [Data.Maybe](https://hackage.haskell.org/package/base/docs/Data-Maybe.html).
@@ -50,6 +50,8 @@ Prelude Data.Maybe> catMaybes [Just 6, Just 7, Nothing, Just 8, Nothing, Just 9]
 [6,7,8,9]
 ```
 
+Is `Maybe` a good container for the following case? What if we need to propage details about the error in the communication (unknown recipient, timeout, bad metadata, etc.)?
+
 ```haskell
 -- Communicator interface
 data Message = Message { msgSender    :: String
@@ -59,7 +61,7 @@ data Message = Message { msgSender    :: String
                        }
 
 sendAndReceive :: Communicator -> Message -> Maybe Message
-sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
+sendAndReceive comm msg = sendSync comm msg  -- some library "magic", various errors
 
 printReceivedMessage :: Maybe Message -> String
 printReceivedMessage Nothing    = "Unknown error occured during communication."
@@ -76,7 +78,7 @@ myCommunicator = printReceivedMessage . sendAndReceive comm
 data Either a b = Left a | Right b
 ```
 
-The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html))
+The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html)):
 
 
 ```
@@ -100,8 +102,12 @@ data Message = Message { msgSender    :: String
                        , msgBody      :: String
                        }
 
-data CommError = Timeout | Disconnected | UnkownRecipient | IncorrectMetadata | UnknownError
-                deriving Show
+data CommError = Timeout
+               | Disconnected
+               | UnkownRecipient
+               | IncorrectMetadata
+               | GeneralError String
+               deriving Show
 
 sendAndReceive :: Communicator -> Message -> Either CommError Message
 sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
@@ -128,7 +134,7 @@ It is semantically more similar to `void` from other languages and you can use i
 
 ## Other containers
 
-As in other programming languages or programming theory, there are various types of containers - data types/structures, whose instances are collections of other objects. As for collections with an arbitrary number of elements, we talked about lists, which are simple to use and have a nice syntactic-sugar notation in Haskell. However, there are also other versatile types of containers available in the package [containers] and others, such as [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and more (use [Hoogle], [Hayoo], [Hackage]).
+As in other programming languages or programming theory, there are various types of containers - data types/structures, whose instances are collections of other objects. As for collections with an arbitrary number of elements, we talked about lists, which are simple to use and have a nice syntactic-sugar notation in Haskell. However, there are also other versatile types of containers available in the package [containers] and others, such as [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and more (use [Hoogle] or [Hackage]).
 
 ### Sequence
 
@@ -265,12 +271,18 @@ So what is currying useful for? It enables a very powerful abstraction technique
 Imagine this situation of a polygon library:
 
 ```haskell
-type PSize = Int
-type NoVertices = Int
-data Polygon = -- some representation
+type Size = Double
+type NoVertices = Word
+newtype Polygon = Polygon [(Double, Double)]
 
-mkPolygon :: NoVertices -> PSize -> Polygon
-mkPolygon = -- some code to make a polygon
+computeRegularPolygonPoints :: (Double, Double) -> NoVertices -> Size -> [(Double, Double)]
+computeRegularPolygonPoints (cX, cY) nVertices r = [ (x i, y i) |  i <- map fromIntegral [0..(nVertices-1)] ]
+  where n = fromIntegral nVertices
+        x i = cX + r * cos(2 * pi * i / n)
+        y i = cY + r * sin(2 * pi * i / n)
+
+mkPolygon :: NoVertices -> Size -> Polygon
+mkPolygon = computeRegularPolygonPoints (0, 0)
 
 mkHexagon :: PSize -> Polygon
 mkHexagon = mkPolygon 6
@@ -280,23 +292,23 @@ mkRectangle = mkPolygon 4
 
 --etc.
 ```
-Here we create *specialized* versions of polygon constructor functions by providing the `PSize` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
+Here we create *specialized* versions of polygon constructor functions by providing the `Size` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
 
 ```haskell
-generalSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
-generalSort orderingFn numbers = -- use the orderingFn to sort the numbers
+genericSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
+genericSort orderingFn numbers = undefined -- use the orderingFn to sort the numbers
 
 fastOrderingFn :: Ord a => a -> a -> Ordering
-fastOrderingFn = -- a fast, but not too reliable ordering algorithm
+fastOrderingFn = undefined -- a fast, but not too reliable ordering algorithm
 
 slowOrderingFn :: Ord a => a -> a -> Ordering
-slowOrderingFn = -- a slow, but precise ordering algorithm
+slowOrderingFn = undefined -- a slow, but precise ordering algorithm
 
 fastSort :: Ord a => [a] -> [a]
-fastSort = generalSort fastOrderingFn
+fastSort = genericSort fastOrderingFn
 
 goodSort :: Ord a => [a] -> [a]
-goodSort = generalSort slowOrderingFn
+goodSort = genericSort slowOrderingFn
 ```
 
 This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
@@ -309,8 +321,10 @@ flip :: (a -> b -> c) -> b -> a -> c
 Then we can have:
 
 ```haskell
-generalSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
-generalSort numbers orderingFn = -- use the orderingFn to sort the numbers
+data Something = SomethingRecord { complexFields :: () }
+
+genericSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
+genericSort numbers orderingFn = -- use the orderingFn to sort the numbers
 
 fastOrderingFn :: Something -> Something -> Ordering
 fastOrderingFn = -- a fast, but not too reliable ordering algorithm
@@ -603,8 +617,8 @@ myMap f (x:xs) = f x : myMap xs
 myFilter :: (a -> Bool) -> [a] -> [a]
 myFilter _ []     = []
 myFilter p (x:xs)
-      | p x       = x : filter p xs
-      | otherwise = filter p xs
+      | p x       = x : myFilter p xs
+      | otherwise = myFilter p xs
 ```
 
 That's it. Let us have some examples:
@@ -807,5 +821,4 @@ The homework to practice working with new types, list comprehensions, containers
 [containers]: https://hackage.haskell.org/package/containers
 [GHC]: https://www.haskell.org/ghc/
 [Hackage]: https://hackage.haskell.org
-[Hayoo]: https://hayoo.fh-wedel.de
 [Hoogle]: https://www.haskell.org/hoogle/
