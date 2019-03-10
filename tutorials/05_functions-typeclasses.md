@@ -1,527 +1,4 @@
-# Advanced functions and intro to typeclasses
-
-## More about functions
-
-Creating new own functions or using the predefined ones from libraries is common in most programming languages. However, in a pure functional language, first-class functions enable to do much more. Generally, we architecture the programme by *composing functions* and other "tricks".
-
-### Currying
-
-When we talk about "currying", in Haskell it has (almost) nothing to do with dishes or spices. A famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: *translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument*. Technically, the original author of this is [Moses Schönfinkel](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel), so sometimes you may even come across a very nice name ["Schönfinkelization"](http://www.natansh.in/2012/07/27/schonfinkelization/).
-
-Currying can be achieved in all functional programming languages, but Haskell is special in that *all functions are curried by default*, similarly to pure lambda calculus. Let's se how we parenthesize function types:
-
-```haskell
-myFunc1 :: a ->  b -> c
-myFunc1 :: a -> (b -> c)
-```
-
-This means that the type annotation is right-associative. We can read that `myFunc1` takes value of `a` and returns a function that takes value of `b` and result is a value of `c`. It is possible to apply value of `a` and "store" the function `b -> c` for later application or reuse:
-
-```
-Prelude> let myFunc x y z = x * y + z
-Prelude> :type myFunc
-myFunc :: Num a => a -> a -> a -> a
-Prelude> :type (myFunc 8)
-(myFunc 8) :: Num a => a -> a -> a
-Prelude> :type (myFunc 8 7)
-(myFunc 8 7) :: Num a => a -> a
-Prelude> :type (myFunc 8 7 1)
-(myFunc 8 7 1) :: Num a => a
-Prelude> myFunc 8 7 1
-57
-Prelude> myFunc2 = myFunc 8 7
-Prelude> myFunc2 1
-57
-Prelude> myFunc2 2
-58
-```
-
-So what is currying useful for? It enables a very powerful abstraction technique called **[partial application](https://en.wikipedia.org/wiki/Partial_application)**. Without going into a detail, partial application is currying + taking care of the context (closure) enabling us to achieve *reification* (a more concrete behaviour).
-
-Imagine this situation of a polygon library:
-
-```haskell
-type PSize = Int
-type NoVertices = Int
-data Polygon = -- some representation
-
-mkPolygon :: NoVertices -> PSize -> Polygon
-mkPolygon = -- some code to make a polygon
-
-mkHexagon :: PSize -> Polygon
-mkHexagon = mkPolygon 6
-
-mkRectangle :: PSize -> Polygon
-mkRectangle = mkPolygon 4
-
---etc.
-```
-Here we create *specialized* versions of polygon constructor functions by providing the `PSize` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
-
-```haskell
-generalSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
-generalSort orderingFn numbers = -- use the orderingFn to sort the numbers
-
-fastOrderingFn :: Ord a => a -> a -> Ordering
-fastOrderingFn = -- a fast, but not too reliable ordering algorithm
-
-slowOrderingFn :: Ord a => a -> a -> Ordering
-slowOrderingFn = -- a slow, but precise ordering algorithm
-
-fastSort :: Ord a => [a] -> [a]
-fastSort = generalSort fastOrderingFn
-
-goodSort :: Ord a => [a] -> [a]
-goodSort = generalSort slowOrderingFn
-```
-
-This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
-
-As you can see, the "parametrising" parameters must come first, so we can make a curried version of the constructor function. At the same time, the order of parameters can be switched using the `flip` function that takes its (first) two arguments in the reverse order of `f`:
-
-```haskell
-flip :: (a -> b -> c) -> b -> a -> c
-```
-Then we can have:
-
-```haskell
-generalSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
-generalSort numbers orderingFn = -- use the orderingFn to sort the numbers
-
-fastOrderingFn :: Something -> Something -> Ordering
-fastOrderingFn = -- a fast, but not too reliable ordering algorithm
-
-slowOrderingFn :: Something -> Something -> Ordering
-slowOrderingFn = -- a slow, but precise ordering algorithm
-
-fastSort :: [Something] -> [Something]
-fastSort = (flip generalSort) fastOrderingFn
-
-goodSort :: [Something] -> [Something]
-goodSort = (flip generalSort) slowOrderingFn
-```
-
-which is of course equivalent (but bloated and not idiomatic!) to:
-
-```haskell
-fastSort :: [Something] -> [Something]
-fastSort numbers = generalSort numbers fastOrderingFn
-```
-
-As we said, all functions in Haskell are curried. In case you want to make them not curried, you can use tuples to "glue" parameters together:
-
-```haskell
-notCurried :: (a, b) -> (c, d) -> e
-```
-
-However, we do this *just* in case they are inherently bound together like key-value pairs.
-
-There are also `curry` and `uncurry` functions available to do such transformations:
-
-```
-Prelude> :type curry
-curry :: ((a, b) -> c) -> a -> b -> c
-Prelude> let myFunc (x, y) = x + y
-Prelude> :type myFunc
-myFunc :: Num a => (a, a) -> a
-Prelude> myFunc (1, 5)
-6
-Prelude> (curry myFunc) 1 5
-6
-Prelude> :type (curry myFunc)
-(curry myFunc) :: Num c => c -> c -> c
-Prelude> :type uncurry
-uncurry :: (a -> b -> c) -> (a, b) -> c
-Prelude> let myFunc x y = x + y
-Prelude> :type (uncurry myFunc)
-(uncurry myFunc) :: Num c => (c, c) -> c
-```
-
-If you like math, then it is the same difference as between *f*: &#8477; &rarr; &#8477; &rarr; &#8477; and *g*: &#8477; × &#8477; &rarr; &#8477;.
-
-In most other functional languages, like Lisp (Clojure) and Javascript, the situation is the opposite to Haskell: the functions are by default not curried and there are functions (usually called `curry`), which enable partial function application – see e.g. [this post](https://blog.benestudio.co/currying-in-javascript-es6-540d2ad09400).
-
-### Function composition
-
-As stated in the beginning, function composition is the main means of devising an **architecture** of a functional programme. It works similarly to function composition in math: Having two functions, one with type `a -> b` and second with type `b -> c` you can create a composed one with type `a -> c`. In Haskell, a composition is done using  the dot `(.)` operator:
-
-```haskell
-Prelude> :type (5+)
-(5+) :: Num a => a -> a
-Prelude> :type (5*)
-(5*) :: Num a => a -> a
-Prelude> :type show
-show :: Show a => a -> String
-Prelude> show ( (5+) ( (5*) 5 ) )
-"30"
-Prelude> (show . (5+) . (5*)) 5
-"30"
-```
-
-Or using the earlier introduced `($)` application:
-
-```
-Prelude> show . (5+) . (5*) $ 5
-"30"
-```
-
-Again, like in math, *f*: A &rarr; B and *g*: B &rarr; C, then (*f* &#8728; *g*): A &rarr; C.
-
-### The "pointfree" style
-
-It is very common in FP to write functions as a composition of other functions without mentioning the actual arguments they will be applied to. Consider the following two examples and notice that although the result is the same, the first one is a way more declarative, concise and readable.
-
-```haskell
-sumA = foldr (+) 0
-sumB xs = foldr (+) 0 xs
-```
-
-Those are very simple examples but you can build more complex ones with function composition `(.)` and partially applied or plain functions.
-
-```haskell
-myFunc :: Int -> String
-myFunc = show . (5+) . (5*)
-```
-
-Now you might ask why we call this a "pointfree" style, when there are actually more points. The confusion comes from the origin of the term, which is (again) math: it is a function that does not explicitly mention the points (values) of the space on which the function acts.
-
-### Fixity and precedence
-
-You might wonder how it works in Haskell that the following expression is evaluated in the correct order you would expect without using brackets:
-
-```
-Prelude> 5 + 2^3 - 4 + 2 * 2
-13
-Prelude> 5 * sin pi - 3 * cos pi + 2
-5.0
-```
-
-The first basic rule is that a function application binds the most. For example, in `foo 5 + 4` it will first evaluate `foo 5` and then add `4` (`foo 5 + 4` is the same as `(+) (foo 5) 4`. If you want to avoid that, you need to use brackets `foo (5 + 4)` or a function application operator `foo $ 5 + 4` (or strict `$!`).
-
-For infix operators (`+`, `**`, `/`, `==`, etc.) and functions (with backticks: `div`, `rem`, `quot`, `mod`, etc.), there is a special infix specification with one of three keywords:
-
-- `infix` = Non-associative operator (for example, comparison operators)
-- `infixl` = Left associative operator (for example, `+`, `-`, or `!!`)
-- `infixr` = Right associative operator (for example, `^`, `**`, `.`, or `&&`)
-
-Each of them should be followed by precedence (0 binds least tightly, and level 9 binds most tightly, default is 9) followed by the function/operator name. To see it in action, you can use `:info` to discover this specification for existing well-known operators and infix functions:
-
-```
-Prelude> :info (+)
-...
-infixl 6 +
-Prelude> :info (&&)
-...
-infixr 3 &&
-Prelude> :info div
-...
-infixl 7 `div`
-```
-
-You can also check *Table 4.1* of [The Haskell 2010 Language: Chapter 4 - Declarations and Bindings](https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-820061).
-
-### Own operators
-
-You already know that operators are just functions and that you can switch always between prefix and infix:
-
-```
-Prelude> (+) 5 7
-12
-Prelude> 7 `div` 2
-3
-Prelude> foo x y z = x * (y + z)
-Prelude> (5 `foo` 3) 12
-75
-```
-
-You can define own operator as you would do it with function:
-
-```
-Prelude> (><) xs ys = reverse xs ++ reverse ys
-Prelude> (><) "abc" "xyz"
-"cbazyx"
-Prelude> "abc" >< "xyz"
-"cbazyx"
-Prelude> :info (><)
-(><) :: [a] -> [a] -> [a]
-```
-
-By default, its asociativity is left, as you can observe:
-
-```
-Prelude> "abc" >< "xyz" >< "klm"
-"xyzabcmlk"
-Prelude> ("abc" >< "xyz") >< "klm"
-"xyzabcmlk"
-Prelude> "abc" >< ("xyz" >< "klm")
-"cbaklmxyz"
-```
-
-By default, its precedence level is 9. We can observe that by constructing expression with `(++)` which has level 5 and the right associativity.
-
-```
-Prelude> "abc" >< "xyz" ++ "klm"
-"cbazyxklm"
-Prelude> "klm" ++ "abc" >< "xyz"
-"klmcbazyx"
-```
-
-You can easily change that and if the new precedence is lower, than `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have the same associativity, otherwise you get an error).
-
-```haskell
-infixl 5 ><
-(><) :: [a] -> [a] -> [a]
-(><) xs ys = reverse xs ++ reverse ys
-
-infixl 2 >-<
-(>-<) :: [a] -> [a] -> [a]
-xs >-< ys = reverse xs ++ reverse ys
-
-foo :: Int -> Int -> Int
-x `foo` y = 2*x + y
-```
-
-```
-*Main> :info (><)
-(><) :: [a] -> [a] -> [a]       -- Defined at test01.hs:3:1
-infixl 5 ><
-*Main> "abc" >< "xyz" ++ "klm"
-
-<interactive>:6:1: error:
-    Precedence parsing error
-        cannot mix `><' [infixl 5] and `++' [infixr 5] in the same infix expression
-*Main> ("abc" >< "xyz") ++ "klm"
-"cbazyxklm"
-*Main> :info (>-<)
-(>-<) :: [a] -> [a] -> [a]      -- Defined at test01.hs:7:1
-infixl 2 >-<
-*Main> "abc" >-< "xyz" ++ "klm"
-"cbamlkzyx"
-*Main>
-
-<interactive>:12:1: error: lexical error at character '\ESC'
-*Main> "klm" ++ "abc" >-< "xyz"
-"cbamlkzyx"
-```
-
-For operators you can use *symbol characters* as being any of `!#$%&*+./<=>?@\^|-~:` or "any *non-ascii* Unicode symbol or punctuation". But, an operator symbol starting with a colon `:` is a constructor.
-
-### Infix and operator-like data constructors
-
-Data constructors can be treated just as functions. You can pass them to a function as a parameter, return them from a function as a result and also use them in infix:
-
-```
-Prelude> data MyTuple a b = MyTupleConstr a b deriving Show
-Prelude> :type MyTupleConstr
-MyTupleConstr :: a -> b -> MyTuple a b
-Prelude> MyTupleConstr 5 "Hi"
-MyTupleConstr 5 "Hi"
-Prelude> 5 `MyTupleConstr` "Hi"
-MyTupleConstr 5 "Hi"
-```
-
-As we said, for constructors you may create operator starting with a colon (and optionally specify also `infix`, `infixl`, or `infixr`).
-
-```
-Prelude> data MyTuple2 a b = a :@ b deriving Show
-Prelude> :type (:@)
-(:@) :: a -> b -> MyTuple2 a b
-Prelude> 5 :@ "Hi"
-5 :@ "Hi"
-Prelude> (:@) 5 "Hi"
-5 :@ "Hi"
-```
-
-You can try that using operator which doesn't start with a colon is not possible. But you can always make a synonym and then your code more readable:
-
-```
-Prelude> data MyTuple3 a b = a @@ b deriving Show
-
-<interactive>:15:17: error: Not a data constructor `a'
-Prelude> (@@) = (:@)
-Prelude> :type (@@)
-(@@) :: a -> b -> MyTuple2 a b
-Prelude> 5 @@ "Hi"
-5 :@ "Hi"
-```
-
-Another fine feature is, that operators `:@` and `@@` can be specified with different associativity and precedence!
-
-GHC has an extension of [Generalized Algebraic Data Types (GADTs)](https://en.wikibooks.org/wiki/Haskell/GADT), where the idea of unifying function and data types is pushed even further. However, as they are a more advanced topic, we leave them to your interest.
-
-### Anonymous functions
-
-An anonymous function is a function without a name. It is a Lambda abstraction and might look like this: `\x -> x + 1`. Sometimes, it is more convenient to use a lambda expression rather than giving a function a name. You should use anonymous functions only for very simple functions because it decreases readability of the code.
-
-```haskell
-myFunc1 x y z = x * y + z               -- <= just syntactic sugar!
-myFunc2 = (\x y z -> x * y + z)         -- <= still syntactic sugar!
-myFunc3 = (\x -> \y -> \z -> x * y + z) -- <= desugarized function
-mapFunc1 = map myFunc1
-mapAFunc1 = map (\x y z -> x * y + z)
-```
-
-Anonymous functions are one of the corner-stones of functional programming and you will meet them in all languages that claim to be at least a little bit "functional".
-
-## Higher-order functions
-
-Higher order function is a function that takes a function as an argument and/or returns a function as a result. We already saw some of them: `(.)`, `curry`, `uncurry`, `map`, etc. Higher-order functions are a very important concept in functional programming. Learning them and using them properly leads to readable, declarative, concise and safe code. They are used especially in manipulating lists, where they are preferred over traditional recursion today.
-
-### Map and filter
-
-Two widely used functions well-known in the most of functional (but others as well) programming languages are `map` and `filter`. In the `Prelude` module, they are defined for lists, but they work in the same way for other data structures (`Data.Sequence`, `Data.Set`, etc., see the previous lecture). When you need to *transform* a list by applying a function to its every element, then you can use `map`. If you have a list and you need to make a sublist based on some property of its elements, use `filter`. The best for understanding is to look at its possible implementation:
-
-```haskell
-myMap :: (a -> b) -> [a] -> [b]
-myMap _ []     = []
-myMap f (x:xs) = f x : myMap xs
-
-myFilter :: (a -> Bool) -> [a] -> [a]
-myFilter _ []     = []
-myFilter p (x:xs)
-      | p x       = x : filter p xs
-      | otherwise = filter p xs
-```
-
-That's it. Let us have some examples:
-
-```
-Prelude> :type map
-map :: (a -> b) -> [a] -> [b]
-Prelude> map show [1..5]
-["1","2","3","4","5"]
-Prelude> map (5*) [1..5]
-[5,10,15,20,25]
-Prelude> map (length . show . abs) [135, (-15), 0, 153151]
-[3,2,1,6]
-Prelude> :type filter
-filter :: (a -> Bool) -> [a] -> [a]
-Prelude> filter (\x -> x `mod` 7 == 0) [1..50]
-[7,14,21,28,35,42,49]
-```
-
-Soon we will get into a generalized function called `fmap` while discussing the term *functor*.
-
-### Folds and scans
-
-Maybe you've heard about *Map/Reduce*... We know `map`, but there is no `reduce`! Actually, there is, but it is called [fold](https://wiki.haskell.org/Fold) (it is practically a synonym in functional programming). Folds are higher-order functions that process a data structure in some order and build a return value. It (as everything in Haskell) has foundations in math - concretely in [Catamorphism](https://wiki.haskell.org/Catamorphisms) of the Category Theory.
-
-So `map` takes a list a produces another list of the same length, while `fold` takes a list and produces a single value.
-
-To get into folds in practice, let's try to implement `sum` and `product` functions (if you want to practice on your own, try it with `and` and `or`).
-
-```haskell
-mySum :: Num a => [a] -> a
-mySum []     = 0
-mySum (x:xs) = x + mySum xs
-
-myProduct :: Num a => [a] -> a
-myProduct []     = 1
-myProduct (x:xs) = x * myProduct xs
-```
-
-Obviously, there are some similarities:
-
-1. initial value for an empty list (`0` for `sum` and `1` in the case of `product`),
-2. use a function and apply it to an element and recursive call to the rest of the list.
-
-Let's make a generalized higher-order function that also takes an initial value and a function for processing:
-
-```haskell
-process :: (a -> a -> a) -> a -> [a] -> a
-process _ initValue    []  = initValue
-process f initValue (x:xs) = f x (process f initValue xs)
-
-mySum = process (+) 0
-myProduct = process (*) 1
-```
-
-But here we are getting into a problem. Both `(+)` and `(*)` use operands and result of the same type - if we want to convert a number to string and join it in one go with `process`, it is not possible!
-
-```
-*Main> process (\x str -> show x ++ str) "" [1,2,3,4]
-
-<interactive>:18:39: error:
-    • No instance for (Num [Char]) arising from the literal ‘1’
-    • In the expression: 1
-      In the third argument of ‘process’, namely ‘[1, 2, 3, 4]’
-      In the expression:
-        process (\ x str -> show x ++ str) "" [1, 2, 3, 4]
-```
-
-The type of the initial value must be the same as the type which is returned by given function. Now we get this:
-
-
-```haskell
-process :: (a -> b -> b) -> b -> [a] -> b
-process _ initValue    []  = initValue
-process f initValue (x:xs) = f x (process f initValue xs)
-
-mySum = process (+) 0
-myProduct = process (*) 1
-
-myToStrJoin :: (Show a) => [a] -> String
-myToStrJoin = process (\x str -> show x ++ str) ""
-```
-
-Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x ++ str)` is not, even type of `x` and `str` can be different. What if we need to apply the function in a different order? Now we have to create two variants.
-
-
-```haskell
-processr :: (a -> b -> b) -> b -> [a] -> b   -- "accumulates" in the RIGHT operand
-processr _ initValue    []  = initValue
-processr f initValue (x:xs) = f x (processr f initValue xs)
-
-processl :: (b -> a -> b) -> b -> [a] -> b   -- "accumulates" in the LEFT operand
-processl _ initValue    []  = initValue
-processl f initValue (x:xs) = f (processl f initValue xs) x
-
-mySum = processl (+) 0
-myProduct = processl (*) 1
-
-myToStrJoinR :: (Show a) => [a] -> String
-myToStrJoinR = processr (\x str -> show x ++ str) ""
-myToStrJoinL :: (Show a) => [a] -> String
-myToStrJoinL = processl (\str x -> show x ++ str) ""
-```
-
-This is something so generally useful, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl`/`foldr` and related `scanl`/`scanr`, which capture intermediate values in a list:
-
-```
-Prelude> :type foldl
-foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
-Prelude> :type foldr
-foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
-Prelude> foldl (-) 0 [1..10]
--55
-Prelude> ((((((((((0-1)-2)-3)-4)-5)-6)-7)-8)-9)-10)
--55
-Prelude> scanl (-) 0 [1..10]
-[0,-1,-3,-6,-10,-15,-21,-28,-36,-45,-55]
-Prelude> foldr (-) 0 [1..10]
--5
-Prelude> (1-(2-(3-(4-(5-(6-(7-(8-(9-(10-0))))))))))
--5
-Prelude> scanr (-) 0 [1..10]
-[-5,6,-4,7,-3,8,-2,9,-1,10,0]
-```
-
-There are some special variants:
-
-```
-Prelude> foldr1 (+) [1..10]
-Prelude> foldl1 (*) [1..10]
-Prelude> foldr1 (+) []
-Prelude> foldl1 (*) []
-
-Prelude> foldl' (*) 0 [1..10]  -- strict evaluation before reduction
-Prelude> foldl'1 (*) [1..10]
-
-Prelude> minimum [1,2,63,12,5,201,2]
-Prelude> maximum [1,2,63,12,5,201,2]
-```
-
-As an exercise, try to implement `foldl` by using `foldr` (spoiler: [solution](https://wiki.haskell.org/Foldl_as_foldr)).
+# Typeclasses, IO, and exceptions
 
 ## Typeclasses
 
@@ -742,51 +219,236 @@ When you derive `Enum`, the order will be generated as left-to-right order of da
 
 Enumerations have also the `..` syntactic sugar. For example, `[1..10]` is translated to `enumFromThen 1 10` and `[1,5..100]` is translated to `enumFromThenTo`
 
-## FP in other languages
+## Basic IO
 
-Functional programming concepts that you learn in a pure functional language may be more or less applicable in other languages, as well, according to the concepts supported and how well they are implemented. Also, some languages provide serious functional constructs, but they are quite cumbersome syntactically, which repels their common usage (yes, we point to you, JavaScript ;-)
+When you need to incorporate input and output (CLI, files, sockets, etc.), you bring impureness into your program. Obviously, IO brings side effects (it interacts with the environment and changes the global state). It can be a bit complicated and so we won't go deep into theory this time and instead, we will just show how to use it. Theoretical part will be covered in the future.
 
-### C/C++
+### The main and gets + puts
 
-C++ is a general purpose object-oriented programming language based on C, which is an imperative procedural language. In both, it is possible to create functions (and procedures). There is no control if a function is pure or not (i.e. making side effects). And in C/C++ you need to deal with mutability, pointers and working with memory on low level (de/allocation). Typing is strict and you can make higher-order functions with "function pointer" types.
+If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in a file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` -- it can do something (some actions) with `IO` and nothing `()` is returned. You may wonder why it is not `IO Int` (with a return code). It is because giving a return code is also an IO action and you can do it from `main` with functions from `System.Exit`.
 
-```cpp
-int calculate(int(*binOperation)(const int, const int), const int operandA, const int operandB){
-    return binOperation(operandA, operandB);
-}
+Now, let's take a look at basic IO examples:
+
+```haskell
+main1 :: IO ()
+main1 = putStr "Hello, Haskeller!"     -- putStr :: String -> IO ()
+
+main2 :: IO ()
+main2 = putStrLn "Hello, Haskeller!"   -- putStrLn :: String -> IO ()
+
+main3 :: IO ()
+main3 = do
+          putStr "Haskell "
+          putChar 'F'                   -- putChar :: Char -> IO ()
+          putChar 'T'
+          putChar 'W'
+          putStrLn "! Don't you think?!"
+
+-- pure function
+sayHello :: String -> String
+sayHello name = "Hello, " ++ name ++ "!"
+
+main4 :: IO ()
+main4 = do
+          putStrLn "Enter your name:"
+          name <- getLine                -- getLine :: IO String, see getChar & getContents
+          putStrLn . sayHello $ name
+
+-- custom IO action
+promptInt :: IO Int
+promptInt = do
+              putStr "Enter single integer: "
+              inpt <- getLine       -- unwraps from IO (inpt :: String)
+              return (read inpt)    -- return wraps with IO, read :: String -> Int
+
+compute x y = 50 * x + y
+
+main5 :: IO ()
+main5 = do
+          intA <- promptInt
+          intB <- promptInt
+          putStrLn ("Result: ++ show . compute $ intA intB)
+
+main6 :: IO ()
+main6 = print 1254                  -- print = putStrLn . show
 ```
 
-If you are a normal person and not a bighead, you will most probably use `typedef` to name the type of such functions so the code is more readable and understandable. In newer versions of C++, there are also anonymous functions, combinators (`for_each`, `transform`, `filter`, ...), functors. Then you can of course use simpler functional concepts such as closures or recursion.
+### What does `do` do?
 
-```cpp
-typedef int(*binOperation)(const int, const int);  /* I am not a bighead */
+It doesn't look so weird if you recall how imperative programming works... But we are in the functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just a syntactic sugar for chaining actions and bindings (not just IO, in general!) in a simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of the typeclass `Monad`. We cover this topic in detail in the next lecture, right now you can remember that although `do` looks imperative, it is actually still pure thanks to a smart "trick".
 
-int calculate(binOperation bo, const int operandA, const int operandB){
-    return bo(operandA, operandB);
-}
+When you use the binding operator `<-`, it means that the result of a bound action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for the following action that will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
+
+You might have noticed the `return` in custom `promptInt` action. This is a confusing thing for beginners, as `return` here has **nothing to do** with imperative languages return. The confusing thing is that it *looks* very much like it. However, conceptually it is not a control-flow expression, but just a function of the typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. This is one of the reasons why PureScript got rid of `return` and uses `pure` instead. Again, we will look at this in detail in the next lecture.
+
+### Be `interact`ive
+
+A very interesting construct for building a simple CLI is `interact :: (String -> String) -> IO ()`. The interact function takes a function of type `String -> String` as its argument. The **entire** input from the standard input device is passed to this function as its argument, and the resulting string is output on the standard output device. Btw. this is a nice example of a higher-order function at work, right?
+
+```haskell
+import Data.Char
+
+main1 :: IO ()
+main1 = interact (map toUpper)
+
+main2 :: IO ()
+main2 = interact (show . length)
+
+main3 :: IO ()
+main3 = interact reverse
 ```
 
-* [libf - C++ as a Pure Functional Programming Language](https://github.com/GJDuck/libf)
-* [Functional in C++17 and C++20](http://www.modernescpp.com/index.php/functional-in-c-17-and-c-20)
+As is emphasized, it works with an entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by words, you can create helper functions for that easily.
 
-### Java
+```haskell
+eachLine :: (String -> String) -> (String -> String)
+eachLine f = unlines . f . lines
 
-* [Flying Bytes - An Introduction to Functional Programming in Java 8](https://flyingbytes.github.io/programming/java8/functional/part0/2017/01/16/Java8-Part0.html)
-* [Hackernoon - Finally Functional Programming in Java](https://hackernoon.com/finally-functional-programming-in-java-ad4d388fb92e)
-* [JavaCodeGeeks - Java 9 Functional Programming Tutorial](https://examples.javacodegeeks.com/core-java/java-9-functional-programming-tutorial/)
+eachWord :: (String -> String) -> (String -> String)
+eachWord f = unwords . f . words
 
-### Python
+main5 :: IO ()
+main5 = interact (eachLine reverse)
 
-* [Functional Programming in Python (free O'Reilly)](http://www.oreilly.com/programming/free/functional-programming-python.csp)
-* [Python 3 - Functional Programming HOWTO](https://docs.python.org/3/howto/functional.html)
-* [Python 3 - Typing](https://docs.python.org/3/library/typing.html)
+main6 :: IO ()
+main6 = interact (eachWord reverse)
 
-### Smalltalk and Ruby
+chatBot "Hello" = "Hi, how are you?"
+chatBot "Fine" = "Lucky you... bye!"
+chatBot "Bad" = "Me too!"
+chatBot _ = "Sorry, I'm too dumb to understand this..."
 
-* [Smalltalk, A Functional Programming Language](http://monospacedmonologues.com/post/138978728947/smalltalk-a-functional-programming-language)
-* [Functional Programming in Ruby for people who don’t know what functional programming is](https://medium.com/craft-academy/functional-programming-in-ruby-for-people-who-dont-know-what-functional-programming-is-f0c4ab7dc68c)
-* [Functional Programming in Ruby](http://joelmccracken.github.io/functional-programming-in-ruby/#/)
-* [Embracing Functional Programming in Ruby](https://kellysutton.com/2017/09/13/embracing-functional-programming-in-ruby.html)
+main7 :: IO ()
+main7 = interact (eachLine chatBot)
+```
+
+### IO with files
+
+Working with files is very similar to working with console IO. As you may already know, most of IO for consoles is built by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
+
+```haskell
+main1 :: IO ()
+main1 = withFile "test.txt" ReadMode $ \handle -> do
+           fileSize <- hFileSize handle
+           print fileSize
+           xs <- getlines handle
+           sequence_ $ map (putStrLn . reverse) xs
+
+main2 :: IO ()
+main2 = do
+          handle <- openFile  "test.txt" ReadMode    -- :: IO Handle
+          fileSize <- hFileSize handle
+          print fileSize
+          hClose handle
+```
+
+In a similar manner, you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use a library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req).
+
+For some well-known file formats there are libraries ready, so you don't have to work with them over and over again just with functions from `Prelude`:
+
+* JSON: [aeson](https://hackage.haskell.org/package/aeson)
+* YAML: [yaml](https://hackage.haskell.org/package/yaml)
+* XML: [xml](https://hackage.haskell.org/package/xml), [hxt](https://hackage.haskell.org/package/hxt), or [xeno](https://hackage.haskell.org/package/xeno)
+* CSV: [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
+* INI: [ini](https://hackage.haskell.org/package/ini)
+
+... and so on. Also, you probably know the fabulous [pandoc](https://pandoc.org), which is written in Haskell -- and you can use it as a [library](https://hackage.haskell.org/package/pandoc)!
+
+Hmmm, who said that Haskell is just for math and mad academics? ;-)
+
+### Arguments and env variables
+
+Another way of interacting with a program is via its command-line arguments and environment variables. Again, there is a little bit clumsy but simple way in [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some fancy libraries that can help you with more complex cases...
+
+```haskell
+main :: IO ()
+main = do
+         progName <- getProgName    -- IO String
+         print progName
+         path <- getExecutablePath  -- IO String
+         print path
+         args <- getArgs            -- :: IO [String]
+         print args
+         user <- lookupEnv "USER"   -- :: IO (Maybe String), vs. getEnv :: IO String
+         print user
+         env <- getEnvironment      -- :: IO [(String, String)]
+         print env
+```
+
+The most used library for [command line option parser](https://wiki.haskell.org/Command_line_option_parsers) is [cmdargs](http://hackage.haskell.org/package/cmdargs):
+
+```haskell
+{-# LANGUAGE DeriveDataTypeable #-}
+module Sample where
+import System.Console.CmdArgs
+
+data Sample = Hello {whom :: String}
+            | Goodbye
+              deriving (Show, Data, Typeable)
+
+hello = Hello{whom = def}
+goodbye = Goodbye
+
+main = do
+         args <- cmdArgs (modes [hello, goodbye])
+         print args
+```
+
+For a more complex example, visit their documentation -- for example, `hlint` or `diffy` use this one.
+
+## Handling errors
+
+As we saw, a very elegant way way how to handle errors is using `Maybe` or `Either` types. This is a preferred way with obvious advantages, however, in practice, it may still come to a more explosive situation.
+
+### error
+
+`error` is a special function which stops execution with given message:
+
+```
+Prelude> error "Stop now"
+*** Exception: Stop now
+CallStack (from HasCallStack):
+  error, called at <interactive>:1:1 in interactive:Ghci1
+```
+
+There is another quite similar one - `errorWithoutStackTrace`:
+
+```
+Prelude> errorWithoutStackTrace "Stop now without stack trace"
+*** Exception: Stop now without stack trace
+```
+
+It is obviously even worse than just `error` because you somewhere deep in your code say something about rendering the error...
+
+### undefined
+
+Special case of error is that something is `undefined` and it does not accept any message:
+
+```
+Prelude> undefined
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
+  undefined, called at <interactive>:5:1 in interactive:Ghci1
+```
+
+Semantically, it can be used where the value is not defined (for example when you want to divide by zero). Sometimes you can see it used as a basic placeholder with meaning "Not implemented yet". For such things, you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html), which are more suitable.
+
+### throw, try and catch
+
+We have `throw`, `try` and `catch`, but those are functions - not keywords!
+
+```
+Prelude> import Control.Exception
+Prelude Control.Exception> :type try
+try :: Exception e => IO a -> IO (Either e a)
+Prelude Control.Exception> :type throw
+throw :: Exception e => e -> a
+Prelude Control.Exception> :type catch
+catch :: Exception e => IO a -> (e -> IO a) -> IO a
+```
+
+If you are interested you can read the documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html), however, exceptions are considered an anti-pattern in Haskell and you should always try to deal with potential errors in a more systematic way using types. We will slightly get back to these after getting the notion of Monads.
 
 ## Task assignment
 
