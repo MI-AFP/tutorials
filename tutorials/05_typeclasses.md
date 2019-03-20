@@ -1,4 +1,4 @@
-# Typeclasses, IO, and exceptions
+# Typeclasses - custom and predefined
 
 ## Typeclasses
 
@@ -696,13 +696,13 @@ The homework to practice working with typeclasses is in repository [MI-AFP/hw05]
 
 ## Further reading
 
-* [Haskell - Polymorphism](https://wiki.haskell.org/Polymorphism)
+* [Haskell: Polymorphism](https://wiki.haskell.org/Polymorphism)
 * [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
-* [Haskell - OOP vs type classes](https://wiki.haskell.org/OOP_vs_type_classes)
-* [WikiBooks - Haskell: Classes and types](https://en.wikibooks.org/wiki/Haskell/Classes_and_types)
+* [Haskell: OOP vs type classes](https://wiki.haskell.org/OOP_vs_type_classes)
+* [WikiBooks Haskell: Classes and types](https://en.wikibooks.org/wiki/Haskell/Classes_and_types)
 * [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
 * [Haskell and Category Theory](https://en.wikibooks.org/wiki/Haskell/Category_theory)
 * [Category Theory for Programmers by Bartosz Milewski](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface)
-* [LYAH - Functors, Applicative Functors and Monoids](http://learnyouahaskell.com/functors-applicative-functors-and-monoids)
-* [LYAH - A Fistful of Monads](http://learnyouahaskell.com/a-fistful-of-monads)
-* [Haskell - Monad](https://wiki.haskell.org/Monad)
+* [LYAH: Functors, Applicative Functors and Monoids](http://learnyouahaskell.com/functors-applicative-functors-and-monoids)
+* [LYAH: A Fistful of Monads](http://learnyouahaskell.com/a-fistful-of-monads)
+* [Haskell: Monad](https://wiki.haskell.org/Monad)
