@@ -290,10 +290,9 @@ If you are interested you can read the documentation of [Control.Exception](http
 import System.IO
 import Control.Exception
 
-myHandler :: Exception e => (e -> IO a)
 myHandler exc = do
   putStrLn "Oops, error occured while trying to read the file"
-  putStrLn $ "It failed with: " ++ show exc
+  putStrLn $ "It failed with: " ++ show (exc :: SomeException)
 
 main = handle myHandler $ do
         fp <- openFile "test.txt" ReadMode
@@ -539,6 +538,34 @@ newtype Parser a = Parser (parse :: String -> [(a,String)])
 ```
 
 A very nice example is [here](http://dev.stephendiehl.com/fun/002_parsers.html).
+
+For custom `Read` instance, you can do something simple, but it still works as a parser and uses `ReadS` (S ~ state):
+
+```haskell
+import Data.Char
+
+data Time = Time Int Int Int
+
+timePart x
+  | x < 10    = '0' : show x
+  | otherwise = show x
+
+instance Show Time where
+  show (Time hours minutes seconds) = timePart hours ++ ":" ++ timePart minutes ++ ":" ++ timePart seconds
+
+instance Read Time where
+  readsPrec _ (h1:h2:':':m1:m2:':':s1:s2:remaining)
+    | all isDigit [h1,h2,m1,m2,s1,s2] = [(Time h m s, remaining)]
+    | otherwise = []
+    where
+      h = mkTimePart h1 h2
+      m = mkTimePart m1 m2
+      s = mkTimePart s1 s2
+      mkTimePart x1 x2 = 10 * digitToInt x1 + digitToInt x2
+  readsPrec _ _ = []
+```
+
+Notice that you have to return list of tuples of type `(a, String)` just like in `parse`. The `readsPrec` gets and `Int` and then `String` where the number serves for the operator precedence of the enclosing context (can be often omitted).
 
 ### Alternative and MonadPlus
 
