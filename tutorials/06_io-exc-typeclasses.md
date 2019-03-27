@@ -1,6 +1,6 @@
 # IO, Exceptions, and More Typeclasses
 
-In this tutorial, we will take a brief look at few more advanced typeclasses that you might want to use in some projects. They are not described in high detail, but just in an introductory manner, so when you encouter some problem - you should know what you can use and learn specific details for your case.
+In this tutorial, we will take a brief look at IO including exceptions and then at few more advanced typeclasses that you might want to use in some projects. They are not described in high detail, but just in an introductory manner, so when you encouter some problem - you should know what you can use and learn specific details for your case.
 
 ## Working with IO
 
@@ -286,7 +286,25 @@ catch :: Exception e => IO a -> (e -> IO a) -> IO a
 
 If you are interested you can read the documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html), however, exceptions are considered an anti-pattern in Haskell and you should always try to deal with potential errors in a more systematic way using types. We will slightly get back to these after getting the notion of Monads.
 
-## Foldable
+```haskell
+import System.IO
+import Control.Exception
+
+myHandler :: Exception e => (e -> IO a)
+myHandler exc = do
+  putStrLn "Oops, error occured while trying to read the file"
+  putStrLn $ "It failed with: " ++ show exc
+
+main = handle myHandler $ do
+        fp <- openFile "test.txt" ReadMode
+        fileSize <- hFileSize fp
+        print fileSize
+        hClose fp
+```
+
+## Advanced Typeclasses
+
+### Foldable
 
 Recall the time when we were talking about folds... The `Foldable` type class provides a generalization of list folding (`foldr` and friends) and operations derived from it to arbitrary data structures. The class does not require the Functor superclass in order to allow containers like Set or StorableVector that have additional constraints on the element type. But many interesting Foldables are also Functors. A foldable container is a container with the added property that its items can be 'folded' to a summary value. Recall what `foldr` and `foldl` do...
 
@@ -317,7 +335,7 @@ class Foldable (t :: * -> *) where
 
 This class is very straight-forward, it has no specific laws, but it is very powerful as we've already known... It allows you to create new or use various containers with same generic functions like `null`, `length`, `elem`, `minimum`, `maximum`, and others seamlessly and without any problems. For more, see [Data.Foldable](https://hackage.haskell.org/package/base/docs/Data-Foldable.html).
 
-### Specialized folds
+#### Specialized folds
 
 Aside functions defined in `Foldable` typeclass, there are some additional specialized folds that can be very useful and avoid reinventing the wheel in your code:
 
@@ -338,7 +356,7 @@ notElem :: (Foldable t, Eq a) => a -> t a -> Bool
 find :: Foldable t => (a -> Bool) -> t a -> Maybe a
 ```
 
-### Foldable and Applicative
+#### Foldable and Applicative
 
 Then, there are some specialized functions that are useful when you have `Applicative` objects in a `Foldable` structure or want to apply them over a `Foldable` structure. *(Notice the underscores)*
 
@@ -385,7 +403,7 @@ Prelude Data.Foldable> asum [Nothing, Just "b"]
 Just "b"
 ```
 
-### Foldable and Monad
+#### Foldable and Monad
 
 Similarly, there are also same folds for `Monad`s, just naming is a bit different:
 
@@ -399,7 +417,7 @@ sequence_ :: (Foldable t, Monad m) => t (m a) -> m ()
 msum :: (Foldable t, MonadPlus m) => t (m a) -> m a          -- An alternative is described in this tutorial
 ```
 
-## Traversable
+### Traversable
 
 A `Traversable` type is a kind of upgraded `Foldable` with use of `Functor`. Where Foldable gives you the ability to go through the structure processing the elements (*catamorphism*) but throwing away the "shape", `Traversable` allows you to do that whilst preserving the "shape" and, e.g., putting new values in. Traversable is what we need for `mapM` and `sequence`: note the apparently surprising fact that the versions ending with an underscore (e.g., `mapM_`) are in a different typeclass - in `Foldable`.
 
@@ -414,7 +432,7 @@ class (Functor t, Foldable t) => Traversable (t :: * -> *) where
 
 `Traversable` has, unlike `Foldable`, a few laws (naturality, identity, composition, ...). For more, see [Data.Traversable](https://hackage.haskell.org/package/base/docs/Data-Traversable.html).
 
-### No more underscore
+#### No more underscore
 
 Indeed, some functions from `Foldable` are in `Traversable` without trailing `_` and it means "preserving the structure":
 
@@ -447,7 +465,7 @@ ciao
 ["ahoj","hello","ciao"]
 ```
 
-## State
+### State
 
 As you know, Haskell is great, there is no mutability, which results in reference transparency, everything has a mathematical foundations, and life is perfect. Or not? Using a mutable state is clearly over-used in imperative and object-oriented programming, at the same time, the concept of "state" may be inherently present in the modelled domain and so we need to deal with it.
 
@@ -474,7 +492,7 @@ instance Monad (State s) where
 
 There are two interesting things. First, `State` is a record type with one field of type `s -> (a, s)`. Then `(>>=)` operator returns a `State` with a function that first runs `p` on given state `s0`, get intermediary result `(x, s)` and returns the result of running `k x` on `s1`
 
-### Example: simple counter
+#### Example: simple counter
 
 Let's look at a simple example:
 
@@ -499,7 +517,7 @@ main = do
 
 If still not clear, try to read about `Reader` and `Writer` monads and look [here](http://adit.io/posts/2013-06-10-three-useful-monads.html) or into the classic [LYAH](http://learnyouahaskell.com/for-a-few-monads-more#state).
 
-### Random in Haskell
+#### Random in Haskell
 
 When you are using `System.Random`, you work with `State`: `State` is the generator for pseudorandom numbers (some equation with "memory").
 
@@ -512,7 +530,7 @@ main = do
    print $ take 10 ns
 ```
 
-### Parser
+#### Parser
 
 Another typical example where you use `State` is when you want to parse something. So for this purpose, we have Parser monadic combinator as follows:
 
@@ -522,7 +540,7 @@ newtype Parser a = Parser (parse :: String -> [(a,String)])
 
 A very nice example is [here](http://dev.stephendiehl.com/fun/002_parsers.html).
 
-## Alternative and MonadPlus
+### Alternative and MonadPlus
 
 We are used use type `Maybe` when the result can be something or fail/nothing, and lists when there are many results of the same type and arbitrary size. Typeclasses `Alternative` and `MonadPlus` are here to provide a generic way of aggregating results together. `Maybe` and `[]` are its instances - read more: [Control.Applicative#Alternative](https://hackage.haskell.org/package/base/docs/Control-Applicative.html#t:Alternative) and [Control.Monad#MonadPlus](https://hackage.haskell.org/package/base/docs/Control-Monad.html#t:MonadPlus). You might find this very useful for [parsing](https://en.wikibooks.org/wiki/Haskell/Alternative_and_MonadPlus#Example:_parallel_parsing).
 
@@ -548,7 +566,7 @@ a
 "a"
 ```
 
-### `guard` (don't mix with guards!)
+#### `guard` (don't mix with guards!)
 
 An interesting function related to `Alternative` is `guard :: Alternative f => Bool -> f ()`. What does it do? It works like a guard in a sequence of actions!
 
@@ -567,13 +585,13 @@ main = do
          print "OK, it is bigger than 100"
 ```
 
-## Monad Transformers
+### Monad Transformers
 
 We have seen how monads can help handling IO actions, Maybe, lists, and state. With monads providing a common way to use such useful general-purpose tools, a natural thing we might want to do is using the capabilities of several monads at once. For instance, a function could use both I/O and Maybe exception handling. While a type like `IO (Maybe a)` would work just fine, it would force us to do pattern matching within `IO` do-blocks to extract values, something that the `Maybe` monad was meant to spare us from. Sounds like a dead end, right?!
 
 Luckily, we have monad transformers that can be used to combine monads in this way, save us time, and make the code easier to read.
 
-### MaybeT
+#### MaybeT
 
 Consider following simple program:
 
@@ -616,7 +634,7 @@ askPassphrase = do lift $ putStrLn "Insert your new passphrase:"
 
 For more about monad transformers visit [this](https://en.wikibooks.org/wiki/Haskell/Monad_transformers) and the [transformers](https://hackage.haskell.org/package/transformers) package. There is also a very nice chapter about them in http://haskellbook.com.
 
-## Category and Arrow
+### Category and Arrow
 
 Recall what was told about Category Theory in the last tutorial. In Haskell, we have also typeclasses `Category` and `Arrow` (Do you remember? Alias for *morphisms*.). We mention it here just as an interesting part of Haskell and let you explore it if you are interested...
 
@@ -693,7 +711,7 @@ arrow3 :: Arrow a => a [a1] [a1]
 
 A good explanation with nice visualization is in the chapter [Understanding Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows) at wikibooks.
 
-## Lens (and the taste of Template Haskell)
+### Lens (and the taste of Template Haskell)
 
 The last thing we are going to get into this time is *Lens*. It is something that can make you a way more productive while working with records and especially nested records - which is something really common in non-trivial programs.
 
@@ -707,7 +725,7 @@ The combinators in [Control.Lens](https://hackage.haskell.org/package/lens) prov
 
 If you are interested in `Control.Lens`, follow links in *Further reading* sections...
 
-### Lens example
+#### Lens example
 
 First, let's try example without *lens*:
 
@@ -765,7 +783,7 @@ Line {_pA = Point2D {_x = 0, _y = 2}, _pB = Point2D {_x = 5, _y = 7}}
 Line {_pA = Point2D {_x = 0, _y = 0}, _pB = Point2D {_x = 10, _y = 7}}
 ```
 
-### What is `makeLenses`
+#### What is `makeLenses`
 
 The function `makeLenses` indeed does some magic! From its type signature `makeLenses :: Language.Haskell.TH.Syntax.Name -> Language.Haskell.TH.Lib.DecsQ`, you can see it has something to do with [Template Haskell](https://wiki.haskell.org/Template_Haskell). It is GHC extension that allows metaprogramming. In this case, the function `makeLenses` builds lenses (and traversals) with a sensible default configuration. You need to provide the data type name where the record starts with an underscore and it will basically generate lenses for you.
 
@@ -773,10 +791,12 @@ Template Haskell is very powerful and allows you to do interesting stuff, but it
 
 ## Task assignment
 
-The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw08](https://github.com/MI-AFP/hw08).
+The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
 
 ## Further reading
 
+* [Haskell - Introduction to IO](https://wiki.haskell.org/Introduction_to_IO)
+* [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
 * [Haskell - Foldable](https://en.wikibooks.org/wiki/Haskell/Foldable)
 * [Haskell - Traversable](https://en.wikibooks.org/wiki/Haskell/Traversable)
 * [Haskell - State monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State)
