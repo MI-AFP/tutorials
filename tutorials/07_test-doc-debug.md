@@ -357,7 +357,7 @@ For more information about using Haddock and writing the documentation of source
 
 For building the documentation within a *stack project*, you can use `stack haddock` command, which generates `index.html` file.
 
-## Publish your project
+### Publish your project
 
 If you think that other people might be interested in your project and want to use it standalone or as part of their project (as a dependency), you can publish your project on GitHub and also on Hackage:
 
@@ -371,7 +371,7 @@ Your project should be:
 
 Another advantage of publishing is that your project can get attention and community can help you improve it -- they create issues, forks and pull requests.
 
-## Using CI (Travis CI)
+### Using CI (Travis CI)
 
 When you are developing a project and sharing it with a community, you want to show that it is working well and you also want to check if contributions to your code are not breaking it. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Jenkins, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
 
@@ -401,22 +401,9 @@ script:
 
 For Haskell, you can use `.travis.yml` above or read the [documentation](https://docs.travis-ci.com/user/languages/haskell/).
 
-## Task assignment
+## Performance and Debugging
 
-The homework to practice IO basics, testing, and writing project documentation is in repository [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
-
-## Further reading
-
-* [A Gentle Introduction to Haskell - Input/Output](https://www.haskell.org/tutorial/io.html)
-* [Haskell - Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
-* [Real World Haskell - Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
-* [WikiBooks - Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
-* [Haddock User Guide](https://www.haskell.org/haddock/doc/html/index.html)
-* [QuickCheck and Magic of Testing](https://www.fpcomplete.com/blog/2017/01/quickcheck)
-
-# Performance and Debugging
-
-During this tutorial, we will take a look how to improve the performance of a Haskell program and how to debug it. We will use very simple example - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
+During this tutorial, we will also take a look how to improve the performance of a Haskell program and how to debug it. We will use very simple example - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
 
 ```haskell
 import System.Environment
@@ -433,11 +420,11 @@ main = do
     print . fibonacci . read . head $ args
 ```
 
-## Measuring time and memory
+### Measuring time and memory
 
 When you want to check the performance of a program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
 
-### Basic `time`
+#### Basic `time`
 
 The `time` command is one of the well-known Linux commands for programmers. It can be used to show how long a command takes to run. That makes it Very useful if you are a developer and you want to test the performance of your program or script. Especially to compare the time of programs written in other languages "from outside". For basic usage, you will get three numbers:
 
@@ -465,7 +452,7 @@ Exit Status: 0
 Page Faults: 0
 ```
 
-### Benchmarking with Criterion
+#### Benchmarking with Criterion
 
 If you are interested in such optimizations and improving your application or comparing various algorithms or their implementations, then you might find interesting to use a benchmarking library. In Haskell is the most used one called [Criterion](http://www.serpentine.com/criterion/). It provides a powerful but simple way to measure software performance. It provides both a framework for executing and analyzing benchmarks and a set of driver functions that makes it easy to build and run benchmarks and to analyze their results.
 
@@ -516,7 +503,7 @@ variance introduced by outliers: 11% (moderately inflated)
 runhaskell FibonacciNaiveCriterion.hs  15.98s user 0.04s system 99% cpu 16.055 total
 ```
 
-### Measure allocations with Weigh
+#### Measure allocations with Weigh
 
 The package [weigh](https://hackage.haskell.org/package/weigh) provides a simple interface to measure the memory usage of a Haskell value or function.
 
@@ -547,11 +534,11 @@ fib 10      24,304    0
 fib 25  33,509,936   63
 ```
 
-## Performance
+### Performance
 
 Now we are able to measure something and compare algorithms, but how to improve the numbers we get if we really need it?
 
-### Basic ideas
+#### Basic ideas
 
 When you are not satisfied with the performance of your application, then before any sophisticated optimization steps by using strictness, unboxed types, calling FFI, etc., you should consider if you prefer faster application over better readability. Then another important thing to think about is design if it is not slow by using "naive" algorithm, using an inappropriate data structure (List instead of Set or Map), etc.
 
@@ -618,7 +605,7 @@ fib 10      1,712    0
 fib 25     37,000    0
 ```
 
-### Boxed vs. Unboxed types
+#### Boxed vs. Unboxed types
 
 Now, we are going to briefly mention is the difference between boxed and unboxed types. Although it is a low-level concern and with regular Haskell programming, you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
 
@@ -656,7 +643,7 @@ sys 0.03
 
 For more information, visit [GHC.Exts]() and [GHC.Prim]().
 
-### Strictness with types
+#### Strictness with types
 
 In the previous lessons, we touched the topic of enforcing strictness with `!` in patterns ([bang patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)) and in function application with `$!` operator. Similarly, we can use `!` with type fields like this:
 
@@ -681,7 +668,7 @@ data T2 = T2 Double {-# UNPACK #-} !Int    -- => T2 Double Int#
 
 We mention this just because of differences in performance of types we are going to describe now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations and if yes, consider reading [Haskell High Performance Programming](https://github.com/TechBookHunter/Free-Haskell-Books/blob/master/book/Haskell%20High%20Performance%20Programming.pdf).
 
-### GHC optimization flags
+#### GHC optimization flags
 
 If you know optimization with GCC, then you won't be surprised how it works with GHC:
 
@@ -691,7 +678,7 @@ If you know optimization with GCC, then you won't be surprised how it works with
 
 Then there are also `-f*`  platform-independent flags, that allows you to turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html).
 
-### Concurrency and Parallelism
+#### Concurrency and Parallelism
 
 Haskell (of course) supports parallelism or concurrency in order to achieve faster and efficient computation. For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
 
@@ -716,7 +703,7 @@ main = do x <- parfib 30; print x
 
 GHC supports running programs in parallel on an SMP (symmetric multiprocessor) or multi-core machine. Just compile your program using the `-threaded` switch and then run it with RTS option `-N <x>` (where `<x>` is the number of simultaneous threads). See [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/parallel.html) for more information.
 
-### FFI
+#### FFI
 
 As with many other programming languages, Haskell supports [FFI (Foreign Function Interface)](https://wiki.haskell.org/Foreign_Function_Interface) that allows co-operating with programs written with other languages. We've already could see that in the example of Haste in DS Wizard where there were some JS bindings. But you can also use it to call some functions from C++ or Rust:
 
@@ -762,11 +749,11 @@ sys 0.00
 
 Similarly, there is `foreign export` to expose some Haskell functions to other FFIs. Nice example is here: [jarrett/cpphs](https://github.com/jarrett/cpphs).
 
-## Debugging
+### Debugging
 
 Even if you are a good Haskell programmer, things can go wrong and especially in big projects it is a nontrivial challenge to find out where you did some mistake. Going thru the code in multiple functions, inner functions, various modules, etc. can be painful. Luckilly, there are some ways how to debug Haskell program and some are pretty easy and similar to well-known.
 
-### Tracing with `Debug.Trace`
+#### Tracing with `Debug.Trace`
 
 You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result. There are many more *traces* defined for different cases: `traceShow`, `traceId`, `traceStack`, `traceIO`, `traceM`, etc. So you can use it for custom debugging output anywhere in the code.
 
@@ -824,7 +811,7 @@ fib2 0
 3
 ```
 
-### GHCi debugger
+#### GHCi debugger
 
 If you need a better debugger, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
 
@@ -855,7 +842,7 @@ n :: Integer = 3
 *Main>
 ```
 
-### `debug` package
+#### `debug` package
 
 An interesting solution brings also the [debug](https://hackage.haskell.org/package/debug) package (and related extensions). It uses *Template Haskell* to examine the code and algorithms.
 
@@ -874,8 +861,18 @@ debug [d|
    |]
 ```
 
+## Task assignment
+
+The homework to practice testing, and writing project documentation is in repository [MI-AFP/hw07](https://github.com/MI-AFP/hw07).
+
 ## Further reading
 
+* [A Gentle Introduction to Haskell - Input/Output](https://www.haskell.org/tutorial/io.html)
+* [Haskell - Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
+* [Real World Haskell - Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
+* [WikiBooks - Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
+* [Haddock User Guide](https://www.haskell.org/haddock/doc/html/index.html)
+* [QuickCheck and Magic of Testing](https://www.fpcomplete.com/blog/2017/01/quickcheck)
 * [Haskell - Debugging](https://wiki.haskell.org/Debugging)
 * [Haskell - Performance](https://wiki.haskell.org/Performance)
 * [Haskell - Concurrency](https://wiki.haskell.org/Concurrency)
