@@ -863,7 +863,7 @@ debug [d|
 
 ## Task assignment
 
-The homework to practice testing, and writing project documentation is in repository [MI-AFP/hw07](https://github.com/MI-AFP/hw07).
+The homework to practice IO (again), testing, and writing project documentation is in repository [MI-AFP/hw07](https://github.com/MI-AFP/hw07).
 
 ## Further reading
 
