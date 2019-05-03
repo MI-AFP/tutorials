@@ -271,7 +271,7 @@ type Msg = NewGrade Int
 
 generateGrade : Cmd
 generateGrade =
-    Random.generate NewGrade generateGrade
+    Random.generate NewGrade randomGrade
 ```
 
 The other option is to use `step` functions. It requires the generator and also a `Seed` and returns a tuple with generated value and a new `Seed`. The initial seed can be hardcoded (but then the generated values are same each time we run the application), send to Elm via Flags (we'll cover those in the next lesson) or using `generate` function first to get the seed and then use it to generate other random values.
@@ -287,5 +287,6 @@ generateGrade seed =
 
 ## Further Reading
 
+- [Examples from this lesson](https://github.com/MI-AFP/elm-examples)
 - [Commands and Subscriptions](https://guide.elm-lang.org/effects/)
 - [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)
