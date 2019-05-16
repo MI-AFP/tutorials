@@ -285,8 +285,8 @@ The other option is to [use ports](https://stackoverflow.com/a/52569683/2492795)
 
 ## Materials
 
-- [Complex Form Example](https://github.com/MI-AFP/elm-examples/tree/master/form)
-- [SVG Clock Example](https://github.com/MI-AFP/elm-examples/tree/master/clock)
+- [Examples - Complex Form](https://github.com/MI-AFP/elm-examples/tree/master/form)
+- [Examples - SVG Clock](https://github.com/MI-AFP/elm-examples/tree/master/clock)
 
 ## Further Reading
 

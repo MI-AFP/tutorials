@@ -56,7 +56,7 @@ view model =
         []
 ```
 
-When you need more complex forms in your application, there are packags to handle forms like [etaque/elm-form](https://package.elm-lang.org/packages/etaque/elm-form/latest/).
+When we need more complex forms in our application, there are packags to handle forms like [etaque/elm-form](https://package.elm-lang.org/packages/etaque/elm-form/latest/).
 
 
 ## JSON
@@ -227,7 +227,7 @@ request :
 
 ## Subscriptions
 
-[Subscirptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that you want to be informed if something happend (e.g., web socket message or clock tick).
+[Subscirptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happend (e.g., web socket message or clock tick).
 
 
 Here's an example of subscriptions defining that a message `Tick` with current time should be send to update function every 1000 milliseconds.
@@ -285,8 +285,12 @@ generateGrade seed =
     Random.step randomGrade seed
 ```
 
+## Materials
+
+- [Examples - TODO List](https://github.com/MI-AFP/elm-examples/tree/master/todo)
+- [Examples - Timer](https://github.com/MI-AFP/elm-examples/tree/master/timer)
+
 ## Further Reading
 
-- [Examples from this lesson](https://github.com/MI-AFP/elm-examples)
 - [Commands and Subscriptions](https://guide.elm-lang.org/effects/)
 - [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)

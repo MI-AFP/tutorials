@@ -4,7 +4,7 @@
 
 [Webpack](https://webpack.js.org) is a module bundler for JavaScript applications. It builds a dependency graph of source modules and creates static assets. It uses different loaders for different file types, e.g., to convert new EcmaScript syntax into the one supported by browsers or to convert Sass to CSS. It can also minify those assets.
 
-Besides other loaders, there is also [elm-webpack-laoder](https://github.com/elm-community/elm-webpack-loader). If you require an Elm module from JavaScript code, it will use `elm make` under the hood to build it.
+Besides other loaders, there is also [elm-webpack-laoder](https://github.com/elm-community/elm-webpack-loader). If we require an Elm module from JavaScript code, it will use `elm make` under the hood to build it.
 
 Here's an example of configuration:
 
@@ -82,7 +82,7 @@ The flags can be one of the following types:
 - Records
 - `Json.Decode.Value`
 
-If you use anything else than `Json.Decode.Value` and provide an incorrect type, you get an error on the JavaScript side. Therefore it is safer to use `Json.Decode.Value`, define a decoder and handle possible errors on the Elm side when the decoding fails.
+If we use anything else than `Json.Decode.Value` and provide an incorrect type, we get an error on the JavaScript side. Therefore it is safer to use `Json.Decode.Value`, define a decoder and handle possible errors on the Elm side when the decoding fails.
 
 ### Ports
 
@@ -160,7 +160,7 @@ subscriptions model =
 
 ```
 
-On JavaScript side, you can send a message to the Elm app using the port.
+On JavaScript side, we can send a message to the Elm app using the port.
 
 ```js
 var program = require('src/Todos.elm');
@@ -338,9 +338,13 @@ route =
 ```
 
 
-## Further Reading
+## Materials
 
 - [elm-webpack-boilerplate](https://github.com/MI-AFP/elm-webpack-boilerplate)
+- [Examples - Web Application](https://github.com/MI-AFP/elm-examples/tree/master/webapp)
+
+## Further Reading
+
 - [Webpack Concepts](https://webpack.js.org/concepts)
 - [Web Apps · An Introduction to Elm](https://guide.elm-lang.org/webapps/)
 - [Elm Europe 2017 - Richard Feldman - Scaling Elm Apps](https://www.youtube.com/watch?v=DoA4Txr4GUs)

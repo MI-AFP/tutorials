@@ -81,7 +81,7 @@ Reason is a new syntax and toolchain based on OCaml programing language created 
 
 ## Elm REPL
 
-If you have Elm installed, you can run Elm REPL by `elm repl` command. It is like `ghci` for Elm.
+If we have Elm installed, we can run Elm REPL by `elm repl` command. It is like `ghci` for Elm.
 
 ```
 $ elm repl
@@ -420,7 +420,7 @@ bio (name, age) = name ++ " is " ++ (String.fromInt age) ++ " years old."
 ```
 
 
-Elm has a limit on the maximum number of items in the tuple to be 3. If you need more, you should use a record or your own custom type.
+Elm has a limit on the maximum number of items in the tuple to be 3. If we need more, we should use a record or our own custom type.
 
 ```
 > vector4 = (4, 10, 12, 3)
@@ -817,9 +817,9 @@ number: 4
 
 ## Packages
 
-Elm packages are published on [package.elm-lang.org](https://package.elm-lang.org). There is forced [semantic versioning](https://semver.org) for Elm packages. Therefore, you don't have to worry about breaking your application while updating packages.
+Elm packages are published on [package.elm-lang.org](https://package.elm-lang.org). There is forced [semantic versioning](https://semver.org) for Elm packages. Therefore, we don't have to worry about breaking our application while updating packages.
 
-In 2018, Elm 0.19 was released, and not all packages have been updated yet, so you need to check first whether the package is supported in the latest Elm version.
+In 2018, Elm 0.19 was released, and not all packages have been updated yet, so we need to check first whether the package is supported in the latest Elm version.
 
 
 
@@ -899,7 +899,7 @@ view model =
 
 ### Elm Reactor
 
-It is a quick and simple tool to run Elm project during development. Run `elm reactor` in the project root. It starts a server at [http://localhost:8000](http://localhost:8000) where you can navigate to Elm files.
+It is a quick and simple tool to run Elm project during development. Run `elm reactor` in the project root. It starts a server at [http://localhost:8000](http://localhost:8000) where we can navigate to Elm files.
 
 
 ### Elm Make
