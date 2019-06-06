@@ -396,7 +396,7 @@ updateUserTimestamp user = do
   return $ user & updatedAt .~ Just now
 
 heCheckIfRegistrationIsEnabled = heCheckIfFeatureIsEnabled "Registration" (general . registrationEnabled)
-´´´
+```
 
 ## References
 
