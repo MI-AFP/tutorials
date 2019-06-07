@@ -63,6 +63,8 @@ Important part of a productive environment (and not just for team, even if you a
 
 The most famous version control systems these days are [Git](https://git-scm.com) and [SVN (subversion)](https://subversion.apache.org). Frequently, you can stick with rule that SVN is more suitable for larger and binary files (although there is Git LFS) or when good integration for specific tool is supplied (for example, Enterprise Architect). The core difference is in approach that SVN is centralized and you need to lock part that you want to change, this is where Git will require you resolve merge conflicts. Merging and branches in SVN are more complicated than in Git (this many be subjective).
 
+![Git vs. Subversion (git-tower.com)](https://www.git-tower.com/learn/content/01-git/01-ebook/en/02-desktop-gui/07-appendix/02-from-subversion-to-git/centralized-vs-distributed.png)
+
 For more see: https://www.perforce.com/blog/vcs/git-vs-svn-what-difference
 
 ### GitHub, GitLab, and others
@@ -78,6 +80,8 @@ Another important advantage is that there are more services that can be integrat
 Git allows you to develop in branches and make units of change called commits. A very good practice is to setup guidelines for you, your team, and/or external contributors how to split work into branches and how to compose commit messages. There is so-called [Gitflow Workflow](https://cs.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) that describes naming and branching of code in universal and nice way. Relating branches and Pull Requests to certain issues seems to be useful for tracking.
 
 Important also is to have **atomic commits** so one commit is only one change of your code. That helps you when going through the changes in time and cherrypicking some of them or alternating them. A good description of commit is vital as well. There is always a short message but then you can include a more elaborate description if needed. But it should be always clear from the message what the commit changed in the project and even when you don't know the previous or following messages. Messages such as "Bugfix app", "Web improvement", "Another enhancement", "Trying again", are really bad!
+
+![Git Flow (Atlassian)](https://wac-cdn.atlassian.com/dam/jcr:61ccc620-5249-4338-be66-94d563f2843c/05%20(2).svg?cdnVersion=lf)
 
 ## Documentation
 
@@ -141,6 +145,8 @@ As already being said few times, there are services that can be easily integrate
 * Continuous Integration - This term is used usually when your software is built (all parts are integrated), and tested with automatic tests or at least attempt to execute it is done. The result is that at that moment your code is (at least somehow) working. It is nice to see in your commits history which were working and which were not. For this, you can use [Travis CI](travis-ci.org), [Semaphore CI](https://semaphoreci.com), AppVeyor, and many others.
 * Continuous Inspection - Services that does static inspection of your code, they can verify dependencies of your project, evaluate coverage, and others. One of the examples is [SonarQube](https://www.sonarqube.org), but again there are many similar services.
 * Continuous Delivery - If your code passed the build and test phases, it can be deployed somewhere. The deployment can have many realizations, from actual deployment on some web hosting or app server (realized, for example, by service like [Heroku](https://www.heroku.com) or [AWS](https://aws.amazon.com)), though publishing new documentation on [ReadTheDocs](https://readthedocs.org), to uploading installation packages to some registry. All depends what you need, want, and how you will set it up.
+
+![CI and CD (dzone.com)](https://www.edureka.co/blog/content/ver.1531719070/uploads/2018/07/Asset-33-1.png)
 
 ## License
 
