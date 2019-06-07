@@ -236,6 +236,10 @@ main = scotty 3000 $ do
 
 Surprisingly easy, right?!
 
+### Templating
+
+Writing HTML fragments as strings and compose them together can be fairly bothersome. For that purpose, there are libraries for templating known from other languages and frameworks as well.
+
 #### Blaze templates
 
 One of the well-known and widely used solution for HTML templates is [Blaze HTML](https://hackage.haskell.org/package/blaze-html). It is "a blazingly fast HTML combinator library for the Haskell programming language". A huge advantage of Blaze is that you write HTML via HTML-like lightweight DSL in Haskell with the great type system. Blaze and Haskell won't allow you to make a non-sense HTML, although it does not check a full conformity, of course.
@@ -293,7 +297,92 @@ context "name" = MuVariable "Haskell"
 
 A useful source of information what can you do with Hastache are [examples](https://github.com/lymar/hastache/tree/master/examples).
 
-#### Databases
+#### Ginger
+
+If you are familiar with Python and more specifically with Jinja2 templates, then you might be a fan of [Ginger](https://ginger.tobiasdammers.nl/guide/) library. It is implementation of Jinja2 templates in Haskell and it have quite nice documentation. Usage is quite simple, just look at the example:
+
+You have some HTML file with Jinja2 tags:
+
+```html
+{# There could be some "extends" for layout #}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ title }}</title>
+    </head>
+    <body>
+        <h1>Hello, {{ name }}!</h1>
+
+        {% if condition %}
+            <p>Condition is true</p>
+        {% else %}
+            <p>Condition is false or undefined</p>
+        {% endif %}
+    </body>
+</html>
+```
+
+Then you can load template, supply context into it, and render as text:
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+module Main where
+
+import Data.HashMap.Strict (fromList, HashMap)
+import qualified Data.HashMap.Strict as HashMap
+import Data.Hashable
+import Data.Text (Text)
+import System.Exit (exitFailure)
+import System.IO (IOMode(ReadMode), openFile, hGetContents)
+import System.IO.Error (tryIOError)
+import Text.Ginger
+       (makeContextHtml, Template, toGVal, runGinger, parseGingerFile, VarName)
+import Text.Ginger.GVal (ToGVal, GVal)
+import Text.Ginger.Html (htmlSource)
+
+
+-- A simple hashmap that we'll use as our template context
+sampleContext :: HashMap Text Text
+sampleContext = fromList [("name", "Alice")]
+
+
+-- Given a Template and a HashMap of context, render the template to Text
+render :: Template -> HashMap VarName Text -> Text
+render template contextMap =
+  let contextLookup = flip scopeLookup contextMap
+      context = makeContextHtml contextLookup
+  in htmlSource $ runGinger context template
+
+
+-- Wrapper around HashMap.lookup that applies toGVal to the value found.
+-- Any value referenced in a template, returned from within a template, or used
+-- in a template context, will be a GVal
+scopeLookup
+  :: (Hashable k, Eq k, ToGVal m b)
+  => k -> HashMap.HashMap k b -> GVal m
+scopeLookup key context = toGVal $ HashMap.lookup key context
+
+
+loadFileMay :: FilePath -> IO (Maybe String)
+loadFileMay fn =
+  tryIOError (loadFile fn) >>= \e ->
+    case e of
+      Right contents -> return (Just contents)
+      Left _ -> return Nothing
+
+  where
+    loadFile :: FilePath -> IO String
+    loadFile fn' = openFile fn' ReadMode >>= hGetContents
+
+main :: IO ()
+main = do
+  template <- parseGingerFile loadFileMay "base.html"
+  case template of
+    Left err -> print err >> exitFailure
+    Right template' -> print $ render template' sampleContext
+```
+
+### Databases
 
 Again, several abstraction levels are available. First, you can employ a low-level approach where you incorporate SQL in the code. For that, you can usually use module `Database.X` where `X` is type of datase:
 
@@ -476,24 +565,24 @@ This is just a simple (but often sufficient) example. Of course, you can test mu
 Here are a few examples of simple and more complex web apps:
 
 * [dbushenko/scotty-blog](https://github.com/dbushenko/scotty-blog)
-* [DataStewardshipWizard/ds-wizard](https://github.com/DataStewardshipWizard/ds-wizard/tree/master/DSServer)
-* [DataStewardshipWizard/dsw-server](https://github.com/DataStewardshipWizard/dsw-server)
+* [ds-wizard/legacy-wizard](https://github.com/ds-wizard/legacy-wizard)
+* [ds-wizard/dsw-server](https://github.com/ds-wizard/dsw-server)
 
 
 ## Continuation-style web development
 
-We would also like to raise your attention to an interesting approach to web development based on the [continuation](https://wiki.haskell.org/Continuation). A continuation is "something" that enables you to save the state of computation, suspend it (do something else) and later resume it. This "something" may be a first-class language feature (such as in Scheme), or a library feature -- in Haskell, surprisingly, we have a continuation monad ;-).
+We would also like to raise your attention to an interesting approach to web development based on the [continuation](https://wiki.haskell.org/Continuation). A continuation is "something" that enables you to save the state of computation, suspend it (do something else) and later resume it. This "something" may be a first-class language feature (such as in Scheme), or a library feature - in Haskell, surprisingly, we have a continuation monad ;-).
 
-A need for continuation occurs typically in web development (and generally in UI development) when you want a modal dialogue. Today, most of the dialogues are handled on client-side, however if you need to do a modal dialogue on server-side, it is hard -- HTTP behaves like a programming language, which does not have subroutines, only GOTOs (URLSs are the 'line numbers'). Continuation can provide the missing abstraction here, which is embodied in the [MFlow](http://mflowdemo.herokuapp.com) library. Sadly, the project seems abandoned for several years.
+A need for continuation occurs typically in web development (and generally in UI development) when you want a modal dialogue. Today, most of the dialogues are handled on client-side, however if you need to do a modal dialogue on server-side, it is hard - HTTP behaves like a programming language, which does not have subroutines, only GOTOs (URLSs are the 'line numbers'). Continuation can provide the missing abstraction here, which is embodied in the [MFlow](http://mflowdemo.herokuapp.com) library. Sadly, the project seems abandoned for several years.
 
-At the same time, the continuation-style web server programming is typically the first choice in the Smalltalk (OOP) world -- [Seaside](http://seaside.st/) is purely continuation-based, and as such it gives a "desktop programming" experience for the web development resulting in no need of dealing with routing and URLs. As for the FP world, continuation-style web programming is surprisingly not used much in practice, but there are solutions such as the [Racket web server](https://docs.racket-lang.org/web-server/index.html) or [cl-weblocks](https://www.cliki.net/cl-weblocks) in Common Lisp.
+At the same time, the continuation-style web server programming is typically the first choice in the Smalltalk (OOP) world - [Seaside](http://seaside.st/) is purely continuation-based, and as such it gives a "desktop programming" experience for the web development resulting in no need of dealing with routing and URLs. As for the FP world, continuation-style web programming is surprisingly not used much in practice, but there are solutions such as the [Racket web server](https://docs.racket-lang.org/web-server/index.html) or [cl-weblocks](https://www.cliki.net/cl-weblocks) in Common Lisp.
 
 
 The next time, we will deal a bit with frontend technologies for Haskell, functional reactive programming and [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem). So you will also see how to develop server-side and client-side separately and connect them through a (REST) API.
 
 ## Task assignment
 
-The homework to complete a simple web app is in repository [MI-AFP/hw09](https://github.com/MI-AFP/hw09).
+The homework to complete a simple web app is in repository [MI-AFP/hw08](https://github.com/MI-AFP/hw08).
 
 ## Further reading
 

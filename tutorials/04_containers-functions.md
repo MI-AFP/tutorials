@@ -1,4 +1,234 @@
-# Advanced functions and intro to typeclasses
+# Types, containers, and advanced functions
+
+## Important "base" types
+
+We already know basic data types (from `base` package) such as [Data.Char](https://hackage.haskell.org/package/base/docs/Data-Char.html), [Bool](https://hackage.haskell.org/package/base/docs/Data-Bool.html), or [Data.Int](https://hackage.haskell.org/package/base/docs/Data-Int.html) and structures like [Data.List](https://hackage.haskell.org/package/base/docs/Data-List.html) and [Data.Tuple](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) pretty well. But of course, there are more widely used types and we are going to know some more now.
+
+### Maybe
+
+In most programming languages, there is a notion of `null` or `nil` or even `None` value. Such a value is usable, but it leads often to undesired crashes of "Null pointer exception". As Haskell is type-safe, it does not allow such rogue surprises to happen, but instead deals with a possible "null" situation in a managed way.
+
+If we were to design such a solution, we may use ADTs like that:
+
+```haskell
+data IntOrNull = I Int | NullInt
+data StringOrNull = S String | NullString
+data ValueOrNull a = Value a | Null
+
+myDiv     :: Int -> Int -> ValueOrNull Int
+myDiv x 0 = Null
+myDiv x y = Value (x `div` y)
+
+divString     :: Int -> Int -> String
+divString x y = case (myDiv x y) of
+                  Null      -> "Division by zero is not allowed!"
+                  Value res -> "Result: " ++ show res
+```
+
+In Haskell, we have a pretty structure called `Maybe` which does exactly that for us and there are some functions helping with common usage. It is a very important structure and you will be dealing with it very often. You can find more about in the documentation of [Data.Maybe](https://hackage.haskell.org/package/base/docs/Data-Maybe.html).
+
+It is defined as:
+
+```haskell
+data Maybe a = Nothing | Just a
+```
+
+```
+Prelude Data.Maybe> :type Just 10
+Just 10 :: Num a => Maybe a
+Prelude Data.Maybe> :type Nothing
+Nothing :: Maybe a
+Prelude Data.Maybe> fromJust (Just 10)
+10
+Prelude Data.Maybe> fromJust Nothing
+*** Exception: Maybe.fromJust: Nothing
+Prelude Data.Maybe> fromMaybe "default" Nothing
+"default"
+Prelude Data.Maybe> fromMaybe "default" (Just "something")
+"something"
+Prelude Data.Maybe> catMaybes [Just 6, Just 7, Nothing, Just 8, Nothing, Just 9]
+[6,7,8,9]
+```
+
+Is `Maybe` a good container for the following case? What if we need to propage details about the error in the communication (unknown recipient, timeout, bad metadata, etc.)?
+
+```haskell
+-- Communicator interface
+data Message = Message { msgSender    :: String
+                       , msgRecipient :: String
+                       , msgMetadata  :: [(String, String)]
+                       , msgBody      :: String
+                       }
+
+sendAndReceive :: Communicator -> Message -> Maybe Message
+sendAndReceive comm msg = sendSync comm msg  -- some library "magic", various errors
+
+printReceivedMessage :: Maybe Message -> String
+printReceivedMessage Nothing    = "Unknown error occured during communication."
+printReceivedMessage (Just msg) = msgSender msg ++ ": " ++ msgBody msg
+
+myCommunicator = printReceivedMessage . sendAndReceive comm
+```
+
+### Either
+
+`Maybe` is also used to signal two types of results: an error (`Nothing`) and a success (`Just value`). However, it does not tell what is the error in case of `Nothing`. There is a standard type for such use cases, and it is called `Either`:
+
+```haskell
+data Either a b = Left a | Right b
+```
+
+The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html)):
+
+
+```
+Prelude Data.Either> :type Left 7
+Left 7 :: Num a => Either a b
+Prelude Data.Either> :type Right "Message"
+Right "Message" :: Either a [Char]
+Prelude Data.Either> lefts [Left 7, Right "Msg1", Left 8, Right "Msg2"]
+[7,8]
+Prelude Data.Either> rights [Left 7, Right "Msg1", Left 8, Right "Msg2"]
+["Msg1","Msg2"]
+Prelude Data.Either> partitionEithers [Left 7, Right "Msg1", Left 8, Right "Msg2"]
+([7,8],["Msg1","Msg2"])
+```
+
+```haskell
+-- Communicator interface
+data Message = Message { msgSender    :: String
+                       , msgRecipient :: String
+                       , msgMetadata  :: [(String, String)]
+                       , msgBody      :: String
+                       }
+
+data CommError = Timeout
+               | Disconnected
+               | UnkownRecipient
+               | IncorrectMetadata
+               | GeneralError String
+               deriving Show
+
+sendAndReceive :: Communicator -> Message -> Either CommError Message
+sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
+
+printReceivedMessage :: Either CommError Message -> String
+printReceivedMessage (Left  err) = "Error occured during communication: " ++ show err
+printReceivedMessage (Right msg) = msgSender msg ++ ": " ++ msgBody msg
+
+myCommunicator = printReceivedMessage . sendAndReceive comm
+```
+
+### Unit
+
+Although we said there is no `null`, `nil` or `None`, we still have one dummy value/type called "Unit" and it is designated as an empty tuple `()`.
+
+```
+Prelude> :info ()
+data () = ()    -- Defined in ‘GHC.Tuple’
+Prelude> :type ()
+() :: ()
+```
+
+It is semantically more similar to `void` from other languages and you can use it wherever you don't want to use an actual type. For example, using `Either` to simulate  `Maybe`, you could do `Either a ()`. For more about [unit type, read wikipedia](https://en.wikipedia.org/wiki/Unit_type).
+
+## Other containers
+
+As in other programming languages or programming theory, there are various types of containers - data types/structures, whose instances are collections of other objects. As for collections with an arbitrary number of elements, we talked about lists, which are simple to use and have a nice syntactic-sugar notation in Haskell. However, there are also other versatile types of containers available in the package [containers] and others, such as [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and more (use [Hoogle] or [Hackage]).
+
+### Sequence
+
+The `Seq a` is a type from [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) that represents a **finite** sequence of values of type `a`. Sequences are very similar to lists, working with sequences is not so different, but some operations are more efficient - constant-time access to both the front and the rear and Logarithmic-time concatenation, splitting, and access to any element. But in other cases, it can be slower than lists because of overhead created for making operations efficient. The size of a `Seq` must not exceed `maxBound::Int`!
+
+```
+Prelude> import Data.Sequence
+Prelude Data.Sequence> seq1 = 1 <| 2 <| 15 <| 7 <| empty
+Prelude Data.Sequence> seq1
+fromList [1,2,15,7]
+Prelude Data.Sequence> :type seq1
+seq1 :: Num a => Seq a
+Prelude Data.Sequence> 3 <| seq1
+fromList [3,1,2,15,7]
+Prelude Data.Sequence> seq1 |> 3
+fromList [1,2,15,7,3]
+Prelude Data.Sequence> seq1 >< (fromList [2, 3, 4])
+fromList [1,2,15,7,2,3,4]
+Prelude Data.Sequence> sort seq1
+fromList [1,2,7,15]
+```
+
+### Set
+
+The `Set e` type represents a set of elements of type `e`. Most operations require that `e` be an instance of the `Ord` class. A `Set` is strict in its elements. If you know what is *set* in math and/or programming, you can be very powerful with them.
+
+```
+Prelude> import Data.Set
+Prelude Data.Set> set1 = insert 4 $ insert 2 $ insert 0 $ singleton 2
+Prelude Data.Set> set1
+fromList [0,2,4]
+Prelude Data.Set> delete 2 set1
+fromList [0,4]
+Prelude Data.Set> delete 3 set1
+fromList [0,2,4]
+Prelude Data.Set> mem
+member  mempty
+Prelude Data.Set> member 4 set1
+True
+Prelude Data.Set> member (-6) set1
+False
+Prelude Data.Set> Data.Set.filter (>3) set1
+fromList [4]
+Prelude Data.Set> set2 = insert 5 (insert 3 (singleton 2))
+Prelude Data.Set> set2
+fromList [2,3,5]
+Prelude Data.Set> set1
+fromList [0,2,4]
+Prelude Data.Set> intersection set1 set2
+fromList [2]
+Prelude Data.Set> union set1 set2
+fromList [0,2,3,4,5]
+```
+
+There is an efficient implementation of integer sets, which uses big-endian Patricia trees (works better mainly with union and intersection). Use qualified import like `import qualified Data.IntSet as IntSet` to work with it.
+
+### Map
+
+The `Map k v` type represents a finite map (sometimes called a dictionary) from keys of type `k` to values of type `v`. A Map is strict in its keys but lazy in its values (by default we use [Data.Map.Lazy](https://hackage.haskell.org/package/containers/docs/Data-Map-Lazy.html). You may use [Data.Map.Strict](https://hackage.haskell.org/package/containers/docs/Data-Map-Strict.html) instead if you will eventually need all the values stored and/or the stored values are not so complicated to compute (no big advantage of laziness).
+
+```
+Prelude> import Data.Map
+Prelude Data.Map> map1 = insert "suchama4" "Marek Suchanek" (singleton "perglr" "Robert Pergl")
+Prelude Data.Map> map1 ! "suchama4"
+"Marek Suchanek"
+Prelude Data.Map> map1 ! "suchamar"
+"*** Exception: Map.!: given key is not an element in the map
+CallStack (from HasCallStack):
+  error, called at ./Data/Map/Internal.hs:610:17 in containers-0.5.11.0-K2TDqgYtGUcKxAY1UqVZ3R:Data.Map.Internal
+Prelude Data.Map> map1 !? "suchamar"
+Nothing
+Prelude Data.Map> map1 !? "suchama4"
+Just "Marek Suchanek"
+Prelude Data.Map> size map1
+2
+Prelude Data.Map> delete "suchama4" map1
+fromList [("perglr","Robert Pergl")]
+Prelude Data.Map> delete "suchamar" map1
+fromList [("perglr","Robert Pergl"),("suchama4","Marek Suchanek")]
+Prelude Data.Map> map2 = insert "suchama4" "Marek Suchanek" (singleton "stengvac" "Vaclav Stengl")
+Prelude Data.Map> map2 = insert "suchama4" "Marek Sushi Suchanek" (singleton "stengvac" "Vaclav Stengl")
+Prelude Data.Map> union map1 map2
+fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Suchanek")]
+Prelude Data.Map> union map2 map1
+fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Sushi Suchanek")]
+Prelude Data.Map> intersection map1 map2
+fromList [("suchama4","Marek Suchanek")]
+```
+
+Again, there is an efficient implementation of maps, where the keys are of `Int`. It uses same mechanisms as `Data.IntSet` - use `import qualified Data.IntMap as IntMap`.
+
+### Graph and Tree
+
+Finally, [containers] specify also [Data.Tree](https://hackage.haskell.org/package/containers/docs/Data-Tree.html) and [Data.Graph](https://hackage.haskell.org/package/containers/docs/Data-Graph.html), both in a very generic manner. If you ever need to work with trees or graphs, it is convenient to use those instead of reinventing the wheel yourself.
 
 ## More about functions
 
@@ -41,12 +271,18 @@ So what is currying useful for? It enables a very powerful abstraction technique
 Imagine this situation of a polygon library:
 
 ```haskell
-type PSize = Int
-type NoVertices = Int
-data Polygon = -- some representation
+type Size = Double
+type NoVertices = Word
+newtype Polygon = Polygon [(Double, Double)]
 
-mkPolygon :: NoVertices -> PSize -> Polygon
-mkPolygon = -- some code to make a polygon
+computeRegularPolygonPoints :: (Double, Double) -> NoVertices -> Size -> [(Double, Double)]
+computeRegularPolygonPoints (cX, cY) nVertices r = [ (x i, y i) |  i <- map fromIntegral [0..(nVertices-1)] ]
+  where n = fromIntegral nVertices
+        x i = cX + r * cos(2 * pi * i / n)
+        y i = cY + r * sin(2 * pi * i / n)
+
+mkPolygon :: NoVertices -> Size -> Polygon
+mkPolygon = computeRegularPolygonPoints (0, 0)
 
 mkHexagon :: PSize -> Polygon
 mkHexagon = mkPolygon 6
@@ -56,23 +292,23 @@ mkRectangle = mkPolygon 4
 
 --etc.
 ```
-Here we create *specialized* versions of polygon constructor functions by providing the `PSize` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
+Here we create *specialized* versions of polygon constructor functions by providing the `Size` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
 
 ```haskell
-generalSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
-generalSort orderingFn numbers = -- use the orderingFn to sort the numbers
+genericSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
+genericSort orderingFn numbers = undefined -- use the orderingFn to sort the numbers
 
 fastOrderingFn :: Ord a => a -> a -> Ordering
-fastOrderingFn = -- a fast, but not too reliable ordering algorithm
+fastOrderingFn = undefined -- a fast, but not too reliable ordering algorithm
 
 slowOrderingFn :: Ord a => a -> a -> Ordering
-slowOrderingFn = -- a slow, but precise ordering algorithm
+slowOrderingFn = undefined -- a slow, but precise ordering algorithm
 
 fastSort :: Ord a => [a] -> [a]
-fastSort = generalSort fastOrderingFn
+fastSort = genericSort fastOrderingFn
 
 goodSort :: Ord a => [a] -> [a]
-goodSort = generalSort slowOrderingFn
+goodSort = genericSort slowOrderingFn
 ```
 
 This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
@@ -85,8 +321,10 @@ flip :: (a -> b -> c) -> b -> a -> c
 Then we can have:
 
 ```haskell
-generalSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
-generalSort numbers orderingFn = -- use the orderingFn to sort the numbers
+data Something = SomethingRecord { complexFields :: () }
+
+genericSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
+genericSort numbers orderingFn = -- use the orderingFn to sort the numbers
 
 fastOrderingFn :: Something -> Something -> Ordering
 fastOrderingFn = -- a fast, but not too reliable ordering algorithm
@@ -379,8 +617,8 @@ myMap f (x:xs) = f x : myMap xs
 myFilter :: (a -> Bool) -> [a] -> [a]
 myFilter _ []     = []
 myFilter p (x:xs)
-      | p x       = x : filter p xs
-      | otherwise = filter p xs
+      | p x       = x : myFilter p xs
+      | otherwise = myFilter p xs
 ```
 
 That's it. Let us have some examples:
@@ -523,225 +761,6 @@ Prelude> maximum [1,2,63,12,5,201,2]
 
 As an exercise, try to implement `foldl` by using `foldr` (spoiler: [solution](https://wiki.haskell.org/Foldl_as_foldr)).
 
-## Typeclasses
-
-Typeclass is a class of types with a definition of common functions for all instances of that class. Please note that the term "class" here means a [mathematical class in the set theory](https://en.wikipedia.org/wiki/Class_(set_theory)), not an [object-oriented class](https://en.wikipedia.org/wiki/Class_(computer_programming))!.
-
-Typeclasses represent a powerful means for polymorphism in a strong static type system. They can be related to interfaces in Java or protocols in Clojure, however, they are more powerful.
-
-### Kinds
-
-In the type theory, a kind is the type of a type constructor or, less commonly, the type of a higher order type operator. A kind system is essentially a simply-typed lambda calculus 'one level up' from functions to their types, endowed with a primitive type, denoted `*` and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create a type with kind `*` so you can have values of it.
-
-```
-Prelude> :kind Integer
-Integer :: *
-Prelude> :kind Maybe
-Maybe :: * -> *
-Prelude> :kind Either
-Either :: * -> * -> *
-Prelude> :kind (Either Integer)
-(Either Integer) :: * -> *
-Prelude> :kind (Either Integer String)
-(Either Integer String) :: *
-```
-
-### Polymorphism
-
-[Polymorphism](https://en.wikipedia.org/wiki/Polymorphism_(computer_science)) (from Greek πολύς, polys, "many, much" and μορφή, morphē, "form, shape") is the provision of a single interface to entities of different types. A polymorphic type is one whose operations can also be applied to values of some other type, or types. Polymorphism is usually connected with object-oriented programming today, however, there are even more powerful types of polymorphism in functional programming languages, such as Haskell or Clojure.
-
-We already used type classes and type variables - the basic enablers of polymorphism in Haskell. **Parametric polymorphism** refers to the situation when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of a list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also a parametric polymorphism. This type of polymorphism doesn't know anything about the type which it will be used with. The behaviour is abstracted regardless of a concrete type. This is a somewhat limiting but extremely useful property known as versatility.
-
-**Ad-hoc polymorphism** refers to the situation when a value is able to adopt any one of a defined set of types because it, or a value it uses, has been given a separate definition for each of those types. This is a situation when the type variable *is constrained* by some type class. Thanks to that extra information about the given *still-generic* type, it is possible to use behaviour defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of an arbitrary list an instance of some class. This polymorphism is not only about functions, but also about values - recall `Bounded` class with `minBound` and `maxBound` values which are different for each instance.
-
-There are some other types of polymorphism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorphism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
-
-### Own typeclass and instance
-
-There are some commonly used typeclasses and their instances available and you can create your own, as well. You need to use keyword `class` to defined functions for that typeclass and also optionally a class inheritance, i.e. a base class, which is extended. There can be even more, so the inheritance forms [lattices](https://commons.wikimedia.org/wiki/File:Base-classes.svg).
-
-Contrary to Java interfaces, apart from function declarations, Haskell typeclasses can also contain function implementations.
-
-Next, you create typeclass instances using the keyword `instance`, which means you define or (re-define) functions for that class.
-
-```haskell
--- from https://en.wikibooks.org/wiki/Haskell/Classes_and_types#A_concerted_example
--- Location, in two dimensions.
-class Located a where
-    getLocation :: a -> (Int, Int)
-
-class (Located a) => Movable a where
-    setLocation :: (Int, Int) -> a -> a
-
--- An example type, with accompanying instances.
-data NamedPoint = NamedPoint
-    { pointName :: String
-    , pointX    :: Int
-    , pointY    :: Int
-    } deriving (Show)
-
-instance Located NamedPoint where
-    getLocation p = (pointX p, pointY p)
-
-instance Movable NamedPoint where
-    setLocation (x, y) p = p { pointX = x, pointY = y }
-
--- Moves a value of a Movable type by the specified displacement.
--- This works for any movable, including NamedPoint.
-move :: (Movable a) => (Int, Int) -> a -> a
-move (dx, dy) p = setLocation (x + dx, y + dy) p
-    where
-    (x, y) = getLocation p
-```
-
-## Basic typeclasses in detail
-
-### Deriving
-
-We have already used the keyword `deriving` many times. It is kind of magic which will automatically derive an instance of desired typeclass(es) so you don't have to write functions on your own.
-
-You can derive only built-in typeclasses:
-
-* `Eq` = (in)equality based on arguments
-* `Ord` = `compare`, `min`, `max` and comparison operators
-* `Show` = to `String` conversion
-* `Read` = from `String` conversion
-* `Enum` = enumerations only (no arguments), list `..` syntax
-* `Bounded` = only for enumerations or just one arguments, `minBound` and `maxBound`
-
-You can use `deriving` for your own classes, but you need to put some (advanced) effort in it by using [Data.Derive](https://hackage.haskell.org/package/derive) and [Template Haskell](https://wiki.haskell.org/Template_Haskell).
-
-### Read and Show
-
-If you derive default implementation of instances for `Show` and `Read` the string representing the data is actually the same as you would write it in Haskell code:
-
-```
-Prelude> data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Show, Read)
-Prelude>
-Prelude> myTree = Node (Leaf 8) (Node (Leaf 70) (Leaf 15))
-Prelude> show myTree
-"Node (Leaf 8) (Node (Leaf 70) (Leaf 15))"
-Prelude> read "Node (Leaf 5) (Leaf 100)"
-*** Exception: Prelude.read: no parse
-Prelude> (read "Node (Leaf 5) (Leaf 100)") :: Tree Int
-Node (Leaf 5) (Leaf 100)
-```
-
-```haskell
-class Show a where
-  showsPrec :: Int -> a -> ShowS
-  show :: a -> String
-  showList :: [a] -> ShowS
-  {-# MINIMAL showsPrec | show #-}
-        -- Defined in ‘GHC.Show’
-```
-
-When you make own `read` and `show`, you should ensure that after using `read` on a string produced by `show`, you will get the same data:
-
-```haskell
-data Tree a = Leaf a | Node (Tree a) (Tree a)
-
-size :: Num a => Tree b -> a
-size (Leaf _)   = 1
-size (Node l r) = size l + size r
-
-instance (Show a) => Show (Tree a) where
-  show (Leaf x)   = show x
-  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
-```
-
- `show` is (quite often) abused to represent fancy string representations, but it is adviced to name such functions differently (such as `myShow`), or to use a pretty-printing library such as [Text.PrettyPrint](https://hackage.haskell.org/package/pretty-1.1.3.6/docs/Text-PrettyPrint.html), [pretty](https://hackage.haskell.org/package/pretty), [pretty-simple](https://hackage.haskell.org/package/pretty-simple) or [prettyprinter](https://hackage.haskell.org/package/prettyprinter).
-
-Typeclass `Read` is a bit more complex. If you want to make your own implementation, you need to write a parser. Parsing will be covered later on during the course. Basically, it tries to convert `String` to `a` and return it together with the remaining `String`.
-
-```haskell
-class Read a where
-  readsPrec :: Int -> ReadS a
-  readList :: ReadS [a]
-  GHC.Read.readPrec :: Text.ParserCombinators.ReadPrec.ReadPrec a
-  GHC.Read.readListPrec :: Text.ParserCombinators.ReadPrec.ReadPrec [a]
-  {-# MINIMAL readsPrec | readPrec #-}
-        -- Defined in `GHC.Read'
-```
-
-### Numerics
-
-For numbers, there are several built-in typeclasses making numeric computing more flexible:
-
-* `Num`
-  * `Real`
-    * `Integral`
-    * `RealFrac`
-  * `Fractional`
-    * `Floating`
-    * `RealFloat` (subclass of `Floating` and `RealFrac`)
-
-If you don't need to explicitly specify the type of number, use the typeclass constraint in the declaration of function type. This is a general rule of thumb: be as much generic, as possible.
-
-### Comparison
-
-There are two basic typeclasses - `Eq` and its subclass `Ord` that specify comparisons.
-
-```haskell
-class Eq a where
-  (==) :: a -> a -> Bool
-  (/=) :: a -> a -> Bool
-  {-# MINIMAL (==) | (/=) #-}
-        -- Defined in ‘GHC.Classes’
-
-class Eq a => Ord a where
-  compare :: a -> a -> Ordering
-  (<) :: a -> a -> Bool
-  (<=) :: a -> a -> Bool
-  (>) :: a -> a -> Bool
-  (>=) :: a -> a -> Bool
-  max :: a -> a -> a
-  min :: a -> a -> a
-  {-# MINIMAL compare | (<=) #-}
-        -- Defined in ‘GHC.Classes’
-```
-
-You can again implement your own instances of those classes:
-
-```haskell
-data Tree a = Leaf a | Node (Tree a) (Tree a)
-
-size :: Num a => Tree b -> a
-size (Leaf _)   = 1
-size (Node l r) = size l + size r
-
-instance (Show a) => Show (Tree a) where
-  show (Leaf x)   = show x
-  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
-
-instance Eq (Tree a) where
-    (==) t1 t2 = (size t1) == (size t2)
-
-instance Ord (Tree a) where
-    compare t1 t2 = compare (size t1) (size t2)
-```
-
-### Enum and Bounded
-
-Class `Enum` defines operations on sequentially ordered types and it is a subclass of `Bounded` which defines just `minBound` and `maxBound` values. As you can see below, `Enum` describes 8 functions but only 2 are required (other will be derived based on that). Functions `toEnum` and `fromEnum` serve for specifying the order by numbering with `Int`s.
-
-```haskell
-class Enum a where
-    succ :: a -> a
-    pred :: a -> a
-    toEnum :: Int -> a
-    fromEnum :: a -> Int
-    enumFrom :: a -> [a]
-    enumFromThen :: a -> a -> [a]
-    enumFromTo :: a -> a -> [a]
-    enumFromThenTo :: a -> a -> a -> [a]
-    {-# MINIMAL toEnum, fromEnum #-}
-```
-
-When you derive `Enum`, the order will be generated as left-to-right order of data constructors (without parameters, an enumeration consists of one or more nullary ones). Similarly, deriving `Bounded` will use the first and the last data constructor.
-
-Enumerations have also the `..` syntactic sugar. For example, `[1..10]` is translated to `enumFromThen 1 10` and `[1,5..100]` is translated to `enumFromThenTo`
-
 ## FP in other languages
 
 Functional programming concepts that you learn in a pure functional language may be more or less applicable in other languages, as well, according to the concepts supported and how well they are implemented. Also, some languages provide serious functional constructs, but they are quite cumbersome syntactically, which repels their common usage (yes, we point to you, JavaScript ;-)
@@ -790,16 +809,16 @@ int calculate(binOperation bo, const int operandA, const int operandB){
 
 ## Task assignment
 
-The homework to practice working with advanced functional patterns, operators, and typeclasses is in repository [MI-AFP/hw05](https://github.com/MI-AFP/hw05).
+The homework to practice working with new types, list comprehensions, containers, and errors is in repository [MI-AFP/hw04](https://github.com/MI-AFP/hw04).
 
 ## Further reading
 
-* [Haskell - Currying](https://wiki.haskell.org/Currying)
-* [Haskell - Pointfree](https://wiki.haskell.org/Pointfree)
-* [Haskell - Higher order function](https://wiki.haskell.org/Higher_order_function)
-* [Haskell - Fold](https://wiki.haskell.org/Fold)
-* [Learn You a Haskell for Great Good](http://learnyouahaskell.com) (chapters 3, 6, 8)
-* [Haskell - Polymorphism](https://wiki.haskell.org/Polymorphism)
-* [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
-* [Haskell - OOP vs type classes](https://wiki.haskell.org/OOP_vs_type_classes)
-* [WikiBooks - Haskell: Classes and types](https://en.wikibooks.org/wiki/Haskell/Classes_and_types)
+* [Haskell containers](https://haskell-containers.readthedocs.io/en/latest/)
+* [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
+* [Haskell - error](https://wiki.haskell.org/Error)
+* [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
+
+[containers]: https://hackage.haskell.org/package/containers
+[GHC]: https://www.haskell.org/ghc/
+[Hackage]: https://hackage.haskell.org
+[Hoogle]: https://www.haskell.org/hoogle/
