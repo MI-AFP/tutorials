@@ -64,10 +64,11 @@ There are several editors you may use for writing Haskell programs, most probabl
 * [Vim with plugins](https://wiki.haskell.org/Vim)
 * [IntelliJ IDEA with HaskForce](http://haskforce.com) (or visit their [GitHub repo](https://github.com/carymrobbins/intellij-haskforce))
 * [Atom with plugins](https://atom-haskell.github.io/overview/)
+* [Visual Studio Code with plugins](https://medium.com/@dogwith1eye/setting-up-haskell-in-vs-code-with-stack-and-the-ide-engine-81d49eda3ecf)
 
 Most probably you will need following stuff:
 
-* [ghc-mod] = connector to [GHC] API for various stuff
+* [ghc-mod] = connector to [GHC] API for various stuff, alternatively you can use [HIE](https://github.com/haskell/haskell-ide-engine)
 * [hlint] = source code suggestion
 * [hindent] = indenter, pretty print
 * [stylish-haskell] = code prettifier ("good style")
