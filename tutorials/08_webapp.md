@@ -566,7 +566,7 @@ Here are a few examples of simple and more complex web apps:
 
 * [dbushenko/scotty-blog](https://github.com/dbushenko/scotty-blog)
 * [ds-wizard/legacy-wizard](https://github.com/ds-wizard/legacy-wizard)
-* [ds-wizard/dsw-server](https://github.com/ds-wizard/dsw-server)
+* [ds-wizard/engine-backend](https://github.com/ds-wizard/engine-backend)
 
 
 ## Continuation-style web development
