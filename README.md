@@ -15,7 +15,7 @@ This repository contains tutorials and related stuff. Homeworks and other projec
 
 Our work is highly inspired by successful course [MI-PYT] (Advanced Python). The materials have been developed with support of the Faculty of Information Technology, CTU in Prague.
 
-[![FIT CTU](https://fit.cvut.cz/sites/default/files/PR/information_technology.svg)](https://fit.cvut.cz/en)
+[![FIT CTU](https://fit.cvut.cz/media-a-pr/corporate-identity/logo-fit-en-modra.svg)](https://fit.cvut.cz)
 
 ## Contribution
 
