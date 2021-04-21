@@ -85,8 +85,8 @@ If we have Elm installed, we can run Elm REPL by `elm repl` command. It is like 
 
 ```
 $ elm repl
----- Elm 0.19.0 ----------------------------------------------------------------
-Read <https://elm-lang.org/0.19.0/repl> to learn more: exit, help, imports, etc.
+---- Elm 0.19.1 ----------------------------------------------------------------
+Read <https://github.com/elm/compiler/blob/master/hints/repl.md> to learn more: exit, help, imports, etc.
 --------------------------------------------------------------------------------
 >
 ```
@@ -239,11 +239,11 @@ It generates `elm.json` file that defines where the source files are and what ar
     "source-directories": [
         "src"
     ],
-    "elm-version": "0.19.0",
+    "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
-            "elm/browser": "1.0.1",
-            "elm/core": "1.0.2",
+            "elm/browser": "1.0.2",
+            "elm/core": "1.0.5",
             "elm/html": "1.0.0"
         },
         "indirect": {
@@ -352,8 +352,8 @@ linear a b x =
 A list is a collection of items of the same type with variable length. There is a [List](https://package.elm-lang.org/packages/elm/core/latest/List) module with various functions for working with lists.
 
 ```elm
-> numbers = [1, 3, 5, 7, 11]
-[1,3,5,7,11] : List number
+> numbers = [ 1, 3, 5, 7, 11 ]
+[ 1, 3, 5, 7, 11 ] : List number
 
 > List.length numbers
 5 : Int
@@ -364,14 +364,14 @@ False : Bool
 > double n = n * 2
 <function> : number -> number
 > List.map double numbers
-[2,6,10,14,22] : List number
+[ 2, 6, 10, 14, 22 ] : List number
 
 > List.map (\n -> n * 2) numbers
-[2,6,10,14,22] : List number
+[ 2, 6, 10, 14, 22 ] : List number
 
 
 > List.map ((*) 2) numbers
-[2,6,10,14,22] : List number
+[ 2, 6, 10, 14, 22 ] : List number
 ```
 
 
@@ -380,14 +380,14 @@ False : Bool
 Dict is a mapping of unique keys to values. There is a [Dict](https://package.elm-lang.org/packages/elm-lang/core/latest/Dict) module with functions for working with dicts.
 
 ```elm
-> Dict.fromList [("Spencer", 25), ("Zoe", 21)]
-Dict.fromList [("Spencer",25),("Zoe",21)] : Dict.Dict String number
+> Dict.fromList [ ( "Spencer", 25 ), ( "Zoe", 21 ) ]
+Dict.fromList [ ("Spencer", 25 ), ("Zoe", 21 ) ] : Dict.Dict String number
 
 > Dict.insert "Spencer" 25 Dict.empty
-Dict.fromList [("Spencer",25)] : Dict.Dict String number
+Dict.fromList [ ( "Spencer", 25 ) ] : Dict.Dict String number
 
-> dict = Dict.fromList [("Spencer", 25), ("Zoe", 21)]
-Dict.fromList [("Spencer",25),("Zoe",21)] : Dict.Dict String number
+> dict = Dict.fromList [ ( "Spencer", 25 ), ( "Zoe", 21 ) ]
+Dict.fromList [ ("Spencer", 25 ),( "Zoe", 21 ) ] : Dict.Dict String number
 > Dict.isEmpty dict
 False : Bool
 > Dict.get "Zoe" dict
@@ -402,8 +402,8 @@ A tuple is a collection of items of various type with the fixed size. There is a
 
 
 ```elm
-> person = ("Joe", 21)
-("Joe",21) : ( String, number )
+> person = ( "Joe", 21 )
+( "Joe" , 21 ) : ( String, number )
 
 > Tuple.first person
 "Joe" : String
@@ -415,25 +415,25 @@ A tuple is a collection of items of various type with the fixed size. There is a
 We can use pattern matching for tuples in functions:
 
 ```elm
-bio : (String, Int) -> String
-bio (name, age) = name ++ " is " ++ (String.fromInt age) ++ " years old."
+bio : ( String, Int ) -> String
+bio ( name, age ) = name ++ " is " ++ ( String.fromInt age ) ++ " years old."
 ```
 
 
 Elm has a limit on the maximum number of items in the tuple to be 3. If we need more, we should use a record or our own custom type.
 
 ```
-> vector4 = (4, 10, 12, 3)
+> vector4 = ( 4, 10, 12, 3 )
 -- BAD TUPLE --------------------------------------------------------------- elm
 
 I only accept tuples with two or three items. This has too many:
 
-8| vector4 = (4, 10, 12, 3)
-             ^^^^^^^^^^^^^^
+8| vector4 = ( 4, 10, 12, 3 )
+             ^^^^^^^^^^^^^^^^
 I recommend switching to records. Each item will be named, and you can use the
 `point.x` syntax to access them.
 
-Note: Read <https://elm-lang.org/0.19.0/tuples> for more comprehensive advice on
+Note: Read <https://elm-lang.org/0.19.1/tuples> for more comprehensive advice on
 working with large chunks of data in Elm.
 ```
 
@@ -446,6 +446,10 @@ Records contain keys and values. Each value can have a different type.
 > vector4 = { w = 4, x = 10, y = 12, z = 3 }
 { w = 4, x = 10, y = 12, z = 3 }
     : { w : number, x : number1, y : number2, z : number3 }
+
+> scatterChart = { points = [ { x = 11, y = 8 } ) ], title = "Bar chart", xAxis = "x", yAxis = "y" }
+{ points = [ { x = 11, y = 8 } ) ], title = "Bar chart", xAxis = "x",   yAxis = "y" }
+    : { points : List { x : number1, y : number2 }, title : String, xAxis : String, yAxis : String }
 ```
 
 
@@ -458,8 +462,8 @@ For accessing record properties, Elm has by default accessors defined as `.<key>
 > .x vector4
 10 : number
 
-> List.map .x [vector4, vector4, vector4]
-[10,10,10] : List number
+> List.map .x [ vector4, vector4, vector4 ]
+[ 10, 10, 10 ] : List number
 ```
 
 If we have a look at the type of `.x` accessor, it says it is any record that has a field `x` of type `a` and returns `a`.
@@ -479,10 +483,10 @@ Since everything is immutable, records cannot be updated. We can create updated 
 ```
 
 
-We can use pattern matching for record keys:
+We can use pattern matching (desctructuring) for record keys:
 
 ```elm
-> length {w, x, y, z} = sqrt (w * w + x * x + y * y + w * w)
+> length { w, x, y, z } = sqrt (w * w + x * x + y * y + w * w)
 <function> : { b | w : Float, x : Float, y : Float, z : a } -> Float
 > length vector4
 16.61324772583615 : Float
@@ -511,6 +515,16 @@ type alias Person =
 isAdult : Person -> Bool
 isAdult { age } =
     age >= 18
+
+
+getName : Person -> Name
+getName { name } =
+    name
+
+
+getName2 : Person -> String
+getName2 { name } =
+    name
 ```
 
 ```elm
@@ -536,9 +550,9 @@ We can define custom types that have several variants. We can also associate dat
 
 
 ```elm
-type Gender
-    = Male
-    | Female
+type Animal
+    = Cat
+    | Dog
 
 
 type Tree a
@@ -553,7 +567,7 @@ type Profile
 
 
 
-gender = Female
+animal = Dog
 
 tree = Branch (Leaf 1) (Branch (Leaf 2) (Leaf 0))
 
@@ -561,16 +575,19 @@ profile = Error "Cannot load profile"
 
 ```
 
+*Note*: There are two more complex techniques, how to design data structure - opaque types and phantom types.
+
+
 ### Pattern Matching
 
 ```elm
-isFemale : Gender -> Bool
-isFemale gender =
-    case gender of
-        Male ->
+isDog : Animal -> Bool
+isDog animal =
+    case animal of
+        Cat ->
             False
 
-        Female ->
+        Dog ->
             True
 ```
 
@@ -584,6 +601,24 @@ isLoading profile =
             True
 
         _ ->
+            False
+
+
+isLoading2 : Profile -> Bool
+isLoading2 profile =
+    profile == Loading
+
+
+isLoading3 : Profile -> Bool
+isLoading3 profile =
+    case profile of
+        Loading ->
+            True
+
+        Error _ ->
+            False
+
+        Success _ ->
             False
 
 
@@ -817,10 +852,7 @@ number: 4
 
 ## Packages
 
-Elm packages are published on [package.elm-lang.org](https://package.elm-lang.org). There is forced [semantic versioning](https://semver.org) for Elm packages. Therefore, we don't have to worry about breaking our application while updating packages.
-
-In 2018, Elm 0.19 was released, and not all packages have been updated yet, so we need to check first whether the package is supported in the latest Elm version.
-
+Elm packages are published on [package.elm-lang.org](https://package.elm-lang.org). There is forced [semantic versioning](https://semver.org) for Elm packages.
 
 
 To install a package, we use `elm install` command in the project directory.
@@ -830,7 +862,7 @@ $ elm install elm-community/maybe-extra
 Here is my plan:
 
   Add:
-    elm-community/maybe-extra    5.0.0
+    elm-community/maybe-extra    5.2.0
 
 Would you like me to update your elm.json accordingly? [Y/n]: y
 Dependencies loaded from local cache.
@@ -918,7 +950,8 @@ Generates `main.html` file with the Elm application.
 
 - [An Introduction to Elm](https://guide.elm-lang.org)
 - [Elm Syntax](https://elm-lang.org/docs/syntax)
-- [Blazing Fast HTML](https://elm-lang.org/blog/blazing-fast-html-round-two)
+- [Korban book](https://korban.net/elm/book/)
 - [Small Assets without the Headache](https://elm-lang.org/blog/small-assets-without-the-headache)
 - [Elm in Production: Surprises & Pain Points](https://www.youtube.com/watch?v=LZj_1qVURL0)
+- [Elm-demo](https://github.com/deny1994/elm-demo)
 
