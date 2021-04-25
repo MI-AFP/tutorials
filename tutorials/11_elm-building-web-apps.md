@@ -28,7 +28,7 @@ module.exports = {
 Till now, we used `elm reactor` to run our Elm applications. However, we can't use that in a production environment. If we try to build the Todo list form [elm-examples](https://github.com/MI-AFP/elm-examples) using `elm make`, we can look into the generated JavaScript, how the app is initialized. At the very end of the document, there is the following line of code:
 
 ```js
-var app = Elm.Todos.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
+const app = Elm.Todos.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 ```
 
 Todos is the name of the module (it was in `src/Todos.elm`). The `init` function is called to initialize the app. We used [Browser.element](https://package.elm-lang.org/packages/elm/browser/latest/Browser#element), therefore there is `node` in init arguments.
@@ -37,9 +37,9 @@ When we are using webpack, we can do something very similar ourselves. We need a
 
 ```js
 // index.js
-var program = require('src/Todos.elm');
+const program = require('src/Todos.elm');
 
-var app = program.Elm.Todos.init({
+const app = program.Elm.Todos.init({
     node: document.getElementById('node-id')
 });
 ```
@@ -57,9 +57,9 @@ Flags are used to pass some values when initializing the Elm app. For example, w
 
 ```js
 // index.js
-var program = require('src/Todos.elm');
+const program = require('src/Todos.elm');
 
-var app = program.Elm.Todos.init({
+const app = program.Elm.Todos.init({
     node: document.getElementById('node-id'),
     flags: Math.random()
 });
@@ -97,9 +97,9 @@ A common example is using localStorage, so for example, here we want to save use
 ```elm
 port module Ports exposing (saveUser)
 
-import Json.Encode as E
+import Json.Encode as Encode
 
-port saveUser : E.Value -> Cmd msg
+port saveUser : Encode.Value -> Cmd msg
 ```
 
 The port declaration is similar to a function. However, it starts with a keyword `port` and has no function body. The module where we define ports must be a `port module`.
@@ -107,9 +107,9 @@ The port declaration is similar to a function. However, it starts with a keyword
 Once we define the port for outgoing messages, we should subscribe to it on the JavaScript side after the app initialization.
 
 ```js
-var program = require('src/Todos.elm');
+const program = require('src/Todos.elm');
 
-var app = program.Elm.Todos.init({
+const app = program.Elm.Todos.init({
     node: document.getElementById('node-id')
 });
 
@@ -121,13 +121,13 @@ app.ports.saveUser.subscribe(function(data) {
 And then we can create a command using the port in our update function.
 
 ```elm
-import Ports exposing (saveUser)
+import Ports
 
 
 update msg model =
     case msg of
         SaveUser user ->
-            (model, saveUser <| encdeUser user)
+            (model, Ports.saveUser <| encdeUser user)
         ...
 ```
 
@@ -140,21 +140,25 @@ For example, we want to send user data back to the Elm app.
 ```elm
 port module Ports exposing (gotUser)
 
-import Json.Encode as E
+import Json.Encode as Encode
 
-port gotUser : (E.Value -> msg) -> Sub msg
+port gotUser : (Encode.Value -> msg) -> Sub msg
 ```
 
 Then in our subscriptions function, we need to subscribe to use the port with proper message constructor.
 
 ```elm
-import Json.Encode as E
-import Ports exposing (gotUser)
+import Json.Encode as Encode
+import Ports
 
+
+type alias Model =
+    ()
 
 type Msg
-    = GotUser E.Value
+    = GotUser Encode.Value
 
+subscriptions : Model -> Sub Msg
 subscriptions model =
     gotUser GotUser
 
@@ -163,12 +167,13 @@ subscriptions model =
 On JavaScript side, we can send a message to the Elm app using the port.
 
 ```js
-var program = require('src/Todos.elm');
+const program = require('src/Todos.elm');
 
-var app = program.Elm.Todos.init({
+const app = program.Elm.Todos.init({
     node: document.getElementById('node-id')
 });
 
+const userData = {}
 
 app.ports.gotUser.send(userData);
 ```
@@ -203,9 +208,9 @@ Here is a simple example from [An Introduction to Elm](https://guide.elm-lang.or
 
 ```elm
 import Browser
-import Browser.Navigation as Nav
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Browser.Navigation as Navigation
+import Html exposing (Html)
+import Html.Attributes as  Attributes
 import Url
 
 
@@ -213,7 +218,7 @@ import Url
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
   Browser.application
     { init = init
@@ -230,14 +235,22 @@ main =
 
 
 type alias Model =
-  { key : Nav.Key
+  { key : Navigation.Key
   , url : Url.Url
   }
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
-  ( Model key url, Cmd.none )
+type alias Flags = 
+  ()
+
+
+init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
+init _ url key =
+  ( { key = key
+    , url = url
+    }
+  , Cmd.none
+  )
 
 
 
@@ -255,10 +268,14 @@ update msg model =
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          ( model, Nav.pushUrl model.key (Url.toString url) )
+          ( model
+          , Nav.pushUrl model.key <| Url.toString url
+          )
 
         Browser.External href ->
-          ( model, Nav.load href )
+          ( model
+          , Navigation.load href
+          )
 
     UrlChanged url ->
       ( { model | url = url }
@@ -271,8 +288,8 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-  Sub.none
+subscriptions =
+  always Sub.none
 
 
 
@@ -283,9 +300,9 @@ view : Model -> Browser.Document Msg
 view model =
   { title = "URL Interceptor"
   , body =
-      [ text "The current URL is: "
-      , b [] [ text (Url.toString model.url) ]
-      , ul []
+      [ Html.text "The current URL is: "
+      , Html.b [] [ Html.text <| Url.toString model.url ]
+      , Html.ul []
           [ viewLink "/home"
           , viewLink "/profile"
           , viewLink "/reviews/the-century-of-the-self"
@@ -298,7 +315,7 @@ view model =
 
 viewLink : String -> Html msg
 viewLink path =
-  li [] [ a [ href path ] [ text path ] ]
+  Html.li [] [ Html.a [ Attributes.href path ] [ Html.text path ] ]
 ```
 
 
@@ -325,21 +342,24 @@ route =
     , map Comment (s "user" </> string </> s "comment" </> int)
     ]
 
--- /topic/wolf           ==>  Just (Topic "wolf")
--- /topic/               ==>  Nothing
+-- /topic/wolf            ==>  Just (Topic "wolf")
+-- /topic/                ==>  Nothing
 
 -- /blog/42               ==>  Just (Blog 42)
 -- /blog/wolf             ==>  Nothing
 
 -- /user/sam/             ==>  Just (User "sam")
--- /user/bob/comment/42  ==>  Just (Comment "bob" 42)
--- /user/tom/comment/35  ==>  Just (Comment "tom" 35)
+-- /user/bob/comment/42   ==>  Just (Comment "bob" 42)
+-- /user/tom/comment/35   ==>  Just (Comment "tom" 35)
 -- /user/                 ==>  Nothing
 ```
 
 
 ## Materials
 
+- [create-elm-app](https://github.com/halfzebra/create-elm-app)
+- [elm-shared-state](https://github.com/ohanhi/elm-shared-state)
+- [elm-awesome](https://github.com/sporto/awesome-elm)
 - [elm-webpack-boilerplate](https://github.com/MI-AFP/elm-webpack-boilerplate)
 - [Examples - Web Application](https://github.com/MI-AFP/elm-examples/tree/master/webapp)
 
