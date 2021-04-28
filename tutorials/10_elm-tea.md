@@ -10,55 +10,6 @@ Elm program is set up using [Browser](https://package.elm-lang.org/packages/elm/
 - `application` - Creates single page application, Elm controls not only the whole document but also Url changes.
 
 
-## Forms
-
-Form elements are created the same way as other HTML elements using functions from [Html](https://package.elm-lang.org/packages/elm/html/latest/Html) module and attributes from [Html.Attributes](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes) module from [elm/html](https://package.elm-lang.org/packages/elm/html/latest/) package.
-
-We can use `onInput` from [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events) module to detect input events and create a message for our update function.
-
-The loop is the following:
-- user changes the value in an input field
-- a new message is created
-- the update function is called with the message and it updates the model with the new value
-- input field is re-rendered with the new value
-
-
-Here is a simple example with a single input field:
-
-```elm
-import Browser
-import Html exposing (Html, input)
-import Html.Attributes exposing (placeholder, value)
-import Html.Events exposing (onInput)
-
-main = Browser.sandbox { init = init, update = update, view = view }
-
-type Msg = NameChanged String
-
-type alias Model = { name : String }
-
-init : Model
-init =
-    { name = "" }
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        NameChanged newName ->
-            { model | name = newName }
-
-view : Model -> Html Msg
-view model =
-    input
-        [ placeholder "Your name"
-        , value model.name
-        , onInput NameChanged ]
-        []
-```
-
-When we need more complex forms in our application, there are packags to handle forms like [etaque/elm-form](https://package.elm-lang.org/packages/etaque/elm-form/latest/).
-
-
 ## JSON
 
 It is very common to use JSON format when communicating with different APIs. In JavaScript, JSON is usually turned into a JavaScript object and used within the application. However, this is not the case in Elm since we have a strong type system. Before we can use JSON data, we need to convert it into a type defined in Elm. There is the [elm/json](https://package.elm-lang.org/packages/elm/json/latest/) package for that.
@@ -81,28 +32,30 @@ For example, we have this JSON representing a TODO:
 To get the `label` field, we can define a decoder like this:
 
 ```elm
-import Json.Decode as D exposing (Decoder)
+import Json.Decode as Decode
 
-labelDecoder : Decoder String
+labelDecoder : Decode.Decoder String
 labelDecoder =
-    D.field "label" D.string
+    Decode.field "label" Decode.string
 ```
 
 There are functions to decode other primitives, like `bool` or `int`. However, we usually need more than just one field. We can combine decoders using `map` functions from `Json.Decode` module, e.g. `map3`.
 
 ```elm
+import Json.Decode as Decode
+
 map3 :
     (a -> b -> c -> value)
-    -> Decoder a
-    -> Decoder b
-    -> Decoder c
-    -> Decoder value
+    -> Decode.Decoder a
+    -> Decode.Decoder b
+    -> Decode.Decoder c
+    -> Decode.Decoder value
 ```
 
 We can then define our own type for TODO and a decoder.
 
 ```elm
-import Json.Decode as D exposing (Decoder)
+import Json.Decode as Decode
 
 type alias Todo =
     { id : Int
@@ -110,19 +63,19 @@ type alias Todo =
     , completed : Bool
     }
 
-todoDecoder : Decoder Todo
+todoDecoder : Decode.Decoder Todo
 todoDecoder =
-    D.map3 Todo
-        (D.field "id" D.int)
-        (D.field "name" D.string)
-        (D.field "completed" D.bool)
+    Decode.map3 Todo
+        (Decode.field "id" Decode.int)
+        (Decode.field "name" Decode.string)
+        (Decode.field "completed" Decode.bool)
 ```
 
-There is a package [NoRedInk/elm-json-decode-pipeline](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest) for more convenient JSON decoder. It is especially useful for large and more complex objects. We could rewrite the previous example using pipeline:
+There is a package [NoRedInk/elm-json-decode-pipeline](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest) for more convenient JSON decoders. It is especially useful for large and more complex objects. We could rewrite the previous example using pipeline:
 
 ```elm
-import Json.Decode as D exposing (Decoder)
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as Pipeline
 
 type alias Todo =
     { id : Int
@@ -130,12 +83,12 @@ type alias Todo =
     , completed : Bool
     }
 
-todoDecoder : Decoder Todo
+todoDecoder : Decode.Decoder Todo
 todoDecoder =
-    D.succeed Todo
-        |> required "id" D.int
-        |> required "name" D.string
-        |> required "completed" D.bool
+    Decode.succeed Todo
+        |> Pipeline.required "id" Decode.int
+        |> Pipeline.required "name" Decode.string
+        |> Pipeline.required "completed" Decode.bool
 ```
 
 It is not that big change in this case, however, we only have `map8` function in `Json.Decode` so this library comes handy if we need more. Moreover, it has other functions to define for example [optional](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/Json-Decode-Pipeline#optional) or [hardcoded](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/Json-Decode-Pipeline#hardcoded) values.
@@ -143,12 +96,12 @@ It is not that big change in this case, however, we only have `map8` function in
 
 ### Encoders
 
-When we want to send something to an API we need to do the opposite -- turn the Elm value into JSON value. We use functions form [Json.Encode](https://package.elm-lang.org/packages/elm/json/latest/Json-Encode) package for that. There is a type called `Value` which represents a JavaScript value and functions to convert Elm primitives, lists and objects into `Value` type.
+When we want to send something to an API we need to do the opposite -- turn the Elm value into JSON value. We use functions from [Json.Encode](https://package.elm-lang.org/packages/elm/json/latest/Json-Encode) package for that. There is a type called `Value` which represents a JavaScript value and functions to convert Elm primitives, lists and objects into `Value` type.
 
 Here's an example using the TODO from decoders example.
 
 ```elm
-import Json.Encode as E
+import Json.Encode as Encode
 
 type alias Todo =
     { id : Int
@@ -156,12 +109,12 @@ type alias Todo =
     , completed : Bool
     }
 
-encodeTodo : Todo -> E.Value
+encodeTodo : Todo -> Encode.Value
 encodeTodo todo =
-    E.object
-        [ ( "id", E.int todo.id )
-        , ( "label", E.string todo.label )
-        , ( "completed", E.bool todo.completed )
+    Encode.object
+        [ ( "id", Encode.int todo.id )
+        , ( "label", Encode.string todo.label )
+        , ( "completed", Encode.bool todo.completed )
         ]
 ```
 
@@ -177,7 +130,8 @@ Here is an example for getting TODO using the decoder defined in previous sectio
 ```elm
 import Http
 
-type Msg = GotTodo (Result Http.Error Todo)
+type Msg =
+    GotTodo (Result Http.Error Todo)
 
 getTodo : Cmd Msg
 getTodo =
@@ -187,7 +141,7 @@ getTodo =
         }
 ```
 
-The function `getTodo` creates a command with HTTP request that expect JSON to be returned and uses `todoDecoder` to get `Todo` type form the returned JSON. Once the request is finished, we get `GotTodo` message containing the `Result` with either `Http.Error` if the request failed or `Todo` if the request was successful.
+The function `getTodo` creates a command with HTTP request that expect JSON to be returned and uses `todoDecoder` to get `Todo` type from the returned JSON. Once the request is finished, we get `GotTodo` message containing the `Result` with either `Http.Error` if the request failed or `Todo` if the request was successful.
 
 There are other functions we can use for expected response like `expectString` to get the string as is or `expectWhatever` when we don't really care about the response as long as it's ok.
 
@@ -196,7 +150,8 @@ When we want to do a POST request we also need to define the body. Here's an exa
 ```elm
 import Http
 
-type Msg = TodoSaved (Result Http.Error ())
+type Msg =
+    TodoSaved (Result Http.Error ())
 
 postTodo : Todo -> Cmd Msg
 postTodo todo =
@@ -214,10 +169,10 @@ When we want to do a different type of request than GET and POST or we want to s
 ```elm
 request :
     { method : String
-    , headers : List Header
+    , headers : List Http.Header
     , url : String
-    , body : Body
-    , expect : Expect msg
+    , body : Http.Body
+    , expect : Http.Expect msg
     , timeout : Maybe Float
     , tracker : Maybe String
     }
@@ -227,7 +182,7 @@ request :
 
 ## Subscriptions
 
-[Subscirptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happend (e.g., web socket message or clock tick).
+[Subscriptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happend (e.g., web socket message or clock tick).
 
 
 Here's an example of subscriptions defining that a message `Tick` with current time should be send to update function every 1000 milliseconds.
@@ -237,7 +192,11 @@ Here's an example of subscriptions defining that a message `Tick` with current t
 import Time
 
 
-type Msg = Tick Time.Posix
+type alias Model =
+    ()
+
+type Msg =
+    Tick Time.Posix
 
 
 subscriptions : Model -> Sub Msg
@@ -245,8 +204,76 @@ subscriptions model =
     Time.every 1000 Tick
 ```
 
+## Materials
 
-## Random
+- [Examples - TODO List](https://github.com/MI-AFP/elm-examples/tree/master/todo)
+- [Examples - Timer](https://github.com/MI-AFP/elm-examples/tree/master/timer)
+
+## Further Reading
+
+- [Commands and Subscriptions](https://guide.elm-lang.org/effects/)
+- [krisajenkins/remotedata](https://package.elm-lang.org/packages/krisajenkins/remotedata/latest/RemoteData)
+- [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)
+
+
+### Forms
+
+Form elements are created the same way as other HTML elements using functions from [Html](https://package.elm-lang.org/packages/elm/html/latest/Html) module and attributes from [Html.Attributes](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes) module from [elm/html](https://package.elm-lang.org/packages/elm/html/latest/) package.
+
+We can use `onInput` from [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events) module to detect input events and create a message for our update function.
+
+The loop is the following:
+- user changes the value in an input field
+- a new message is created
+- the update function is called with the message and it updates the model with the new value
+- input field is re-rendered with the new value
+
+
+Here is a simple example with a single input field:
+
+```elm
+import Browser
+import Html exposing (Html)
+import Html.Attributes as Attributes
+import Html.Events as Events
+
+main : Program () Model Msg
+main =
+    Browser.sandbox
+        { init = init
+        , update = update
+        , view = view
+        }
+
+type Msg =
+    NameChanged String
+
+type alias Model =
+    { name : String }
+
+init : Model
+init =
+    { name = "" }
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        NameChanged newName ->
+            { model | name = newName }
+
+view : Model -> Html Msg
+view model =
+    Html.input
+        [ Attributes.placeholder "Your name"
+        , Attributes.value model.name
+        , Events.onInput NameChanged ]
+        []
+```
+
+When we need more complex forms in our application, there are packages to handle forms like [etaque/elm-form](https://package.elm-lang.org/packages/etaque/elm-form/latest/).
+
+
+### Random
 
 There is a [Random](https://package.elm-lang.org/packages/elm/random/latest/Random) module in [elm/random](https://package.elm-lang.org/packages/elm/random/latest/) package for generating pseudo-random values in Elm. It defines a type called `Generator` which can be think of as a recipe for generating random values.
 
@@ -284,13 +311,3 @@ generateGrade : Seed -> (Int, Seed)
 generateGrade seed =
     Random.step randomGrade seed
 ```
-
-## Materials
-
-- [Examples - TODO List](https://github.com/MI-AFP/elm-examples/tree/master/todo)
-- [Examples - Timer](https://github.com/MI-AFP/elm-examples/tree/master/timer)
-
-## Further Reading
-
-- [Commands and Subscriptions](https://guide.elm-lang.org/effects/)
-- [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)

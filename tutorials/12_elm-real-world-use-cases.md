@@ -17,10 +17,11 @@ type alias Person =
 Then, we define validation (notice that the API is basically the same as using `Json.Decode` module):
 
 ```elm
-import Form.Validate as Validate exposing (..)
+import Form
+import Form.Validate as Validate
 
 
-personValidation : Validation CustomFormError Person
+personValidation : Validate.Validation CustomFormError Person
 personValidation =
     Validate.map2 Person
         (Validate.field "name" Validate.string)
@@ -30,7 +31,7 @@ personValidation =
 After that, we can initialize the form, either empty:
 
 ```elm
-initPersonForm : Form CustomFormError Person
+initPersonForm : Form.Form CustomFormError Person
 initPersonForm =
     Form.initial [] personValidation
 ```
@@ -41,12 +42,12 @@ Or using existing person data (notice that the API for the initial data is basic
 import Form.Field as Field
 
 
-initPersonFormWithPerson : Person -> Form CustomFormError Person
-initPersonFormWithPerson person=
+initPersonFormWithPerson : Person -> Form.Form CustomFormError Person
+initPersonFormWithPerson { age, name } =
     let
         initials =
-            [ ( "name", Field.string person.name )
-            , ( "age", Field.int person.age )
+            [ ( "name", Field.string name )
+            , ( "age", Field.int age )
             ]
     in
     Form.initial initials personValidation
@@ -55,20 +56,24 @@ initPersonFormWithPerson person=
 The library comes with functions for generating views. We need to create our own functions for converting form errors to string (because we can add our own errors). Also, all fields are represented as string or bool (for checkboxes), so we cannot really use for example input type number.
 
 ```elm
-import Form exposing (Form)
+import Form
 import Form.Input as Input
+import Html exposing (Html)
+import Html.Attributes as Attributes
+import Html.Events as Events
 
 
-viewForm : Form () Person -> Html Form.Msg
+viewForm : Form.Form () Person -> Html Form.Msg
 viewForm form =
     let
-        viewError field =
-            case field.liveError of
+        viewError { liveError } =
+            case liveError of
                 Just error ->
-                    p [ class "error" ] [ text (errorToString error) ]
+                    Html.p [ Attributes.class "error" ]
+                        [ Html.text (errorToString error) ]
 
                 Nothing ->
-                    text ""
+                    Html.text ""
 
         nameField =
             Form.getFieldAsString "name" form
@@ -76,14 +81,14 @@ viewForm form =
         ageField =
             Form.getFieldAsString "age" form
     in
-    form [ onSubmit Form.Submit ]
-        [ label [] [ text "name" ]
+    form [ Events.onSubmit Form.Submit ]
+        [ Html.label [] [ Html.text "name" ]
         , Input.textInput nameField []
         , viewError nameField
-        , label [] [ text "age" ]
+        , Html.label [] [ Html.text "age" ]
         , Input.textInput ageField []
         , viewError ageField
-        , button [ type_ "submit" ] [ text "Submit" ]
+        , Html.button [ Attributes.type_ "submit" ] [ Html.text "Submit" ]
         ]
 ```
 
@@ -123,14 +128,27 @@ Elm has a package [elm/svg](https://package.elm-lang.org/packages/elm/svg/latest
 SVG is good for visualisations. We can start at [SVG element reference](https://developer.mozilla.org/en-US/docs/Web/SVG/Element) to find the elements we need. Here's an example from package documentation of drawing a rounded rectangle:
 
 ```elm
-import Svg exposing (..)
-import Svg.Attributes exposing (..)
+import Html exposing (Html)
+import Svg
+import Svg.Attributes as Attributes
 
-
+roundRect : Html msg
 roundRect =
-    svg
-      [ width "120", height "120", viewBox "0 0 120 120" ]
-      [ rect [ x "10", y "10", width "100", height "100", rx "15", ry "15" ] [] ]
+    Svg.svg
+      [ Attributes.width "120"
+      , Attributes.height "120"
+      , Attributes.viewBox "0 0 120 120"
+      ]
+      [ Svg.rect
+        [ Attributes.x "10"
+        , Attributes.y "10"
+        , Attributes.width "100"
+        , Attributes.height "100"
+        , Attributes.rx "15"
+        , Attributes.ry "15"
+        ] 
+        []
+      ]
 ```
 
 
@@ -160,7 +178,7 @@ type Msg
 
 requestImages : Cmd Msg
 requestImages =
-  Select.files ["image/png","image/jpg"] ImagesLoaded
+  Select.files [ "image/png", "image/jpg" ] ImagesLoaded
 ```
 
 If we get `File` from the previous example, we can send it to the server using [elm/http](https://package.elm-lang.org/packages/elm/http/2.0.0/) package. There is a [fileBody](https://package.elm-lang.org/packages/elm/http/latest/Http#fileBody) function for that. We can explore [examples](https://github.com/elm/file/tree/master/examples) in elm/file package to see how it works.
@@ -190,16 +208,16 @@ query {
 It looks like this in the Elm code (`StarWars` packages are auto-generated using the command line tool):
 
 ```elm
-import Graphql.Operation exposing (RootQuery)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
-import StarWars.Object.Human as Human
+import Graphql.Operation as Operation
+import Graphql.SelectionSet as SelectionSet
+import StarWars.Object.Human as HumanObject
 import StarWars.Query as Query
-import StarWars.Scalar exposing (Id(..))
+import StarWars.Scalar as Scalar
 
 
-query : SelectionSet (Maybe Human) RootQuery
+query : SelectionSet.SelectionSet (Maybe Human) Operation.RootQuery
 query =
-    Query.human { id = Id "1001" } humanSelection
+    Query.human { id = Scalar.Id "1001" } humanSelection
 
 
 type alias Human =
@@ -208,7 +226,7 @@ type alias Human =
     }
 
 
-humanSelection : SelectionSet Human StarWars.Object.Human
+humanSelection : SelectionSet.SelectionSet Human HumanObject
 humanSelection =
     SelectionSet.map2 Human
         Human.name
@@ -229,7 +247,8 @@ type alias Photo =
 
 type alias User =
     { name : String
-    , photos : List Photo }
+    , photos : List Photo
+    }
 ```
 
 Then we build a query document using the library:
@@ -258,7 +277,7 @@ userQuery =
                     user
                 )
     in
-        queryDocument queryRoot
+    queryDocument queryRoot
 ```
 
 The document would be encoded into this string:
@@ -278,7 +297,7 @@ query ($userID: ID!) {
 
 ## WebSockets
 
-There is a package [elm-lang/websockets](https://package.elm-lang.org/packages/elm-lang/websocket/latest), however, it was **not yet updated** to Elm 0.19. It [should be updated](https://discourse.elm-lang.org/t/updating-packages/1771) at some point in the future. There is a 3rd party package [billstclair/elm-websocket-client](https://package.elm-lang.org/packages/billstclair/elm-websocket-client/latest/) that is converting the original package to Elm 0.19.
+There is a package [elm-lang/websockets](https://package.elm-lang.org/packages/elm-lang/websocket/latest), however, it was **not yet updated** to Elm 0.19.1 - it remains in 0.19.0 ELM version. It [should be updated](https://discourse.elm-lang.org/t/updating-packages/1771) at some point in the future. There is a 3rd party package [billstclair/elm-websocket-client](https://package.elm-lang.org/packages/billstclair/elm-websocket-client/latest/) that is converting the original package to Elm 0.19.1.
 
 The other option is to [use ports](https://stackoverflow.com/a/52569683/2492795) and to implement WebSocket interactions on the JavaScript side.
 
@@ -290,6 +309,7 @@ The other option is to [use ports](https://stackoverflow.com/a/52569683/2492795)
 
 ## Further Reading
 
+- [Richard Feldman real world SPA](https://github.com/rtfeldman/elm-spa-example)
 - [SVG: Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
 - [Line Charts - A library for plotting line charts in SVG. Written in all Elm.](https://github.com/terezka/line-charts)
 - [Working with Files](https://elm-lang.org/blog/working-with-files)
