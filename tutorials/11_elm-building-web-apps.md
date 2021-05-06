@@ -160,7 +160,7 @@ type Msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    gotUser GotUser
+    Ports.gotUser GotUser
 
 ```
 
@@ -327,6 +327,8 @@ In the previous example, we used Url as is. However, we can use [Url.Parser](htt
 Here's an example form the documentation converting different routes with parameters into `Route` type.
 
 ```elm
+import Url.Parser exposing ((</>), Parser, int, s, string)
+
 type Route
   = Topic String
   | Blog Int
@@ -354,17 +356,67 @@ route =
 -- /user/                 ==>  Nothing
 ```
 
+## Opaque type
+
+Opaque types are types that hide their internal implementation details within a module. While this statement seems benign on its surface, it’s an incredibly important concept in an ecosystem that enforces semantic versioning.
+
+*Note*: Taken from [Charlie Koster, medium.com](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+
+```elm
+module Email exposing (Email, decodeEmail, toString)
+
+import Json.Decode as Decode
+
+type Email
+    = EmailInternal String
+
+decodeEmail : Decode.Decoder Email
+decodeEmail =
+    Decode.andThen validateEmail Decode.string
+
+validateEmail : String -> Decode.Decoder Email
+validateEmail emailString =
+    if isEmailValid emailString then
+        Decode.succeed <| EmailInternal emailString
+
+    else
+        Decode.fail "Invalid email!"
+
+toString : Email -> String
+toString (EmailInternal email) =
+    email
+
+isEmailValid : String -> Bool
+
+-- in Home page
+import Email
+
+emailView : Email.Email -> Html msg
+emailView =
+  Email.toString
+    >> Html.text
+
+emailView2 : String -> Html msg
+emailView2 =
+  Html.text
+```
+
+*Note*: From `Email` module, we expose only `Email` type without variant `EmailInternal`. The only way, how to access email value is in this module, no other module does not have access to `EmailInternal` and can use only access function `toString`.
 
 ## Materials
 
-- [create-elm-app](https://github.com/halfzebra/create-elm-app)
-- [elm-shared-state](https://github.com/ohanhi/elm-shared-state)
-- [elm-awesome](https://github.com/sporto/awesome-elm)
+- [elm-spa](https://github.com/deny1994/elm-spa)
 - [elm-webpack-boilerplate](https://github.com/MI-AFP/elm-webpack-boilerplate)
 - [Examples - Web Application](https://github.com/MI-AFP/elm-examples/tree/master/webapp)
 
 ## Further Reading
 
+- [Opaque types](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+- [Make impossible states impossible](https://www.youtube.com/watch?v=IcgmSRJHu_8&ab_channel=elm-conf)
+- [Elm Europe 2017 - Richard Feldman - Scaling Elm Apps](https://www.youtube.com/watch?v=DoA4Txr4GUs)
+- [Richard Feldman real world SPA](https://github.com/rtfeldman/elm-spa-example)
+- [create-elm-app](https://github.com/halfzebra/create-elm-app)
 - [Webpack Concepts](https://webpack.js.org/concepts)
 - [Web Apps · An Introduction to Elm](https://guide.elm-lang.org/webapps/)
-- [Elm Europe 2017 - Richard Feldman - Scaling Elm Apps](https://www.youtube.com/watch?v=DoA4Txr4GUs)
+- [elm-shared-state](https://github.com/ohanhi/elm-shared-state)
+- [elm-awesome](https://github.com/sporto/awesome-elm)

@@ -309,7 +309,6 @@ The other option is to [use ports](https://stackoverflow.com/a/52569683/2492795)
 
 ## Further Reading
 
-- [Richard Feldman real world SPA](https://github.com/rtfeldman/elm-spa-example)
 - [SVG: Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
 - [Line Charts - A library for plotting line charts in SVG. Written in all Elm.](https://github.com/terezka/line-charts)
 - [Working with Files](https://elm-lang.org/blog/working-with-files)
