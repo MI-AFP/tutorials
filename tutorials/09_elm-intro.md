@@ -8,7 +8,6 @@ Make sure to install [elm-format](https://github.com/avh4/elm-format) to your ed
 
 There is also an online live editor for Elm called [Ellie](https://ellie-app.com).
 
-
 ## What is Elm
 
 According to the official website [elm-lang.org](https://elm-lang.org):
@@ -18,7 +17,6 @@ According to the official website [elm-lang.org](https://elm-lang.org):
 > Generate JavaScript with great performance and no runtime exceptions.
 
 It is a reactive pure functional programming language with syntax inspired by Haskell that compiles to JavaScript. It is designed for building reliable web applications with no runtime exceptions. Elm is one of the solutions for [the JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem). The [compiler](https://github.com/elm/compiler) is implemented in Haskell.
-
 
 Elm is language **and** a framework for building front-end web applications.
 
@@ -41,43 +39,14 @@ Elm is language **and** a framework for building front-end web applications.
 
 Elm has built-in common tools and features that are part of typical JavaScript stack.
 
-| JavaScript | Elm|
-| --- | --- |
-| npm/yarn | built-in |
-| Webpack | built-in |
-| React | built-in |
-| Redux | built-in |
+| JavaScript      | Elm      |
+| --------------- | -------- |
+| npm/yarn        | built-in |
+| Webpack         | built-in |
+| React           | built-in |
+| Redux           | built-in |
 | TypeScript/Flow | built-in |
-| Immutable.JS | built-in |
-
-
-## Alternatives
-
-### [Haste](https://haste-lang.org)
-
-Haste is a tool for compiling Haskell code into a JavaScript code and a server-side binary. Both programs can talk to each other ensuring type-safe communication.
-
-### [GHCJS](https://github.com/ghcjs/ghcjs)
-
-GHCJS is a compiler for Haskell to JavaScript that uses GHC API. It supports a wide range of Haskell features, including all type system extensions supported by GHC. There are some interesting frameworks for building web applications based on GHCJS:
-
-- [Reflex](https://reflex-frp.org) - A composable, cross-platform functional reactive programming framework for Haskell.
-- [miso](https://haskell-miso.org) - A tasty Haskell front-end framework.
-
-### [PureScript](http://www.purescript.org)
-
-PureScript is a strongly-typed functional programming language that compiles to JavaScript. It is similar to Haskell with [some differences](https://github.com/purescript/documentation/blob/master/language/Differences-from-Haskell.md). It has a lot of packages published in [Pursuit](https://pursuit.purescript.org). Also, some frameworks for building web applications are there, e.g.:
-
-- [Thermite](https://github.com/paf31/purescript-thermite) - A simple PureScript wrapper for React.
-- [Halogen](https://github.com/slamdata/purescript-halogen) - A declarative, type-safe UI library for PureScript.
-- [Pux](https://github.com/alexmingoia/purescript-pux) - A library for building type-safe web applications.
-
-If you are interested, you can have a look at this comparison: [Benchmarks: GHCJS (Reflex, Miso) & Purescript (Pux, Thermite, Halogen)](https://medium.com/@saurabhnanda/benchmarks-fp-languages-libraries-for-front-end-development-a11af0542f7e)
-
-### [ReasonML](https://reasonml.github.io)
-
-Reason is a new syntax and toolchain based on OCaml programing language created by Facebook. The syntax is closer to JavaScript than OCaml. It is intended for development of front-end web applications and compiles to JavaScript. Using existing JavaScript and OCaml packages is possible.
-
+| Immutable.JS    | built-in |
 
 ## Elm REPL
 
@@ -91,6 +60,7 @@ Read <https://github.com/elm/compiler/blob/master/hints/repl.md> to learn more: 
 >
 ```
 
+_Note_: You can use same syntax in REPL. Next examples are make as it would be part of the source code.
 
 ## Elm Language
 
@@ -98,41 +68,49 @@ Read <https://github.com/elm/compiler/blob/master/hints/repl.md> to learn more: 
 
 Strings are enclosed in double quotation mark `"`. We use `++` operator to join them.
 
+### Naming things
+
+If we want to give a name to expression, we use the `=` operator.
+
+```elm
+a =
+    5
+```
+
 #### String
 
 ```elm
-> "Hello world!"
-"Hello world!" : String
+hello =
+    "Hello world!"
 
-> "Hello " ++ "world!"
-"Hello world!" : String
+
+hello2 =
+    "Hello" ++ " " ++ "world!"
 ```
 
 #### Numbers
 
-Elm has two number types `Int` and `Float` and constrained type variable `number` which can be either `Int` or `Float`.
+Elm has two number types `Int` and `Float` and constrained type variable (see below few more) `number` which can be either `Int` or `Float`.
 
 ```elm
-> 5 + 5
-10 : number
+plus =
+    5 + 5 -- 10
 
-> 5 + 5 * 3
-20 : number
 
-> (5 + 5) * 3
-30 : number
+power =
+    2 ^ 8 -- 256
 
-> 2 ^ 8
-256 : number
 
-> 2 / 3
-0.6666666666666666 : Float
+divide =
+    2 / 3 -- 0.6666666666666666
 
-> 7 // 2
-3 : Int
 
-> modBy 7 2
-2 : Int
+divide_ =
+    7 // 2 -- 3
+
+
+modBy_ =
+    modBy 7 2 -- 2
 ```
 
 #### Bool and logical operators
@@ -140,39 +118,28 @@ Elm has two number types `Int` and `Float` and constrained type variable `number
 Elm has standard operators for comparison and boolean operations. Same as in Haskell, it uses `/=` operator for inequality.
 
 ```elm
-> 5 > 7
-False : Bool
-
-> (5 == 7)
-False : Bool
-
-> 5 /= 7
-True : Bool
-
-> not (5 /= 7)
-False : Bool
-
-> False || True
-True : Bool
-
-> False && True
-False : Bool
-
-> not False && True
-True : Bool
-```
-
-### Naming things
-
-If we want to give a name to expression, we use the `=` operator.
+compare =
+    5 > 7 -- False
 
 
-```elm
-> x = 5
-5 : number
+equal =
+    (5 == 7) -- False
 
-> x
-5 : number
+
+notEqual =
+    (5 /= 7) -- True
+
+
+not =
+    not (5 /= 7) -- False
+
+
+or =
+    False || True -- True
+
+
+and =
+    False && True -- True
 ```
 
 ### Function
@@ -180,20 +147,24 @@ If we want to give a name to expression, we use the `=` operator.
 The definition and function call looks the same as in Haskell.
 
 ```elm
-> linear a b x = a * x + b
-<function> : number -> number -> number -> number
+linear a b x =
+    a * x + b
 
-> linear 5 3 7
-38 : number
+linearResult =
+    linear 5 3 7 -- 38
 ```
 
 ### If expression
 
 ```elm
-> if True then "It is true!" else "It is not true."
-"It is true!" : String
-```
+ifCondition =
+    if True then
+        "It is true!"
 
+    else
+        "It is not true."
+
+```
 
 ### Comments
 
@@ -207,7 +178,6 @@ Elm has multiline and single-line comments.
 -- a single line comment
 
 ```
-
 
 ### The Elm project
 
@@ -230,45 +200,41 @@ $ ls
 elm.json src
 ```
 
-
 It generates `elm.json` file that defines where the source files are and what are the project dependencies.
 
 ```json
 {
-    "type": "application",
-    "source-directories": [
-        "src"
-    ],
-    "elm-version": "0.19.1",
-    "dependencies": {
-        "direct": {
-            "elm/browser": "1.0.2",
-            "elm/core": "1.0.5",
-            "elm/html": "1.0.0"
-        },
-        "indirect": {
-            "elm/json": "1.1.3",
-            "elm/time": "1.0.0",
-            "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.2"
-        }
+  "type": "application",
+  "source-directories": ["src"],
+  "elm-version": "0.19.1",
+  "dependencies": {
+    "direct": {
+      "elm/browser": "1.0.2",
+      "elm/core": "1.0.5",
+      "elm/html": "1.0.0"
     },
-    "test-dependencies": {
-        "direct": {},
-        "indirect": {}
+    "indirect": {
+      "elm/json": "1.1.3",
+      "elm/time": "1.0.0",
+      "elm/url": "1.0.0",
+      "elm/virtual-dom": "1.0.2"
     }
+  },
+  "test-dependencies": {
+    "direct": {},
+    "indirect": {}
+  }
 }
 ```
 
 ### Modules
 
-Now, when we have our project ready, we can create some modules. A module has a name which should be the same as the file name. It has to state what expression from the module should be exposed explicitly.
-
+Now, when we have our project ready, we can create some modules. A module has a name which need to be the same as the file name - whole absolute path (e. g. `Lib.Math`, etc.). It has to state what expression from the module should be exposed explicitly.
 
 ```elm
--- src/Lib.elm
+-- src/Lib/Math.elm
 
-module Lib exposing (linear)
+module Lib.Math exposing (linear)
 
 
 linear a b x =
@@ -278,33 +244,41 @@ linear a b x =
 We can import the module to other modules or the repl using `import` statement. If we use just `import Lib` we need to use the full name for the expressions from the module.
 
 ```elm
-> import Lib
-> Lib.linear 5 3 7
-38 : Int
+import Lib.Math
+
+
+linearResult =
+    Lib.Math.linear 5 3 7 -- 38
 ```
 
 We can also expose some expression and then use them without the full module name.
 
 ```elm
-> import Lib exposing (linear)
-> linear 5 3 7
-38 : Int
+import Lib.Math exposing (linear)
+
+
+linearResult =
+    linear 5 3 7 -- 38
 ```
 
 Or we can expose everything from the module.
 
 ```elm
-> import Lib exposing (..)
-> linear 5 3 7
-38 : Int
+import Lib.Math exposing (..)
+
+
+linearResult =
+    Lib.Math.linear 5 3 7 -- 38
 ```
 
 Or we can import a module with a different name.
 
 ```elm
-> import Lib as Math
-> Math.linear 5 3 7
-38 : Int
+import Lib.Math as Math
+
+
+linearResult =
+    Math.linear 5 3 7 -- 38
 ```
 
 ### Type annotation
@@ -317,18 +291,14 @@ linear a b x =
     a * x + b
 ```
 
-
 ### Type variables
 
 When the specific type is not important, we can use a type variable. Type names start with an uppercase letter (e.g., `Float`), type variable can be almost any string starting with a lowercase letter.
 
 ```elm
-> List.isEmpty
-<function> : List a -> Bool
+List.isEmpty : List a -> Bool
 
-> List.map
-<function> : (a -> b) -> List a -> List b
-
+List.map : (a -> b) -> List a -> List b
 ```
 
 #### Constrained Type Variables
@@ -339,7 +309,6 @@ There are several constrained type variables with a special meaning defined by t
 - `appendable` permits `String` and `List a`
 - `comparable` permits `Int`, `Float`, `Char`, `String`, and lists/tuples of `comparable` values
 - `compappend` permits `String` and `List comparable`
-
 
 ```elm
 linear : number -> number -> number -> number
@@ -352,73 +321,94 @@ linear a b x =
 A list is a collection of items of the same type with variable length. There is a [List](https://package.elm-lang.org/packages/elm/core/latest/List) module with various functions for working with lists.
 
 ```elm
-> numbers = [ 1, 3, 5, 7, 11 ]
-[ 1, 3, 5, 7, 11 ] : List number
+numbers : List number
+numbers =
+    [ 1, 3, 5, 7, 11 ]
 
-> List.length numbers
-5 : Int
-
-> List.isEmpty numbers
-False : Bool
-
-> double n = n * 2
-<function> : number -> number
-> List.map double numbers
-[ 2, 6, 10, 14, 22 ] : List number
-
-> List.map (\n -> n * 2) numbers
-[ 2, 6, 10, 14, 22 ] : List number
+lenght : Int
+lenght =
+    List.length numbers -- 5
 
 
-> List.map ((*) 2) numbers
-[ 2, 6, 10, 14, 22 ] : List number
+isEmpty : Bool
+isEmpty =
+    List.isEmpty numbers -- False
+
+
+double : Float -> Float
+double n =
+    n * 2
+
+
+doubleNumbers : List number
+doubleNumbers =
+    List.map double numbers -- [ 2, 6, 10, 14, 22 ]
+
+
+doubleNumbers2 : List number
+doubleNumbers2 =
+    List.map (\n -> n * 2) numbers -- [ 2, 6, 10, 14, 22 ]
+
+
+doubleNumbers3 : List number
+doubleNumbers3 =
+    List.map ((*) 2) numbers -- [ 2, 6, 10, 14, 22 ]
 ```
-
 
 ### Dict
 
 Dict is a mapping of unique keys to values. There is a [Dict](https://package.elm-lang.org/packages/elm-lang/core/latest/Dict) module with functions for working with dicts.
 
 ```elm
-> Dict.fromList [ ( "Spencer", 25 ), ( "Zoe", 21 ) ]
-Dict.fromList [ ("Spencer", 25 ), ("Zoe", 21 ) ] : Dict.Dict String number
+-- Even if Dict is part of ELM core we need to import it
+import Dict
 
-> Dict.insert "Spencer" 25 Dict.empty
-Dict.fromList [ ( "Spencer", 25 ) ] : Dict.Dict String number
+newDict : Dict.Dict String number
+newDict =
+    Dict.fromList [ ( "Spencer", 25 ), ( "Zoe", 21 ) ] --
 
-> dict = Dict.fromList [ ( "Spencer", 25 ), ( "Zoe", 21 ) ]
-Dict.fromList [ ("Spencer", 25 ),( "Zoe", 21 ) ] : Dict.Dict String number
-> Dict.isEmpty dict
-False : Bool
-> Dict.get "Zoe" dict
-Just 21 : Maybe number
-> Dict.get "Frankie" dict
-Nothing : Maybe number
+insertSpencer : Dict.Dict String number
+insertSpencer =
+    Dict.insert "Spencer" 25 Dict.empty
+
+isEmpty : False
+isEmpty =
+    Dict.isEmpty dict
+
+getZoe : Maybe number
+getZoe =
+    Dict.get "Zoe" newDict -- Just 21
+
+getFrankie : Maybe number
+getFrankie =
+    Dict.get "Frankie" dict -- Nothing
 ```
 
 ### Tuple
 
 A tuple is a collection of items of various type with the fixed size. There is a [Tuple](https://package.elm-lang.org/packages/elm/core/latest/Tuple) module for working with tuples. Tuples can be used when a function returns more than one value.
 
-
 ```elm
-> person = ( "Joe", 21 )
-( "Joe" , 21 ) : ( String, number )
+person : ( String, number )
+person =
+    ( "Joe", 21 )
 
-> Tuple.first person
-"Joe" : String
+joe : String
+joe =
+    Tuple.first person
 
-> Tuple.second person
-21 : number
+number_ : number
+number_ =
+    Tuple.second person
 ```
 
 We can use pattern matching for tuples in functions:
 
 ```elm
 bio : ( String, Int ) -> String
-bio ( name, age ) = name ++ " is " ++ ( String.fromInt age ) ++ " years old."
+bio ( name, age ) =
+    name ++ " is " ++ ( String.fromInt age ) ++ " years old."
 ```
-
 
 Elm has a limit on the maximum number of items in the tuple to be 3. If we need more, we should use a record or our own custom type.
 
@@ -437,146 +427,201 @@ Note: Read <https://elm-lang.org/0.19.1/tuples> for more comprehensive advice on
 working with large chunks of data in Elm.
 ```
 
-
 ### Record
 
 Records contain keys and values. Each value can have a different type.
 
 ```elm
-> vector4 = { w = 4, x = 10, y = 12, z = 3 }
-{ w = 4, x = 10, y = 12, z = 3 }
-    : { w : number, x : number1, y : number2, z : number3 }
+vector4 : { w : number, x : number1, y : number2, z : number3 }
+vector4 =
+    { w = 4
+    , x = 10
+    , y = 12
+    , z = 3
+    }
 
-> scatterChart = { points = [ { x = 11, y = 8 } ) ], title = "Bar chart", xAxis = "x", yAxis = "y" }
-{ points = [ { x = 11, y = 8 } ) ], title = "Bar chart", xAxis = "x",   yAxis = "y" }
-    : { points : List { x : number1, y : number2 }, title : String, xAxis : String, yAxis : String }
+scatterChart :
+    { points : List { x : number1, y : number2 }
+    , title : String
+    , xAxis : String
+    , yAxis : String
+    }
+scatterChart =
+    { points = [ { x = 11, y = 8 } ]
+    , title = "Bar chart"
+    , xAxis = "x"
+    , yAxis = "y"
+    }
+
 ```
-
 
 For accessing record properties, Elm has by default accessors defined as `.<key>`. They can be used as `<record>.<key>`, but it is just syntactic sugar, they are just functions.
 
 ```elm
-> vector4.x
-10 : number
+x : number
+x =
+    vector4.x -- 10
 
-> .x vector4
-10 : number
+x_ : number
+x_ =
+    .x vector4 -- 10
 
-> List.map .x [ vector4, vector4, vector4 ]
-[ 10, 10, 10 ] : List number
+listX : List number
+listX =
+    List.map .x [ vector4, vector4, vector4 ] -- [ 10, 10, 10 ]
 ```
 
 If we have a look at the type of `.x` accessor, it says it is any record that has a field `x` of type `a` and returns `a`.
 
 ```elm
-> .x
-<function> : { b | x : a } -> a
+accessorX : { b | x : a } -> a -- { b | x : a } is extensible record
+accessorX =
+    .x
 ```
-
 
 Since everything is immutable, records cannot be updated. We can create updated records though:
 
 ```elm
-> { vector4 | x = 20 }
-{ w = 4, x = 20, y = 12, z = 3 }
-    : { w : number1, x : number, y : number2, z : number3 }
+updatedVector4 : { w : number1, x : number, y : number2, z : number3 }
+updatedVector4 =
+    { vector4 | x = 20 } -- { w = 4, x = 20, y = 12, z = 3 }
 ```
-
 
 We can use pattern matching (desctructuring) for record keys:
 
 ```elm
-> length { w, x, y, z } = sqrt (w * w + x * x + y * y + w * w)
-<function> : { b | w : Float, x : Float, y : Float, z : a } -> Float
-> length vector4
-16.61324772583615 : Float
+lenght : { b | w : Float, x : Float, y : Float, z : a } -> Float
+length { w, x, y, z } = sqrt (w * w + x * x + y * y + w * w)
+
+lengthResult : Float
+lengthResult =
+    length vector4 -- 16.61324772583615
+```
+
+#### Extensible records
+
+An extensible record is a record defined as _having at least certain fields_. For example, a record can be defined as having at least an `id` and `name` fields.
+
+We can use extensible records for type inheritance. IT has one limitation - we will see it next lessonin Decoders part.
+
+```elm
+type alias ExtensibleUser a =
+    { a | id : String, name : String }
+
+nameView : ExtensibleUser a -> Html msg -- we access only to id and name, nothing else
+nameView { name } =
+    ...
+```
+
+What we can do with extensible records?
+
+```elm
+type Role
+    = Admin
+    | Regular
+
+type alias User =
+    ExtensibleUser { role : Role }
+
+user : User  -- doesn't matter about the order when defining new object
+user =
+    { id : "id"
+    , role : Admin
+    , name : "Joe"
+    }
+
+type alias BaseUser =
+    ExtensibleUser {}
+
+baseUser : BaseUser
+baseUser =
+    { id : "id"
+    , name : "Joe"
+    }
+
+workingOrNot : User
+workingOrNot =
+    User "id" "Joe" Admin
 ```
 
 ### Type alias
 
 Type aliases are used to give a new name to existing types. It is useful for naming record types.
 
-
 ```elm
+-- naming
 type alias Name =
     String
 
-
+-- naming
 type alias Age =
     Int
 
-
+-- record
 type alias Person =
     { name : Name
     , age : Age
     }
 
-
 isAdult : Person -> Bool
 isAdult { age } =
     age >= 18
-
 
 getName : Person -> Name
 getName { name } =
     name
 
-
 getName2 : Person -> String
 getName2 { name } =
     name
+
+joe : Person
+joe =
+    { age = 21, name = "Joe" }
+
+isJoeAdult : Bool
+isJoeAdult =
+    isAdult joe -- True
+
+joe2 : Person
+joe2 =
+    Person "Joe" 21
 ```
 
-```elm
-> import Lib exposing (..)
-
-> joe = { name = "Joe", age = 21 }
-{ age = 21, name = "Joe" }
-    : { age : number, name : String }
-
-> isAdult joe
-True : Bool
-
-> joe = Person "Joe" 21
-{ age = 21, name = "Joe" } : Person
-```
-
-*Note*: Type aliases are resolved in compiled time. Therefore, they cannot be recursive. For recursion, we need to use custom types.
-
+_Note_: Type aliases are resolved in compiled time. Therefore, they cannot be recursive. For recursion, we need to use custom types.
 
 ### Custom Types
 
 We can define custom types that have several variants. We can also associate data with a variant.
-
 
 ```elm
 type Animal
     = Cat
     | Dog
 
-
 type Tree a
     = Leaf a
     | Branch (Tree a) (Tree a)
-
 
 type Profile
     = Loading
     | Error String
     | Success Person
 
+animal : Animal
+animal =
+    Dog
 
+tree : Tree number
+tree =
+    Branch (Leaf 1) (Branch (Leaf 2) (Leaf 0))
 
-animal = Dog
-
-tree = Branch (Leaf 1) (Branch (Leaf 2) (Leaf 0))
-
-profile = Error "Cannot load profile"
-
+profile : Profile
+profile =
+    Error "Cannot load profile"
 ```
 
-*Note*: There are two more complex techniques, how to design data structure - opaque types and phantom types.
-
+_Note_: There are two more complex techniques, how to design data structure - opaque types (next lesson) and phantom types.
 
 ### Pattern Matching
 
@@ -603,11 +648,9 @@ isLoading profile =
         _ ->
             False
 
-
 isLoading2 : Profile -> Bool
 isLoading2 profile =
     profile == Loading
-
 
 isLoading3 : Profile -> Bool
 isLoading3 profile =
@@ -621,7 +664,6 @@ isLoading3 profile =
         Success _ ->
             False
 
-
 profileStatus : Profile -> String
 profileStatus profile =
     case profile of
@@ -633,7 +675,6 @@ profileStatus profile =
 
         Success _ ->
             "Success!"
-
 ```
 
 We can use `::` operator for matching first element and rest of the list.
@@ -649,8 +690,6 @@ sum list =
             0
 ```
 
-
-
 ### Maybe
 
 `Maybe` is used when a result doesn't have to exist. Unlike `null` in JavaScript, we are forced to handle that case.
@@ -664,8 +703,13 @@ type Maybe a
 For example empty list doesn't have a head.
 
 ```elm
-> List.head
-<function> : List a -> Maybe a
+list : List a
+list =
+    []
+
+headItem : Maybe a
+headItem =
+    List.head list -- Nothing
 ```
 
 We can use the `Maybe` type in `case` statement as any other custom type.
@@ -674,7 +718,6 @@ We can use the `Maybe` type in `case` statement as any other custom type.
 hello : String -> String
 hello name =
     "Hello, " ++ name ++ "!"
-
 
 greet : Maybe String -> String
 greet maybeName =
@@ -689,25 +732,32 @@ greet maybeName =
 [Maybe](https://package.elm-lang.org/packages/elm/core/latest/Maybe) package contains a handful of useful functions to simplify working with maybes.
 
 ```elm
-> Maybe.withDefault
-<function> : a -> Maybe a -> a
+withDefault : a -> Maybe a -> a
+withDefault =
+    Maybe.withDefault
 
-> Maybe.withDefault "default" (Just "value")
-"value" : String
+withDefaultJust : String
+withDefaultJust =
+    Maybe.withDefault "default" (Just "value") -- "value"
 
-> Maybe.withDefault "default" Nothing
-"default" : String
+withDefaultNothing : String
+withDefaultNothing =
+    Maybe.withDefault "default" Nothing -- "default"
 ```
 
 ```elm
-> Maybe.map
-<function> : (a -> b) -> Maybe a -> Maybe b
+maybeMap : (a -> b) -> Maybe a -> Maybe b
+maybeMap =
+    Maybe.map
 
-> Maybe.map ((*) 2) (Just 4)
-Just 8 : Maybe number
+result : Maybe number
+result =
+    Maybe.map ((*) 2) (Just 4) -- Just 8
 
-> Maybe.map ((*) 2) Nothing
-Nothing : Maybe number
+resultNothing : Maybe number
+resultNothing =
+    Maybe.map ((*) 2) Nothing -- Nothing
+
 ```
 
 ```elm
@@ -716,11 +766,9 @@ greet2 maybeName =
     Maybe.withDefault "Nobody's here" (Maybe.map hello maybeName)
 ```
 
-
-
 ### Result
 
-`Result` is used for computations that may fail.
+`Result` is used for computations that may fail. Response from http request is `Result` - `Result Http.Error response`.
 
 ```elm
 type Result error value
@@ -735,17 +783,16 @@ rectArea : Float -> Float -> Result String Float
 rectArea a b =
     if a < 0 || b < 0 then
         Err "Cannot calculate area with negative sides"
+
     else
         Ok (a * b)
 ```
 
 There are again helpful functions in [Result](https://package.elm-lang.org/packages/elm/core/latest/Result) package.
 
-
-
 ### let expressions
 
-It is sometimes handy to define some expression within a function to avoid repetition. We have let expressions for that.
+It is sometimes handy to define some expression within a function to avoid repetition. We have let expressions for that. Otherwise there is implicit return from every function. We can also nest `let` - `in` blocks.
 
 ```elm
 cubeArea : Float -> Float
@@ -763,16 +810,13 @@ Elm has several operators for chaining functions and function calls together.
 
 #### |>
 
-`|>` operator takes a value and a function and applies the function to the value.
+`|>` operator takes a value and a function and applies the function to the value. It is useful when chaining more steps together to write readable code.
 
 ```elm
-> (|>)
-<function> : a -> (a -> b) -> b
-```
+pipe : : a -> (a -> b) -> b
+pipe =
+    (|>)
 
-It is useful when chaining more steps together to write readable code.
-
-```elm
 greet3 : Maybe String -> String
 greet3 maybeName =
     maybeName
@@ -782,16 +826,13 @@ greet3 maybeName =
 
 #### <|
 
-`<|` operator is the opposite. It takes a function and a value and apply the function to the value.
+`<|` operator is the opposite. It takes a function and a value and apply the function to the value. It is useful to avoid parentheses, the same as `$` in Haskell.
 
 ```elm
-> (<|)
-<function> : (a -> b) -> a -> b
-```
+pipe : : (a -> b) -> a -> b
+pipe =
+    (<|)
 
-It is useful to avoid parentheses, the same as `$` in Haskell.
-
-```elm
 greet4 : Maybe String -> String
 greet4 maybeName =
     Maybe.withDefault "Nobody's here" <| Maybe.map hello maybeName
@@ -801,34 +842,29 @@ greet4 maybeName =
 
 `>>` is used for function composition - `(f >> g) x == g(f x)`.
 
-
 ```elm
-> (>>)
-<function> : (a -> b) -> (b -> c) -> a -> c
-```
+functionComposition : (a -> b) -> (b -> c) -> a -> c
+functionComposition =
+    (>>)
 
-```elm
 greet5 : Maybe String -> String
 greet5 =
     Maybe.map hello >> Maybe.withDefault "Nobody's here"
 ```
-
 
 #### <<
 
 `>>` is used for function composition in an opposite direction - `(f << g) x == f(g x)`. This is same as `.` in Haskell.
 
 ```elm
-> (<<)
-<function> : (b -> c) -> (a -> b) -> a -> c
-```
+functionComposition : (b -> c) -> (a -> b) -> a -> c
+functionComposition =
+    (<<)
 
-```elm
 greet6 : Maybe String -> String
 greet6 =
     Maybe.withDefault "Nobody's here" << Maybe.map hello
 ```
-
 
 ### Debug
 
@@ -838,22 +874,12 @@ should not be used in production code.
 `log` function can be used to write a value to console.
 
 ```elm
-> Debug.log "value" 1
-value: 1
-1 : number
+Debug.log "value" 1 -- 1
 ```
-
-```elm
-> 5 - Debug.log "number" 4
-number: 4
-1 : number
-```
-
 
 ## Packages
 
 Elm packages are published on [package.elm-lang.org](https://package.elm-lang.org). There is forced [semantic versioning](https://semver.org) for Elm packages.
-
 
 To install a package, we use `elm install` command in the project directory.
 
@@ -862,7 +888,7 @@ $ elm install elm-community/maybe-extra
 Here is my plan:
 
   Add:
-    elm-community/maybe-extra    5.2.0
+    elm-community/maybe-extra    5.3.0
 
 Would you like me to update your elm.json accordingly? [Y/n]: y
 Dependencies loaded from local cache.
@@ -872,16 +898,12 @@ Dependencies ready!
 Then we can use the new package the same as we used our package before:
 
 ```elm
-> import Maybe.Extra exposing (isNothing)
+import Maybe.Extra exposing (isNothing)
 
-> isNothing Nothing
-True : Bool
-
-> isNothing (Just 2)
-False : Bool
+result : Bool
+result =
+    isNothing Nothing -- True
 ```
-
-
 
 ## The Elm Architecture (TEA)
 
@@ -896,36 +918,73 @@ There are also Subscribers and Commands. We will talk about them later.
 
 ![The Elm Architecture](./images/tea.png)
 
-
 ### Example
 
 Example form [Elm guide](https://guide.elm-lang.org/#a-quick-sample):
 
 ```elm
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Html
+import Html.Events as Events
 
 main =
   Browser.sandbox { init = 0, update = update, view = view }
 
-type Msg = Increment | Decrement
+type Msg
+    = Increment
+    | Decrement
 
+type alias Model =
+    Int
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     Increment ->
-      model + 1
+      ( model + 1, Cmd.none )
 
     Decrement ->
-      model - 1
+      ( model - 1, Cmd.none )
 
+view : Model -> Html.Html Msg
 view model =
-  div []
-    [ button [ onClick Decrement ] [ text "-" ]
-    , div [] [ text (String.fromInt model) ]
-    , button [ onClick Increment ] [ text "+" ]
+  Html.div []
+    [ Html.button [ Events.onClick Decrement ] [ text "-" ]
+    , Html.div [] [ Html.text <| String.fromInt model ]
+    , Html.button [ Events.onClick Increment ] [ text "+" ]
     ]
 ```
+
+## Generate HTML + styling
+
+HTML is fully generated by elm - elm functions, syntax, etc. We can easily connect `Msg` to `onClick` for buttons and other events. With that HTML is always under ELM control and we have type guarantees when working with it.
+
+```elm
+import Html
+import Html.Attributes as Attributes
+
+divView : List (Attribute msg) -> List (Html.Html msg) -> Html.Html msg
+divView =
+    Html.div
+
+greetingView : Html.Html msg
+greetingView =
+    Html.div
+        [ Attributes.style "background-color" "red"
+        , Attributes.style "height" "90px"
+        , Attributes.style "width" "100%"
+        ]
+        [ Html.text "Hello!"
+        ]
+```
+
+First argument is list `Attribute`s - events, id, className, inline styles, etc. Second argument is list for child nodes. By the second argument we are implementing html hierarchy.
+
+We have access to all HTML elements - `link`, `label`, `input`, `h1`, `h2`, etc.
+
+If you don't want to type you own `CSS`, you can use packages for layout and elements - for example [elm-ui](https://package.elm-lang.org/packages/mdgriffith/elm-ui/latest/).
+
+_Note_: Elm is using (same as React) Virtual DOM feature
 
 ## Running the Elm application
 
@@ -933,6 +992,14 @@ view model =
 
 It is a quick and simple tool to run Elm project during development. Run `elm reactor` in the project root. It starts a server at [http://localhost:8000](http://localhost:8000) where we can navigate to Elm files.
 
+## Elm program
+
+Elm program is set up using [Browser](https://package.elm-lang.org/packages/elm/browser/latest/Browser) module from [elm/browser](https://package.elm-lang.org/packages/elm/browser/latest/) package. There are several functions to do that based on the use case.
+
+- `sandbox` - Program that interacts with the user input but cannot communicate with the outside world.
+- `element` - HTML element controlled by Elm that can talk to the outside world (e.g. HTTP requests). Can be embedded into a JavaScript project.
+- `document` - Controls the whole HTML document, view controls `<title>` and `<body>` elements.
+- `application` - Creates single page application, Elm controls not only the whole document but also Url changes.
 
 ### Elm Make
 
@@ -944,9 +1011,36 @@ $ elm make src/Main.elm --output=main.html
 
 Generates `main.html` file with the Elm application.
 
-
-
 ## Further reading
+
+### Alternatives
+
+### [Haste](https://haste-lang.org)
+
+Haste is a tool for compiling Haskell code into a JavaScript code and a server-side binary. Both programs can talk to each other ensuring type-safe communication.
+
+### [GHCJS](https://github.com/ghcjs/ghcjs)
+
+GHCJS is a compiler for Haskell to JavaScript that uses GHC API. It supports a wide range of Haskell features, including all type system extensions supported by GHC. There are some interesting frameworks for building web applications based on GHCJS:
+
+- [Reflex](https://reflex-frp.org) - A composable, cross-platform functional reactive programming framework for Haskell.
+- [miso](https://haskell-miso.org) - A tasty Haskell front-end framework.
+
+### [PureScript](http://www.purescript.org)
+
+PureScript is a strongly-typed functional programming language that compiles to JavaScript. It is similar to Haskell with [some differences](https://github.com/purescript/documentation/blob/master/language/Differences-from-Haskell.md). It has a lot of packages published in [Pursuit](https://pursuit.purescript.org). Also, some frameworks for building web applications are there, e.g.:
+
+- [Thermite](https://github.com/paf31/purescript-thermite) - A simple PureScript wrapper for React.
+- [Halogen](https://github.com/slamdata/purescript-halogen) - A declarative, type-safe UI library for PureScript.
+- [Pux](https://github.com/alexmingoia/purescript-pux) - A library for building type-safe web applications.
+
+If you are interested, you can have a look at this comparison: [Benchmarks: GHCJS (Reflex, Miso) & Purescript (Pux, Thermite, Halogen)](https://medium.com/@saurabhnanda/benchmarks-fp-languages-libraries-for-front-end-development-a11af0542f7e)
+
+### [ReasonML](https://reasonml.github.io)
+
+Reason is a new syntax and toolchain based on OCaml programing language created by Facebook. The syntax is closer to JavaScript than OCaml. It is intended for development of front-end web applications and compiles to JavaScript. Using existing JavaScript and OCaml packages is possible.
+
+### Usefull links
 
 - [An Introduction to Elm](https://guide.elm-lang.org)
 - [Elm Syntax](https://elm-lang.org/docs/syntax)
@@ -954,4 +1048,3 @@ Generates `main.html` file with the Elm application.
 - [Small Assets without the Headache](https://elm-lang.org/blog/small-assets-without-the-headache)
 - [Elm in Production: Surprises & Pain Points](https://www.youtube.com/watch?v=LZj_1qVURL0)
 - [Elm-demo](https://github.com/deny1994/elm-demo)
-

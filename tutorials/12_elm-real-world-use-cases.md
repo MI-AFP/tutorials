@@ -20,7 +20,6 @@ Then, we define validation (notice that the API is basically the same as using `
 import Form
 import Form.Validate as Validate
 
-
 personValidation : Validate.Validation CustomFormError Person
 personValidation =
     Validate.map2 Person
@@ -41,7 +40,6 @@ Or using existing person data (notice that the API for the initial data is basic
 ```elm
 import Form.Field as Field
 
-
 initPersonFormWithPerson : Person -> Form.Form CustomFormError Person
 initPersonFormWithPerson { age, name } =
     let
@@ -61,7 +59,6 @@ import Form.Input as Input
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
-
 
 viewForm : Form.Form () Person -> Html Form.Msg
 viewForm form =
@@ -120,7 +117,6 @@ update msg model =
                     )
 ```
 
-
 ## SVG
 
 Elm has a package [elm/svg](https://package.elm-lang.org/packages/elm/svg/latest/) for creating SVG images in Elm. The API looks like corresponding packages for Html. Now we have `Svg` module with functions for SVG elements (e.g., `rect` or `circle`), `Svg.Attributes` for the attributes used by SVG elements (e.g., `strokeWidth` or `x`) and `Svg.Events` for JavaScript events, same as `Html.Events`.
@@ -146,16 +142,14 @@ roundRect =
         , Attributes.height "100"
         , Attributes.rx "15"
         , Attributes.ry "15"
-        ] 
+        ]
         []
       ]
 ```
 
-
 ## Files
 
 Since Elm 0.19 there is [elm/file](https://package.elm-lang.org/packages/elm/file/latest/) package for working with files. We can use it for allowing users to download a file generated in Elm, or for uploading files.
-
 
 Example of download a markdown file generated from a string in Elm:
 
@@ -182,7 +176,6 @@ requestImages =
 ```
 
 If we get `File` from the previous example, we can send it to the server using [elm/http](https://package.elm-lang.org/packages/elm/http/2.0.0/) package. There is a [fileBody](https://package.elm-lang.org/packages/elm/http/latest/Http#fileBody) function for that. We can explore [examples](https://github.com/elm/file/tree/master/examples) in elm/file package to see how it works.
-
 
 ## Graph QL
 
@@ -214,17 +207,14 @@ import StarWars.Object.Human as HumanObject
 import StarWars.Query as Query
 import StarWars.Scalar as Scalar
 
-
 query : SelectionSet.SelectionSet (Maybe Human) Operation.RootQuery
 query =
     Query.human { id = Scalar.Id "1001" } humanSelection
-
 
 type alias Human =
     { name : String
     , homePlanet : Maybe String
     }
-
 
 humanSelection : SelectionSet.SelectionSet Human HumanObject
 humanSelection =
@@ -294,13 +284,11 @@ query ($userID: ID!) {
 }
 ```
 
-
 ## WebSockets
 
 There is a package [elm-lang/websockets](https://package.elm-lang.org/packages/elm-lang/websocket/latest), however, it was **not yet updated** to Elm 0.19.1 - it remains in 0.19.0 ELM version. It [should be updated](https://discourse.elm-lang.org/t/updating-packages/1771) at some point in the future. There is a 3rd party package [billstclair/elm-websocket-client](https://package.elm-lang.org/packages/billstclair/elm-websocket-client/latest/) that is converting the original package to Elm 0.19.1.
 
 The other option is to [use ports](https://stackoverflow.com/a/52569683/2492795) and to implement WebSocket interactions on the JavaScript side.
-
 
 ## Materials
 

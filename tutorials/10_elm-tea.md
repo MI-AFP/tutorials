@@ -1,19 +1,8 @@
 # Elm - The Elm Architecture
 
-## Elm program
-
-Elm program is set up using [Browser](https://package.elm-lang.org/packages/elm/browser/latest/Browser) module from [elm/browser](https://package.elm-lang.org/packages/elm/browser/latest/) package. There are several functions to do that based on the use case.
-
-- `sandbox` - Program that interacts with the user input but cannot communicate with the outside world.
-- `element` - HTML element controlled by Elm that can talk to the outside world (e.g. HTTP requests). Can be embedded into a JavaScript project.
-- `document` - Controls the whole HTML document, view controls `<title>` and `<body>` elements.
-- `application` - Creates single page application, Elm controls not only the whole document but also Url changes.
-
-
 ## JSON
 
 It is very common to use JSON format when communicating with different APIs. In JavaScript, JSON is usually turned into a JavaScript object and used within the application. However, this is not the case in Elm since we have a strong type system. Before we can use JSON data, we need to convert it into a type defined in Elm. There is the [elm/json](https://package.elm-lang.org/packages/elm/json/latest/) package for that.
-
 
 ### Decoders
 
@@ -23,9 +12,9 @@ For example, we have this JSON representing a TODO:
 
 ```json
 {
-    "id": 24,
-    "label": "Finish the home",
-    "completed": false
+  "id": 24,
+  "label": "Finish the home",
+  "completed": false
 }
 ```
 
@@ -41,23 +30,12 @@ labelDecoder =
 
 There are functions to decode other primitives, like `bool` or `int`. However, we usually need more than just one field. We can combine decoders using `map` functions from `Json.Decode` module, e.g. `map3`.
 
-```elm
-import Json.Decode as Decode
-
-map3 :
-    (a -> b -> c -> value)
-    -> Decode.Decoder a
-    -> Decode.Decoder b
-    -> Decode.Decoder c
-    -> Decode.Decoder value
-```
-
-We can then define our own type for TODO and a decoder.
+We can then define our own type for Todo item and a decoder.
 
 ```elm
 import Json.Decode as Decode
 
-type alias Todo =
+type alias TodoItem =
     { id : Int
     , label : String
     , completed : Bool
@@ -93,7 +71,6 @@ todoDecoder =
 
 It is not that big change in this case, however, we only have `map8` function in `Json.Decode` so this library comes handy if we need more. Moreover, it has other functions to define for example [optional](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/Json-Decode-Pipeline#optional) or [hardcoded](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest/Json-Decode-Pipeline#hardcoded) values.
 
-
 ### Encoders
 
 When we want to send something to an API we need to do the opposite -- turn the Elm value into JSON value. We use functions from [Json.Encode](https://package.elm-lang.org/packages/elm/json/latest/Json-Encode) package for that. There is a type called `Value` which represents a JavaScript value and functions to convert Elm primitives, lists and objects into `Value` type.
@@ -119,7 +96,6 @@ encodeTodo todo =
 ```
 
 The object is representend as a list of key value tuples.
-
 
 ## Http
 
@@ -167,42 +143,70 @@ Of course, we can send different types of body, not just JSON, e.g., `stringBody
 When we want to do a different type of request than GET and POST or we want to set headers, we need to use `Http.request` function (`Http.post` and `Http.get` are actually just a shorthand for calling `Http.request`).
 
 ```elm
-request :
-    { method : String
-    , headers : List Http.Header
-    , url : String
-    , body : Http.Body
-    , expect : Http.Expect msg
-    , timeout : Maybe Float
-    , tracker : Maybe String
-    }
-    -> Cmd msg
-```
-
-
-## Subscriptions
-
-[Subscriptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happend (e.g., web socket message or clock tick).
-
-
-Here's an example of subscriptions defining that a message `Tick` with current time should be send to update function every 1000 milliseconds.
-
-
-```elm
-import Time
-
-
-type alias Model =
-    ()
+import Http
 
 type Msg =
-    Tick Time.Posix
+    TodoSaved (Result Http.Error ())
 
+postTodoRequest =
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = "http://example.com/todo"
+        , body = Http.jsonBody <| encodeTodo todo
+        , expect = Http.expectWhatever TodoSaved
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Time.every 1000 Tick
 ```
+
+## Opaque type
+
+Opaque types are types that hide their internal implementation details within a module. While this statement seems benign on its surface, it’s an incredibly important concept in an ecosystem that enforces semantic versioning.
+
+_Note_: Taken from [Charlie Koster, medium.com](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+
+```elm
+module Email exposing (Email, decodeEmail, toString)
+
+import Json.Decode as Decode
+
+type Email
+    = EmailInternal String
+
+decodeEmail : Decode.Decoder Email
+decodeEmail =
+    Decode.andThen validateEmail Decode.string
+
+validateEmail : String -> Decode.Decoder Email
+validateEmail emailString =
+    if isEmailValid emailString then
+        Decode.succeed <| EmailInternal emailString
+
+    else
+        Decode.fail "Invalid email!"
+
+toString : Email -> String
+toString (EmailInternal email) =
+    email
+
+isEmailValid : String -> Bool
+
+-- in Home page
+import Email
+
+emailView : Email.Email -> Html msg
+emailView =
+  Email.toString
+    >> Html.text
+
+emailView2 : String -> Html msg
+emailView2 =
+  Html.text
+```
+
+_Note_: From `Email` module, we expose only `Email` type without variant `EmailInternal`. The only way, how to access email value is in this module, no other module does not have access to `EmailInternal` and can use only access function `toString`.
 
 ## Materials
 
@@ -211,10 +215,10 @@ subscriptions model =
 
 ## Further Reading
 
-- [Commands and Subscriptions](https://guide.elm-lang.org/effects/)
+- [Opaque types](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+- [Make impossible states impossible](https://www.youtube.com/watch?v=IcgmSRJHu_8&ab_channel=elm-conf)
 - [krisajenkins/remotedata](https://package.elm-lang.org/packages/krisajenkins/remotedata/latest/RemoteData)
 - [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)
-
 
 ### Forms
 
@@ -223,11 +227,11 @@ Form elements are created the same way as other HTML elements using functions fr
 We can use `onInput` from [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events) module to detect input events and create a message for our update function.
 
 The loop is the following:
+
 - user changes the value in an input field
 - a new message is created
 - the update function is called with the message and it updates the model with the new value
 - input field is re-rendered with the new value
-
 
 Here is a simple example with a single input field:
 
@@ -272,7 +276,6 @@ view model =
 
 When we need more complex forms in our application, there are packages to handle forms like [etaque/elm-form](https://package.elm-lang.org/packages/etaque/elm-form/latest/).
 
-
 ### Random
 
 There is a [Random](https://package.elm-lang.org/packages/elm/random/latest/Random) module in [elm/random](https://package.elm-lang.org/packages/elm/random/latest/) package for generating pseudo-random values in Elm. It defines a type called `Generator` which can be think of as a recipe for generating random values.
@@ -288,7 +291,6 @@ randomGrade =
 ```
 
 If we want to use it, we have two options. The first is using `generate` function to create a command. Then we got the generated value back with a defined message to our update function. Here's an example:
-
 
 ```elm
 import Random exposing (Generator)
