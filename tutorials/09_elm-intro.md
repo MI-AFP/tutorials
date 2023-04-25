@@ -236,7 +236,6 @@ Now, when we have our project ready, we can create some modules. A module has a 
 
 module Lib.Math exposing (linear)
 
-
 linear a b x =
     a * x + b
 ```
@@ -245,7 +244,6 @@ We can import the module to other modules or the repl using `import` statement. 
 
 ```elm
 import Lib.Math
-
 
 linearResult =
     Lib.Math.linear 5 3 7 -- 38
@@ -256,7 +254,6 @@ We can also expose some expression and then use them without the full module nam
 ```elm
 import Lib.Math exposing (linear)
 
-
 linearResult =
     linear 5 3 7 -- 38
 ```
@@ -266,7 +263,6 @@ Or we can expose everything from the module.
 ```elm
 import Lib.Math exposing (..)
 
-
 linearResult =
     Lib.Math.linear 5 3 7 -- 38
 ```
@@ -275,7 +271,6 @@ Or we can import a module with a different name.
 
 ```elm
 import Lib.Math as Math
-
 
 linearResult =
     Math.linear 5 3 7 -- 38
@@ -523,7 +518,7 @@ type Role
 type alias User =
     ExtensibleUser { role : Role }
 
-user : User  -- doesn't matter about the order when defining new object
+user : User  -- doesn't matter about the order when defining new record
 user =
     { id : "id"
     , role : Admin
