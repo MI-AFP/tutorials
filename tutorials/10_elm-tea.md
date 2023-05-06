@@ -35,7 +35,7 @@ We can then define our own type for Todo item and a decoder.
 ```elm
 import Json.Decode as Decode
 
-type alias TodoItem =
+type alias Todo =
     { id : Int
     , label : String
     , completed : Bool
@@ -198,12 +198,12 @@ import Email
 
 emailView : Email.Email -> Html msg
 emailView =
-  Email.toString
-    >> Html.text
+    Email.toString
+      >> Html.text
 
 emailView2 : String -> Html msg
 emailView2 =
-  Html.text
+    Html.text
 ```
 
 _Note_: From `Email` module, we expose only `Email` type without variant `EmailInternal`. The only way, how to access email value is in this module, no other module does not have access to `EmailInternal` and can use only access function `toString`.

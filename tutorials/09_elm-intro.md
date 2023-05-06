@@ -618,6 +618,31 @@ profile =
 
 _Note_: There are two more complex techniques, how to design data structure - opaque types (next lesson) and phantom types.
 
+### Never type - Never
+
+Never type is a type that doesn't have any values. It's a type that can be specified in a type annotation, but you can't construct a Never value because it is valueless.
+
+### Unit type - ()
+
+Unit type is commonly used as a placeholder for an empty value.
+
+```elm
+type alias Message a =
+    { code : String
+    , body : a
+    }
+
+readMessage : Message String -> String
+readMessage message =
+    ...
+
+readEmptyMessage : Message () -> String
+readEmptyMessage message =
+    ...
+```
+
+_Note_: `readEmptyMessage` function takes Message with an empty body. This is not the same as any value, just an empty one.
+
 ### Pattern Matching
 
 ```elm
@@ -808,7 +833,7 @@ Elm has several operators for chaining functions and function calls together.
 `|>` operator takes a value and a function and applies the function to the value. It is useful when chaining more steps together to write readable code.
 
 ```elm
-pipe : : a -> (a -> b) -> b
+pipe : a -> (a -> b) -> b
 pipe =
     (|>)
 
@@ -824,7 +849,7 @@ greet3 maybeName =
 `<|` operator is the opposite. It takes a function and a value and apply the function to the value. It is useful to avoid parentheses, the same as `$` in Haskell.
 
 ```elm
-pipe : : (a -> b) -> a -> b
+pipe : (a -> b) -> a -> b
 pipe =
     (<|)
 

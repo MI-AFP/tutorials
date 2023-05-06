@@ -105,7 +105,6 @@ update msg model =
     case msg of
         SaveUser user ->
             (model, Ports.saveUser <| encdeUser user)
-        ...
 ```
 
 #### Incoming messages
@@ -184,14 +183,14 @@ We use [Browser.application](https://package.elm-lang.org/packages/elm/browser/l
 
 ```elm
 application :
-  { init : flags -> Url -> Key -> ( model, Cmd msg )
-  , view : model -> Document msg
-  , update : msg -> model -> ( model, Cmd msg )
-  , subscriptions : model -> Sub msg
-  , onUrlRequest : UrlRequest -> msg
-  , onUrlChange : Url -> msg
-  }
-  -> Program flags model msg
+    { init : flags -> Url -> Key -> ( model, Cmd msg )
+    , view : model -> Document msg
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , onUrlRequest : UrlRequest -> msg
+    , onUrlChange : Url -> msg
+    }
+    -> Program flags model msg
 ```
 
 The `init` function now gets not only flags but also initial `Url` and navigation `Key` that is needed for changing URL using navigation commands.
@@ -209,90 +208,80 @@ import Html exposing (Html)
 import Html.Attributes as  Attributes
 import Url
 
--- MAIN
-
 main : Program Flags Model Msg
 main =
-  Browser.application
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    , onUrlChange = UrlChanged
-    , onUrlRequest = LinkClicked
-    }
-
--- MODEL
+    Browser.application
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
+        }
 
 type alias Model =
-  { key : Navigation.Key
-  , url : Url.Url
-  }
+    { key : Navigation.Key
+    , url : Url.Url
+    }
 
 type alias Flags =
-  ()
+    ()
 
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
-  ( { key = key
+    ( { key = key
     , url = url
     }
-  , Cmd.none
-  )
-
--- UPDATE
+    , Cmd.none
+    )
 
 type Msg
-  = LinkClicked Browser.UrlRequest
-  | UrlChanged Url.Url
+    = LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  case msg of
-    LinkClicked urlRequest ->
-      case urlRequest of
-        Browser.Internal url ->
-          ( model
-          , Nav.pushUrl model.key <| Url.toString url
-          )
+    case msg of
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.key <| Url.toString url
+                    )
 
-        Browser.External href ->
-          ( model
-          , Navigation.load href
-          )
+                Browser.External href ->
+                    ( model
+                    , Navigation.load href
+                    )
 
-    UrlChanged url ->
-      ( { model | url = url }
-      , Cmd.none
-      )
-
--- SUBSCRIPTIONS
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none
+            )
 
 subscriptions : Model -> Sub Msg
 subscriptions =
-  always Sub.none
-
--- VIEW
+    always Sub.none
 
 view : Model -> Browser.Document Msg
 view model =
-  { title = "URL Interceptor"
-  , body =
-      [ Html.text "The current URL is: "
-      , Html.b [] [ Html.text <| Url.toString model.url ]
-      , Html.ul []
-          [ viewLink "/home"
-          , viewLink "/profile"
-          , viewLink "/reviews/the-century-of-the-self"
-          , viewLink "/reviews/public-opinion"
-          , viewLink "/reviews/shah-of-shahs"
-          ]
-      ]
-  }
+    { title = "URL Interceptor"
+    , body =
+        [ Html.text "The current URL is: "
+        , Html.b [] [ Html.text <| Url.toString model.url ]
+        , Html.ul []
+            [ viewLink "/home"
+            , viewLink "/profile"
+            , viewLink "/reviews/the-century-of-the-self"
+            , viewLink "/reviews/public-opinion"
+            , viewLink "/reviews/shah-of-shahs"
+            ]
+        ]
+    }
 
 viewLink : String -> Html msg
 viewLink path =
-  Html.li [] [ Html.a [ Attributes.href path ] [ Html.text path ] ]
+    Html.li [] [ Html.a [ Attributes.href path ] [ Html.text path ] ]
 ```
 
 ### URL Parsing
@@ -305,19 +294,19 @@ Here's an example form the documentation converting different routes with parame
 import Url.Parser exposing ((</>), Parser, int, s, string)
 
 type Route
-  = Topic String
-  | Blog Int
-  | User String
-  | Comment String Int
+    = Topic String
+    | Blog Int
+    | User String
+    | Comment String Int
 
 route : Parser (Route -> a) a
 route =
-  oneOf
-    [ map Topic   (s "topic" </> string)
-    , map Blog    (s "blog" </> int)
-    , map User    (s "user" </> string)
-    , map Comment (s "user" </> string </> s "comment" </> int)
-    ]
+    oneOf
+      [ map Topic   (s "topic" </> string)
+      , map Blog    (s "blog" </> int)
+      , map User    (s "user" </> string)
+      , map Comment (s "user" </> string </> s "comment" </> int)
+      ]
 
 -- /topic/wolf            ==>  Just (Topic "wolf")
 -- /topic/                ==>  Nothing
