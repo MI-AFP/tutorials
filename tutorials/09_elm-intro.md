@@ -497,7 +497,7 @@ lengthResult =
 
 An extensible record is a record defined as _having at least certain fields_. For example, a record can be defined as having at least an `id` and `name` fields.
 
-We can use extensible records for type inheritance. IT has one limitation - we will see it next lessonin Decoders part.
+We can use extensible records for type inheritance. It has one limitation - we will see it next lesson in Decoders part.
 
 ```elm
 type alias ExtensibleUser a =

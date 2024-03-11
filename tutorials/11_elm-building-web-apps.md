@@ -320,6 +320,12 @@ route =
 -- /user/                 ==>  Nothing
 ```
 
+### Msg mapping
+
+To be able to split page to more sub modules, we need to use `Html.map` [function](https://package.elm-lang.org/packages/elm/html/latest/Html#map) for mapping and combining views into single page. To see full example with mapping, you can go to [elm-spa](https://github.com/denynemec/elm-spa) and see all details. Note that we have also `Cmd.map` [function](https://package.elm-lang.org/packages/elm/core/latest/Platform-Cmd#map) and usually we need both. `Html.map` to be map view part and `Cmd.map` to map `Cmd` from sub modules (in update).
+
+![Module mapping](./images/module-mapping.svg)
+
 ## Materials
 
 - [elm-spa](https://github.com/deny1994/elm-spa)

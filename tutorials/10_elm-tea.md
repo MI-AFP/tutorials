@@ -95,7 +95,7 @@ encodeTodo todo =
         ]
 ```
 
-The object is representend as a list of key value tuples.
+The object is represented as a list of key value tuples.
 
 ## Http
 
