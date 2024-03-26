@@ -816,6 +816,40 @@ The function `makeLenses` indeed does some magic! From its type signature `makeL
 
 Template Haskell is very powerful and allows you to do interesting stuff, but it is pretty advanced and we will leave it up to you if you want to look at it... Also, Template Haskell is relevant just for GHC, other compilers do not support it. Last, but not least, Template-Haskell programmes compile (even) longer.
 
+#### Use lenses or not?
+
+Using lenses in Haskell for record types offers several advantages. Firstly, lenses provide a convenient and concise way to access and manipulate deeply nested fields within records. This helps in writing more readable and maintainable code, as it eliminates the need for manual pattern matching or accessor functions. Additionally, lenses support composition, enabling developers to chain multiple operations together seamlessly, which enhances code modularity and reusability. Moreover, lenses facilitate immutable updates by generating functions that produce new copies of records with modified fields, promoting a functional programming style and ensuring referential transparency. There are also additional libraries such as [optics](https://hackage.haskell.org/package/optics/docs/Optics.html) that go beyond lenses and have more advantages.
+
+However, there are some drawbacks to using lenses in Haskell. One of the main criticisms is the perceived complexity introduced by lenses, especially for beginners. The syntax for defining and using lenses may appear unfamiliar and daunting to those new to the language or functional programming paradigm. Furthermore, lenses can sometimes incur performance overhead compared to manual record manipulation, although this may not be significant in many cases. Lastly, while lenses excel at accessing and modifying individual fields, they may not be the best choice for more complex transformations or operations involving multiple records, where alternative approaches like monadic or applicative style may be more appropriate. Overall, while lenses offer powerful abstractions for working with records in Haskell, developers should carefully consider their use case and weigh the trade-offs involved.
+
+#### OverloadedDotRecord (since GHC 9.2)
+
+If you need to simply access fields of nested records, GHC 9.2.0 and newer allows you to use `OverloadedDotRecord` extension. With that, you simply use `.` as accessor to fields of records. It is also good to combine it with `DuplicateRecordFields` as shown in the following example.
+
+```haskell
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+
+data Person = Person
+            { firstName :: String
+            , lastName :: String
+            , idNumber :: String
+            } deriving (Show, Read)
+
+
+data Organization = Organization
+                  { name :: String
+                  , owner :: Person
+                  , idNumber :: String
+                  } deriving (Show, Read)
+
+
+marek = Person "Marek" "Suchánek" "123"
+acme = Organization "ACME" marek "456"
+
+acmeOwnerName = acme.owner.firstName ++ " " ++ acme.owner.lastName
+```
+
 ## Task assignment
 
 The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
