@@ -371,9 +371,9 @@ Your project should be:
 
 Another advantage of publishing is that your project can get attention and community can help you improve it -- they create issues, forks and pull requests.
 
-### Using CI (Travis CI)
+### Using CI
 
-When you are developing a project and sharing it with a community, you want to show that it is working well and you also want to check if contributions to your code are not breaking it. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Jenkins, Circle CI, Appveyor, Semaphore, GitLab CI, etc.
+When you are developing a project and sharing it with a community, you want to show that it is working well and you also want to check if contributions to your code are not breaking it. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Jenkins, Circle CI, Appveyor, Semaphore, GitLab CI, GitHub Actions, etc.
 
 All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of the good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
 
@@ -400,6 +400,31 @@ script:
 ```
 
 For Haskell, you can use `.travis.yml` above or read the [documentation](https://docs.travis-ci.com/user/languages/haskell/).
+
+Another example shows a similar configuration but for GitLab CI (notice caching and use of system GHC from the used base image):
+
+```yaml
+image: haskell:9.4.8
+
+variables:
+  STACK_ROOT: "${CI_PROJECT_DIR}/.stack"
+
+cache:
+  paths:
+    - .stack
+    - .stack-work
+    - target
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - stack test --system-ghc
+```
+
+For GitHub Actions in a more complex project (multiple Stack packages, components and Docker images), you can check [ds-wizard/engine-backend](https://github.com/ds-wizard/engine-backend/blob/develop/.github/workflows/build.yml). 
 
 ## Performance and Debugging
 
