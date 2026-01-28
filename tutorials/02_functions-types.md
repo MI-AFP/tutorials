@@ -1,310 +1,529 @@
 # Functions and basic data types
 
-## General summary of syntax
+In the previous introductory tutorial, we focused on:
 
-### Haskell keywords
+* expressions and values,
+* naming and bindings,
+* functions as mappings between values, and
+* how these ideas appear in GHCi and source files.
 
-There are some [reserved keywords/operators] which have some special meaning in Haskell:
+In this tutorial, we build on that foundation and make the picture more concrete. We will look at:
 
-1. operator-like: `!`, `'`, `"`, `-`, `--`, `-<`, `-<<`, `->`, `::`, `;`, `<-`, `,`, `=`, `=>`, `>`, `?`, `#`, `*`, `@`, `\`, `_`, `` ` ``, `|`, `~`
-2. brackets-like: `[| |]`, `{ }`, `{- -}`
-3. keywords (common): `as`, `case of`, `class`, `data`, `deriving`, `do`, `hiding`, `if then else`, `import`, `infix infixr infixl`, `instance`, `let in`, `module`, `newtype`, `qualified`, `type`, `where`
-4. keywords (not so common): `data family`, `data instance`, `default`, `deriving instance`, `forall`, `foreign`, `mdo`, `proc`, `rec`, `type family`, `type instance`
+* how functions are written and typed,
+* how Haskell represents data, and
+* how syntax reflects the underlying functional and mathematical model.
 
-[reserved keywords/operators]: https://wiki.haskell.org/Keywords
+Before diving into functions and data types themselves, it is useful to clarify some basic syntactic rules and naming conventions that appear throughout Haskell code. This part is not meant to be memorized — it is a reference that will become familiar as we encounter these constructs in practice.
 
-### Type signature
+## Haskell keywords and symbols
 
-As was in the previous lesson, you can specify a type of an expression directly or by its name via `::` operator-like keyword "has-type". It is mandatory only in case of ambiguity because Haskell's type system has type inference (it can analyze what type the expression should have). Type of expression cannot change - it is static typing.
+Haskell has a relatively small set of [**reserved keywords and symbols**](https://wiki.haskell.org/Keywords) with special meaning. You cannot use these as ordinary names. Some do not come directly from Haskell itself but from GHC language extensions.
+
+### Keywords for definitions and structure
+
+These keywords introduce or organize definitions:
+
+* `module`, `import`, `qualified`, `hiding`
+* `let`, `in`, `where`
+* `data`, `newtype`, `type`
+* `class`, `instance`, `deriving`
+
+### Keywords for control and pattern matching
+
+These keywords describe *how* expressions are selected or evaluated:
+
+- `case` ... `of`
+- `if` ... `then` ... `else`
+- `do` (for sequencing effectful computations)
+
+Unlike imperative languages, these are still expressions: each of them produces a value of some type.
+
+### Type-related symbols
+
+- `::` = "has type" (type annotation)
+- `->` = function type constructor (from ... to ...)
+- `=>` = type class constraint in type signature
+- `|` = alternative in data type definition (sum type) or guards in function definition
+
+### Operators and special symbols
+
+- `=` = definition (binding a name to an expression)
+- `<-` = extracting a value from an effectful computation (used inside `do` blocks)
+- `\` = lambda (anonymous function)
+- `@` = as-pattern (naming a pattern while matching)
+- `:` = cons operator (constructing lists)
+- `,` = tuple constructor (grouping values)
+- `..` = range syntax (creating lists of enumerated values)
+- `_` = wildcard pattern (ignoring a value)
+- `` ` `` = backticks (turning a function into an infix operator)
+
+### Operator fixity and associativity
+
+Operators in Haskell can have different *precedence* (fixity) and *associativity* which affect how expressions with multiple operators are parsed. Later we will cover related keywords:
+
+* `infix`
+* `infixl`
+* `infixr`
+
+### Operators and code editors
+
+Some code editors and fonts support so-called **font ligatures**, which visually combine certain character sequences into a single symbol. For example, the sequence `->` may be displayed as a single right arrow symbol (→). Some programmers love this feature, while others find it distracting... so try it out and see what you think!
+
+While this can enhance readability, it is important to remember that these are purely visual enhancements and do not affect the actual code. When writing or reading Haskell code, always consider the underlying characters, especially when sharing code with others who may not have the same editor settings.
+
+## Naming rules and conventions
+
+Haskell is strict about **what names are allowed**, and the community follows **strong naming conventions**. Following them makes code easier to read and understand.
+
+### Capitalization rules (syntactic)
+
+These rules are enforced by the language:
+
+* **Value names and function names** start with a lowercase letter or underscore (`_`), followed by letters, digits, underscores, and apostrophes (`'`). Examples: `x`, `myFunction`, `value1`, `_tempVar`, `count'`.
+* **Type names and data/type constructor names** start with an uppercase letter, followed by letters, digits, underscores, and apostrophes. Examples: `MyType`, `Person`, `TreeNode`, `Result'`.
+* **Type variables** (used in polymorphic types) start with a lowercase letter, often a single letter like `a`, `b`, `c`, etc.
+
+Violating these rules leads to syntax errors or different meanings.
+
+### Conventions for naming values and functions
+
+These are conventions, not rules, but they are widely followed:
+
+* Use **camelCase** for function and variable names: `calculateSum`, `isValid`, `userName`.
+* Use **descriptive names** that convey purpose: `totalPrice` instead of `tp`, `isEven` instead of `myFunc`.
+* **Predicate functions** should start with *is*, *has*, or *can*: `isEmpty`, `hasChildren`, `canExecute`.
+* Use **verbs** for functions that perform actions: `getUser`, `setAge`, `computeAverage`.
+* Use **apostrophes (`'`)** to indicate a modified version of a function or variable: `filter'` might be a variant of `filter`.
+* Give **meaningful** names to parameters: `calculateArea width height` is clearer than `calculateArea x y`.
+
+### Conventions for naming types and constructors
+
+* Use **PascalCase** for type and constructor names: `BinaryTree`, `Person`, `Color`.
+* Use (singular) **nouns** for type names: `User`, `Account`, `Order`.
+* Use **descriptive names** that reflect the purpose of the type: `Success`, `Failure`, `Response`.
+* For types with a single constructor, the constructor name is often the same as the type name: `data Color = Color Int Int Int`.
+
+### Module and file naming
+
+* Module names use **PascalCase** and reflect the directory structure: `Data.List`, `Control.Monad`.
+* **File names correspond to module names** with `.hs` extension: `Data/List.hs`, `Control/Monad.hs`.
+* Directories use **PascalCase** to match module names: `Data/`, `Control/`.
+
+
+## Types, values, and definitions
+
+Before introducing more complex data types, it is important to clarify how Haskell talks about types, values, and functions, and how these are introduced in code.
+
+A recurring pattern in Haskell is that things are described in two steps:
+
+* a **declaration** (what something is, what type it has), and
+* a **definition** (how it is defined, what it equals).
+
+This applies consistently to values, functions, and types.
+
+### Type signatures
+
+A type signature specifies the type of a value or function. It uses the operator ::, read as “*has type*”.
 
 ```haskell
-a :: Integer
-b :: String
-
-a = 42
-b = a
-c = (a + 7) :: Double
+x :: Integer
+y :: String
 ```
 
-Haskell does not have implicit conversion and if you do something like it is in the example above, you will get an error during compilation. The type system is very strict and helps programmers to find more bugs during compile time and not during runtime (where is more problematic to find it).
+This means:
+
+* `x` is a value of type `Integer`,
+* `y` is a value of type `String`.
+
+Type signatures may also be attached directly to expressions:
+
+```haskell
+z = (x + 7) :: Integer
+```
+
+Haskell uses static typing:
+
+* every expression has exactly one type,
+* the type is determined at compile time, and
+* it cannot change during execution.
+
+Because of **type inference**, type signatures are not always required, but they are **strongly recommended for clarity and documentation**.
+
+### Value declarations and definitions
+
+A value is introduced by:
+
+* an optional declaration (type signature), and
+* a mandatory definition (binding).
+
+```haskell
+x :: Integer   -- declaration
+x = 42         -- definition
+```
+
+The definition binds the name `x` to the expression `42` (in this case a literal integer).
+
+There is no assignment and no mutation here — once defined, `x` always refers to the same value.
+
+If types do not match, the compiler reports an error:
+
+```haskell
+y :: String
+y = x
+```
 
 ```
-    Couldn`t match type ‘Integer’ with ‘[Char]’
-    Expected type: String
-      Actual type: Integer
-    In the expression: a
-    In an equation for ‘b’: b = a
+Couldn't match type ‘Integer’ with ‘[Char]’
+Expected type: String
+Actual type: Integer
 ```
 
-### Type variable
+Haskell **does not perform implicit type conversions**.
 
-As you could have noticed, we are able to achieve polymorphism with something strange in function types, something called type variable. Type variables must start with a lowercase letter and usually are just 1 character from the beginning of the alphabet:
+### Function declarations and definitions
+
+Functions follow exactly the same pattern.
+
+```haskell
+identity :: a -> a          -- declaration
+identity x = x              -- definition
+```
+
+* The declaration says that `identity` is a function that takes an argument of type `a` and returns a value of the same type `a`.
+* The definition defines how the function computes its result (for any `x`, `identity x` is defined as `x`).
+
+The definition can be naturally more complex, involving pattern matching, recursion, and other constructs.
+
+```haskell
+fibonacci :: Word -> Integer
+fibonacci 0 = 1
+fibonacci 1 = 1
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+```
+
+Such definition can be read as (always from top to bottom):
+
+1. `fibonacci 0` is defined as `1`,
+2. `fibonacci 1` is defined as `1`,
+3. for any other `n`, `fibonacci n` is defined as the sum of `fibonacci (n - 1)` and `fibonacci (n - 2)`.
+
+### Type variables
+
+Type variables allow functions to be **polymorphic** — they can operate on values of any type.
 
 ```haskell
 identity :: a -> a
-identity x = x
 ```
 
-Such type signature tells us that `identity` is a function from whatever type `a` to the same type `a`.
+The lowercase `a` is a type variable, meaning:
+
+* for any type `a` (without any constraint),
+* not a specific concrete type (like `Int` or `String`).
+
+Type variables are usually single lowercase letters: `a`, `b`, `c`, etc. Multiple type variables can be used in a single type signature:
+
+```haskell
+const :: a -> b -> a
+```
 
 ### Type constraints
 
-In some cases (function type and others) you can see typeclass constraints like here:
+Sometimes a function must restrict which types it works with. This is done using **type constraints** with the `=>` operator.
 
 ```haskell
 next :: Num a => a -> a
 next x = x + 1
 ```
 
-It says `next` has a type `a` to `a` where `a` is "from" typeclass `Num` (typeclasses will be covered later, for now, it is just class or types). Such type signature can be even more complex.
+This reads as:
+
+* `next` is a function that takes an argument of type `a` and returns a value of type `a`,
+* where `a` is constrained to types that are instances of the `Num` type class (i.e., numeric types).
+
+Constraints specify requirements on type variables.
+
+Multiple constraints are also possible:
 
 ```haskell
 foo :: (Show a, Eq a, Read b) => a -> b -> a
 ```
 
-### Function declaration
+In this case, `a` must be an instance of both `Show` and `Eq`, while `b` must be an instance of `Read`.
 
-Although type can be in most cases inferred automatically by the compiler, it is a good practice to write it down at least in case of functions as a part of code documentation. Functions can be complicated and by reading its type signature you know immediately what arguments it expects and what it returns.
+We will get to type classes later in the course, as they are a powerful mechanism for abstraction in Haskell.
 
-Declaration of a function is simple, just use the prefix notation as you would call the function and then describe what is it equal to.
+### Type declarations and definitions
 
-```haskell
-fibonacci   :: Word -> Integer
-fibonacci 0 = 1
-fibonacci 1 = 1
-fibonacci n = fibonacci (n-1) + fibonacci (n-2)
-```
+In addition to values and functions, Haskell allows you to introduce new data types. This is done using one of three constructs.
 
-### Type declaration
+#### Type synonym
 
-There are three basic ways how to introduce your own data type:
-
-1. `type` synonym = you just use a different name for some existing type (for example `String` is type synonym for `[Char]` = list of `Char`)
-2. new `data` type = declare type with type constructor (before `=`) and one or more data constructors (after `=`, separated by `|`), you may use typeclass constraints, type variables, and recursion
-3. `newtype` = new data type with exactly one data constructor with one parameter (new type is isomorphic with the "wrapped" type and compiler can do optimizations, can be used also in another way in more advanced code)
+A type synonym introduces a new name for an existing type. It does not create a new type, just an alias.
 
 ```haskell
 type String = [Char]
+```
 
+#### Data type
+
+A data type introduces a completely new type with one or more constructors.
+
+```haskell
 data Bool = True | False
+```
+
+This one creates a new type `Bool` with two constructors (possible values): `True` and `False`.
+
+A bit terminology:
+
+* `Bool` is the **type constructor** (follows `data`, in this case with no type parameters),
+* `True` and `False` are **data constructors** (follow `=`, separated by `|`, again with no parameters/fields).
+
+More complex data types can have parameters and recursive structure. For example, a binary tree:
+
+```haskell
 data Tree a = Leaf a | Branch (Tree a) (Tree a)
-            deriving (Show, Read)
+```
 
-newtype Age = Age Int
+This creates a polymorphic type `Tree a` with two constructors: `Leaf`, which takes a value of type `a`, and `Branch`, which takes two subtrees:
 
+* `Tree a` is the type constructor with one type parameter `a` (`a` is a type variable),
+* `Leaf` is a data constructor that takes one argument of type `a`,
+* `Branch` is a data constructor that takes two arguments, both of type `Tree a` (recursion).
+
+```haskell
 myTree :: Tree Int
 myTree = Branch (Leaf -7) (Branch (Leaf 7) (Leaf 10))
+```
 
+* Parameters of type constructors are always type variables (like `a`).
+* Parameters of data constructors can be of any type, including other user-defined types, or type variables from the type constructor.
+
+#### Newtype
+
+A `newtype` introduces a new type that is distinct from an existing type but has exactly one constructor with one field. It is often used to improve type safety and express intent without runtime overhead.
+
+```haskell
+newtype Age = Age Int
+```
+
+This creates a new type `Age` that is distinct from `Int`. The `Age` constructor takes one `Int` argument. But there is no runtime overhead compared to using `Int` directly.
+
+```haskell
 myAge :: Age
 myAge = Age 20
 ```
 
-Here, type `String` can be replaced by `[Char]` (it is a mere synonym), so typechecking is not 'perfect' in this sense. In case of `newtype`, `Age` is a different type than Int and compiler will check it.
+### Basic built-in data types
 
-The keyword `deriving` allows you to automatically make your data type instance of some typeclass (limited set of built-in classes) to allow some common Haskell mechanisms and functions to work with your types:
+Haskell provides a small set of basic data types that are used throughout the standard module (`Prelude`) and user code:
 
-* `Eq` - equality operators `==` and `/=`
-* `Ord` - comparison operators `<`, `<=`, `>`, `>=`; `min`, `max`, and `compare` (subclass of `Eq`)
-* `Show` - `show` for value to `String` conversion (+ other related functions)
-* `Read` - `read` for`String` to value conversion (+ other related functions)
-* `Enum` - for enumerations, allows the use of `..` range list syntax such as `[Blue .. Green]`
-* `Bounded` - for enumerations or other bounded, `minBound` and `maxBound` as the lowest and highest values that the type can take
+* `Int` = fixed-precision integer (machine-sized)
+* `Integer` = arbitrary-precision integer
+* `Float` = single-precision floating point
+* `Double` = double-precision floating point
+* `Word` = unsigned integer
+* `Char` = Unicode character
+* `Bool` = logical value (`True¨ or `False`)
+* `String` = type synonym for `[Char]` (list of characters)
 
-As it was said, typeclasses are a very important means of abstraction in Haskell and will be covered later on. You will also learn how to make new typeclasses, their instances, etc.
+You have already encountered most of these in GHCi examples. More specialized data structures (maps, sets, sequences, text) live in libraries and will be introduced when needed.
 
-## Data types
+### Algebraic Data Types (ADTs)
 
-Haskell has a strong static type system which is one of the things making it so great. As we already saw, every expression in Haskell has some type and the type cannot change during runtime (that is the difference with dynamic typing). As in other programming languages, you can use predefined data types, get more from some libraries or introduce your own.
+Haskell’s data declarations are called algebraic data types because they combine two fundamental ideas:
 
-### Basic Data Types
+1. **Sum types** (alternatives) using `|` to define multiple constructors (e.g., `Bool` with `True | False`).
+2. **Product types** (combinations) using constructors with multiple fields (e.g., tuples or records).
 
-* `Int` = A fixed-precision integer type with at least the range `[-2^29 .. 2^29-1]` (exact range can vary based on implementation, it can be check with `minBound` and `maxBound`)
-* `Integer` = Arbitrary-precision integers (e.g. theoretically unlimited)
-* `Float` = Single-precision floating point numbers
-* `Double` = Double-precision floating point numbers
-* `Word` = Unsigned integral number (same size as `Int`)
-* `Char` = Unicode character (ISO/IEC 10646)
-* `Bool` = truth value, only `True` or `False`
-* `String` = literally list of characters (type synonym for `[Char]`)
-
-### Type and data constructor
-
-Get back to creating own data types with the `data` keyword. After `data` is the type construction starting with a capital letter and then there might be type parameters (type variables). Then `=` follows and after it, we can specify multiple data constructors separated by `|`. Each data constructor again starts with a capital letter and can be followed by data types which it takes as arguments.
-
-```haskell
-data MyType a b = MyTypeC1 a Int | MyTypeC2 String b | MyType3
-                deriving Show
-
-x :: MyType Bool Float
-x = MyTypeC1 True 10
-```
-
-Usually, when there is just one data constructor, the name is the same as of the type constructor (but it is not a rule).
-
-This is one another great Haskell feature: Algebraic Data Types (ADT). These are now found in more and more new languages (e.g. [Rust](https://www.rust-lang.org) and very fresh [Reason](https://reasonml.github.io) from Facebook).
+Most real-world data types are combinations of these ideas, allowing for rich and expressive representations of data.
 
 ### Record types
 
-Imagine you want to create a type for `Person` which contains `name`, `age`, `gender`, and `city`. You would need to do:
+When a data constructor contains multiple fields, using positional arguments quickly becomes unreadable.
 
 ```haskell
-data Gender = Male | Female
-            deriving Show
-
-data Person = Person String Int Gender String
-            deriving Show
-
-name :: Person -> String
-name (Person x _ _ _) = x
-
-age :: Person -> Int
-age (Person _ x _ _) = x
-
-gender :: Person -> Gender
-gender (Person _ _ x _) = x
-
-city :: Person -> String
-city (Person _ _ _ x) = x
+data Person = Person String Int String String
 ```
 
-Not very nice, right?! And we have just 4 attributes of a person. Luckily there is syntactic sugar which makes it easier for us called record:
+To improve clarity, Haskell provides **record syntax**, allowing you to name fields explicitly.
 
 ```haskell
 data Gender = Male | Female
             deriving Show
 
 data Person = Person
-            { name   :: String
-            , age    :: Int
-            , gender :: Gender
-            , city   :: String
-            } deriving Show
+    { name   :: String
+    , age    :: Int
+    , gender :: Gender
+    , city   :: String
+    } deriving Show
 ```
 
-Now try to create a type `Pet` which also contains `name` and `age`. You will get an error which is logical, you cannot have two functions with the same name! One option is to rename it to `namePerson` and `namePet`, the second is available to you only if you have GHC 8.0.1 or higher and it is with language extension [DuplicateRecordFields](https://downloads.haskell.org/~ghc/master/users-guide/glasgow_exts.html#duplicate-record-fields) (however the first option is more common):
+Record syntax:
+
+* makes code more self-documenting,
+* automatically generates accessor functions,
+* improves readability when constructing and updating values.
+
+Creating and updating values:
+
+```haskell
+p :: Person
+p = Person { name = "Marek", age = 25, gender = Male, city = "Prague" }
+
+older :: Person -> Person
+older person = person { age = age person + 1 }
+```
+
+Note: Haskell records are implemented as *syntactic sugar* over algebraic data types. They are powerful but somewhat limited compared to record systems in newer languages. Languages inspired by Haskell, such as Elm and PureScript, provide more advanced record systems. We mention this mainly for context — it does not affect how we use records in this course.
+
+#### Records and name conflicts
+
+Record field names are just functions. This means they share a global namespace.
+
+If two record types use the same field names, conflicts arise:
+
+```haskell
+data Pet = Pet
+    { name :: String
+    , age  :: Int
+    } deriving Show
+```
+
+There are several ways to address this:
+
+* use more specific field names (personName, petName),
+* use modules to separate namespaces,
+* or enable language extensions such as `DuplicateRecordFields`.
+
+#### DuplicateRecordFields extension
+
+The [`DuplicateRecordFields`](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/duplicate_record_fields.html) extension allows multiple record types to use the same field names.
 
 ```haskell
 {-# LANGUAGE DuplicateRecordFields #-}
 
-{-
-  Seven Deadly Sins ordered by Dante Alighieri
-  see: https://simple.wikipedia.org/wiki/Seven_deadly_sins
--}
-data Sin = Lust | Gluttony | Greed | Sloth | Wrath | Envy | Pride
-         deriving (Show, Read, Eq, Ord, Enum, Bounded)
-
-data Gender = Male | Female
-            deriving (Show, Read, Eq)      -- Why not Ord? Gender equality!
-
 data Person = Person
-            { name   :: String
-            , age    :: Int
-            , gender :: Gender
-            , city   :: String
-            } deriving (Show, Read, Eq)
+    { name :: String
+    , age  :: Int
+    }
 
 data Pet = Pet
-         { name   :: String
-         , age    :: Int
-         } deriving (Show, Read)
+    { name :: String
+    , age  :: Int
+    }
+```
+
+With this extension:
+
+* the record definitions are accepted, but
+* field access may become ambiguous.
+
+For example, `name x` will not typecheck on its own, because `x` could be either a `Person` or a `Pet`. You must provide additional context to resolve the ambiguity, such as type annotations or using the record in a context where the type is known:
+
+```haskell
+getPersonName :: Person -> String
+getPersonName p = name p
+
+petAge :: Pet -> Int
+petAge pet = age pet
 
 olderPet :: Pet -> Pet
-olderPet pet = pet { age = (age pet + 1) }
+olderPet pet = pet { age = age pet + 1 }
 ```
 
-You can also see that there is a shorthand for updating the value of record - creating new edited record from previous. Now you can try some derived behaviour from typeclasses such as `show`, `read`, or `==`:
+This extension is useful when:
 
-```
-*Main> show Male
-"Male"
-*Main> read "Male"
-*** Exception: Prelude.read: no parse
-*Main> (read "Male") :: Gender
-Male
-*Main> Male == Female
-False
-*Main> Male == Male
-True
-*Main> Male < Female
+* modeling multiple domain entities with overlapping attributes,
+* you want to keep field names short and meaningful,
+* types are clear from context.
 
-<interactive>:8:1: error:
-    • No instance for (Ord Gender) arising from a use of ‘<’
-    • In the expression: Male < Female
-      In an equation for ‘it’: it = Male < Female
-*Main> Gluttony < Wrath
-True
-*Main> [Gluttony .. Envy]
-[Gluttony,Greed,Sloth,Wrath,Envy]
-*Main> :t maxBound
-maxBound :: Bounded a => a
-*Main> maxBound :: Sin
-Pride
-*Main> minBound :: Sin
-Lust
-*Main> let p1 = Person { name = "Marek", age = 25, gender = Male, city = "Prague" }
-*Main> let p2 = Person { name = "Marek", age = 25, gender = Male, city = "Prague" }
-*Main> p1 == p2
-True
-*Main> let p3 = Person { name = "Marek", age = 26, gender = Male, city = "Prague" }
-*Main> p1 == p3
-False
-*Main> show p1
-"Person {name = \"Marek\", age = 25, gender = Male, city = \"Prague\"}"
-```
+However, overusing it can reduce readability, especially for beginners. Explicit field names or module qualification are often simpler.
 
-This is one of the weaker parts of Haskell: it actually does NOT have records (as explained, there is just a syntactic sugar upon tuples). Newer languages from the Haskell family [PureScript](http://www.purescript.org) and [Elm](http://elm-lang.org) elaborated on this and introduced *proper* records.
+### OverloadedRecordDot extension
 
-### Algebraic Data Types (ADTs)
-
-We say that our datatypes are algebraic in Haskell because it allows us to create sum and product types (with `data`), type aliases (with `type`), and special types (with `newtype`).
-
-* Sum = alternation with `|` (`A | B` -> A + B)
+The [`OverloadedRecordDot`](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/overloaded_record_dot.html) extension allows using the dot operator (`.`) for record field access, similar to object-oriented languages.
 
 ```haskell
-data Number = I Int | D Double   -- Int + Double
+{-# LANGUAGE OverloadedRecordDot #-}
+data Person = Person
+    { name :: String
+    , age  :: Int
+    }
+
+getName :: Person -> String
+getName p = p.name
 ```
 
-* Product = combination of types (`A B` -> A * B)
+This comes handy as it improves readability, especially when chaining field accesses (`p.address.city`). However, it also requires careful type management to avoid ambiguity.
 
-```haskell
-data Pair = P Int Double         -- Int * Double
-```
 
-## List and tuple
+## Lists and tuples
 
-There are two basic container types (has the ability to store multiple values) - tuples and lists. Of course, there are much more such as maps, sets, vectors, streams defined in some libraries or you can create your own but these are really the basic and widely used.
+Haskell provides two fundamental built-in container types for grouping values:
+**tuples** and **lists**. They are used everywhere and illustrate two different
+ways of structuring data.
 
-### Tuple
+Other containers (maps, sets, sequences, vectors, streams, …) exist in libraries,
+but tuples and lists are the core building blocks.
 
-Tuple has a fixed number of elements of fixed types. You always know how many elements are in the tuple and what type is it. Type of elements in a tuple can differ.
+### Tuples: fixed structure, heterogeneous types
+
+A **tuple** groups a fixed number of values.
+
+* The number of elements is fixed.
+* Each position has its own (possibly different) type.
 
 ```haskell
 myTuple :: (Int, String, Bool, Double)
 myTuple = (15, "String", True, 5.24)
+```
 
+Pattern matching can extract elements from tuples:
+
+```haskell
 myFunc :: (Int, String, Bool, Double) -> (Double, String)
 myFunc (a, b, c, d) = (if d then a + d else a - d, b)
 ```
 
-There are basic functions for tuples with two elements: `fst`, `snd`, and `swap`.
+Tuples with **two elements** are especially common and have standard helpers: `fst`, `snd`, and `swap` (from [Data.Tuple]).
 
-```haskell
-Prelude> :type fst
+```
+ghci> :type fst
 fst :: (a, b) -> a
-Prelude> fst (7, "Hello")
+
+ghci> fst (7, "Hello")
 7
-Prelude> :type snd
+
+ghci> :type snd
 snd :: (a, b) -> b
-Prelude> snd (7, "Hello")
+
+ghci> snd (7, "Hello")
 "Hello"
-Prelude> import Data.Tuple
-Prelude Data.Tuple> :t swap
+
+ghci> import Data.Tuple
+ghci> :t swap
 swap :: (a, b) -> (b, a)
-Prelude Data.Tuple> swap (7, "Hello")
+
+ghci> swap (7, "Hello")
 ("Hello",7)
 ```
 
-Good to know is, how it actually works and try to implement own tuples.
+#### Tuple pattern matching
+
+Tuples can be deconstructed using pattern matching, either in function definitions or `let`/`where` bindings.
+
+```haskell
+addFirstTwo :: (Int, Int, Int) -> Int
+addFirstTwo (x, y, _) = x + y
+```
+
+#### Tuples as product types
+
+Conceptually, tuples are **product types*. A tuple `(a, b)` contains both an `a` and a `b`.
+
+You can model tuples explicitly using `data`:
 
 ```haskell
 data MyTuple2 a b = XTuple2 a b
@@ -313,212 +532,224 @@ data MyTuple3 a b c = XTuple3 a b c
 
 myTuple :: MyTuple3 Int String Double
 myTuple = XTuple3 7 "Hi" 2.25
+
+addFirstTwo :: MyTuple3 Int Int c -> Int
+addFirstTwo (XTuple3 x y _) = x + y
 ```
 
 What forms the tuple is the `,` operator keyword and used notation in the first example is just a syntactic sugar.
 
-
 ```haskell
 myTuple = (,) 7 "Hi"
+myTuple3 = (,,) 7 "Hi" 2.25
 ```
 
-### List
+Note: there is a limit on the number of tuple elements (up to 62 in GHC) because each arity requires a separate type constructor. For larger collections, use lists or other data structures from libraries. It is reasonable to use tuples for small fixed-size groupings (2-4 elements), typically ad-hoc groupings of related values.
 
-List is different than tuples - it has variable length (because it is a recursive type) and its elements have the same type. To understand it, let's create an alternative implementation of list data type.
+### Lists: variable length, homogeneous types
 
-```haskell
-data List a = Empty | NonEmpty a (List a)
-```
+A list represents a sequence of values:
 
-That's it! List of type `a` is either `Empty` or `NonEmpty` which means that it has an element and then rest of the list (which can be again `Empty` or `NonEmpty`). Sometimes the following naming is used:
-
-```haskell
-data List a = Nil | Cons a (List a)
-```
-
-It is because with `Cons` you join element with the other list. List in Haskell is very similar, just for `Nil` you use empty list `[]` and for joining the infix cons operator `:`.
+* its length can vary,
+* all elements have the same type.
 
 ```haskell
 myIntList :: [Int]
 myIntList = [5,8,7,1]
-myIntList = 5:8:7:[1]
-myIntList = 5:8:[7,1]
--- ...
--- infix cons
-myIntList = 5:8:7:6:1:[]
--- prefix cons
-myIntList = (:) 5 ((:) 8 ((:) 7 ((:) 1 [])))
 ```
 
-Actually `[5,8,7,6,1]` is a syntactic sugar for `5:8:7:6:1:[]` and even for the prefix. Same goes for the type, when you write `[Int]` it actually means `[] Int`. You can rewrite the actual list to:
+Lists are recursive data types. A list is either:
+
+* empty, or
+* an element followed by another list.
+
+A simple custom definition makes this explicit:
 
 ```haskell
--- data [a] = [] | a:[a]
+data List a
+    = Empty
+    | NonEmpty a (List a)
+```
+
+A more traditional naming is:
+
+```haskell
+data List a
+    = Nil
+    | Cons a (List a)
+```
+
+#### List constructors
+
+Lists have two (data) constructors:
+
+* `[]` (*Nil*) represents the empty list,
+* `:` (*Cons*) constructs a new list by prepending an element to an existing list.
+
+Yes, data constructors can be symbolic operators! Basically, the following to definitions are equivalent thanks to *syntactic sugar*:
+
+```haskell
+[5, 8, 7, 1]
+5 : 8 : 7 : [1]
+5 : 8 : 7 : 1 : []
+(:) 5 ((:) 8 ((:) 7 ((:) 1 [])))
+```
+
+Similarly, the type `[Int]` is just syntactic sugar for `[] Int`. The list type is defined as:
+
+```haskell
 data [] a = [] | (:) a ([] a)
 ```
 
-### String
+Lists are simple and expressive, but not always the most efficient data structure. While GHC performs many optimizations, for large-scale or performance-critical applications, we will later explore more advanced data structures from the [containers] library.
 
-String is really nothing but just a list of characters `[Char]`. The only difference is that there are more functions for working especially with `String`s - like `putStr`, `lines`, `words` and more (see [Data.String]). For more efficient working with strings is [text] package providing "a time and space-efficient implementation of Unicode text" with [Data.Text] - two variants: Lazy and Strict. Later on, we will get back to this problem which makes a life of Haskell programmer sometimes little bit uneasy.
+#### List pattern matching
 
-## Simple functions
-
-Enough of types and containers, let's do some functions when this is a functional programming course!
-
-### Basic list functions
-
-Since list is a very simple and widely used data structure, it is a good time to learn useful functions to work with lists. You can find a complete list in [Data.List] documentation. Try following examples and examine the type of functions if needed. Also, try to run some unclear cases like `head` of the empty list and see what happens...
+Pattern matching is commonly used to deconstruct lists (as any other data type):
 
 ```haskell
-Prelude> let myList = [2,4,5,3,2,8,4,1]
-Prelude> head myList
+sumList :: [Int] -> Int
+sumList []       = 0
+sumList (x : xs) = x + sumList xs
+```
+
+### Strings: lists of characters
+
+In Haskell, a `String` is **not a special primitive type**. It is simply a type synonym for a list of characters:
+
+```haskell
+type String = [Char]
+```
+
+This means that:
+
+* all list operations work on strings,
+* strings are immutable sequences of characters.
+* string processing follows the same principles as list processing (thus may be inefficient for large texts).
+
+For example:
+
+```haskell
+"hello" == ['h', 'e', 'l', 'l', 'o']  -- True
+```
+
+#### String functions
+
+Because `String` is just list of `Char`, many functions are shared with lists. In addition, there are some standard functions specialized for textual use, such as:
+
+* `putStr`, `putStrLn`
+* `lines`, `words`
+* `unlines`, `unwords`
+
+These are provided by the standard library (see [Data.String] and related modules).
+
+#### Simple functions for lists (and strings)
+
+Now that we have introduced basic data types and containers, we can focus on **working with data** using functions.
+
+Lists are a fundamental data structure in Haskell, and many useful operations are already provided by the standard library (see [Data.List]).
+
+Try the following examples in GHCi and inspect their types:
+
+```
+ghci> let myList = [2,4,5,3,2,8,4,1]
+
+ghci> head myList
 2
-Prelude> tail myList
+
+ghci> tail myList
 [4,5,3,2,8,4,1]
-Prelude> myList ++ [4, 5]
+
+ghci> myList ++ [4,5]
 [2,4,5,3,2,8,4,1,4,5]
-Prelude> myList !! 2
+
+ghci> myList !! 2
 5
-Prelude> null myList
+
+ghci> null myList
 False
-Prelude> null []
+
+ghci> null []
 True
-Prelude> length myList
+
+ghci> length myList
 8
-Prelude> reverse myList
+
+ghci> reverse myList
 [1,4,8,2,3,5,4,2]
-Prelude> take 2 myList
+
+ghci> take 2 myList
 [2,4]
-Prelude> drop 2 myList
+
+ghci> drop 2 myList
 [5,3,2,8,4,1]
-Prelude> filter (<6) myList
+
+ghci> filter (<6) myList
 [2,4,5,3,2,4,1]
-Prelude> takeWhile (<6) myList
+
+ghci> takeWhile (<6) myList
 [2,4,5,3,2]
-Prelude> dropWhile (<6) myList
+
+ghci> dropWhile (<6) myList
 [8,4,1]
-Prelude> elem 5 myList
+
+ghci> elem 5 myList
 True
-Prelude> elem 7 myList
+
+ghci> elem 7 myList
 False
-Prelude> zip [1,2,3] [4,5,6]
+
+ghci> zip [1,2,3] [4,5,6]
 [(1,4),(2,5),(3,6)]
-Prelude> map (^2) myList
+
+ghci> map (^2) myList
 [4,16,25,9,4,64,16,1]
-Prelude> all (<6) myList
+
+ghci> all (<6) myList
 False
-Prelude> any (<6) myList
+
+ghci> any (<6) myList
 True
-Prelude> sum myList
+
+ghci> sum myList
 29
-Prelude> or [True, False, True]
+
+ghci> or [True, False, True]
 True
-Prelude> and [True, False, True]
+
+ghci> and [True, False, True]
 False
-Prelude> foldl (+) 0 myList
+```
+
+#### Folding (reducing) lists
+
+Folding (also known as reducing) is a powerful technique for processing lists. It involves recursively combining the elements of a list using a binary function and an initial accumulator value.
+
+```
+ghci> foldl (+) 0 myList
 29
-Prelude> foldl (||) False [True, False, True]
+
+ghci> foldl (||) False [True, False, True]
 True
-Prelude> foldl (&&) False [True, False, True]
+
+ghci> foldl (&&) True [True, False, True]
 False
 ```
 
-The last one is left fold, there is also right fold (depends on associativity), we will cover this in more detail later, while explaining so-called catamorphism. Now you can just see that it is a generalization of `sum`, `and`, `or`, and many others.
+Here, `foldl` (left fold) generalizes operations such as `sum`, `and`, and `or`.
 
-It is a very good practice to try to implement some of these functions to understand them and their complexity. You may worry that using list is always very inefficient, luckily GHC can do some optimizations (although still in some cases you should prefer [Data.Sequence] or other [containers] - we will get back to this during the course).
-
-### Intro to pattern matching
-
-An important concept in many (not just) functional programming languages is the pattern matching. You could already notice it before in the example with record data types. When defining a function, it is possible to match the parameters via data constructors and/or values. As we've shown, for lists and tuples there are data constructors (`:` and `,`) which can be used in pattern matching as well.
-
-```haskell
-data Age = Age Int | Unknown
-
-ageInfo         :: Age -> String
-ageInfo (Age x) = "Age is " ++ (show x) ++ " years."
-ageInfo Unknown = "Age is unknown"
-
-head        :: [a] -> a
-head (x:xs) = x
-
-tail        :: [a] -> a
-tail (x:xs) = xs
-
-length        :: [a] -> Integer
-length []     = 0
-length (_:xs) = 1 + length xs     -- _ wildcard = don't care & won't use
-
-fst        :: (a, b) -> a
-fst (x, _) = x
-
-snd        :: (a, b) -> b
-snd (_, y) = y
-```
-
-There are three more advanced, not so common, but sometimes useful concepts: pattern naming, lazy pattern, and strict pattern. We will get back to them in the next lesson when we will cover also guards.
-
-### Recursion and tail recursion
-
-The concept of [recursion] is well-known - a function that has the ability to invoke itself. That allows us to solve big problems by recursively solving their smaller part(s). The best-known example is factorial - the trivial case is the factorial of 0, which is 1. Any other factorial of natural number *n* is then *n* times factorial of *n-1*. In Haskell we can write exactly this definition:
-
-```haskell
-factorial 0 = 1
-factorial n = n * factorial n-1
-```
-
-During any call of subroutine (function, procedure, or other action), it is needed to store information to the [call stack]. Such information consists of where was the call initiated, what was the state and where it should return the value when poping from this stack. For example, with calling `res = factorial 3` call stack could look like this (top on the left):
-
-1. `res = _`
-2. `factorial 3 = 3 * _`, `res = _`
-3. `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
-4. `factorial 1 = 1 * _`,  `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
-
-Now it reaches `factorial 0 = 1` and can start popping back the result:
-
-1. `factorial 1 = 1 * 1`,  `factorial 2 = 2 * _`,  `factorial 3 = 3 * _`, `res = _`
-2. `factorial 2 = 2 * 1`,  `factorial 3 = 3 * _`, `res = _`
-3. `factorial 3 = 3 * 2`, `res = _`
-4. `res = 6`
-
-The result is indeed 6, but could it be more efficient? Why is it necessary to use [call stack]? It stores the context of interrupted functions by the recursive call, it must remember that result needs to be multiplied then and after that, it can be returned. What if there is nothing more to do after returning the value from the recursive call - nothing needed to remember? That is called [tail recursion] and in such case, it can optimize usage of [call stack] - only 1 frame will be (re)used!
-
-Following `factorial` is tail recursive with use of so-called accumulator `acc`, the result is returned from the trivial case without any change.
-
-```haskell
-factorial n = fac' n 1 
-            where fac' 0 acc = acc
-                  fac' x acc = fac' (x - 1) (x * acc) 
-```
-
-
-1. `factorial 3`
-2. `fac' 3 1`
-3. `fac' 2 3`
-4. `fac' 1 6`
-5. `fac' 0 6`
-6. `6`
-
-Although Haskell's [lazy evaluation] strategy and GHC optimizations make it unnecessary to write tail-recursive functions, you should be familiar with the concept as functional programmer. With Haskell, you should more focus on the readability of your code and productivity!
+We will study folds in more detail later when discussing recursion schemes (catamorphisms). For now, it is enough to recognize them as a powerful abstraction over list processing.
 
 ## Task assignment
 
-The homework to try out your skills in using basic functions and types can be found at [MI-AFP/hw02](https://github.com/MI-AFP/hw02). 
+For the second assignment, navigate to the `hw02` project and follow the instructions in the `README.md` file there. It will test your skills in using basic functions and types.
 
 ## Further reading
 
-* [Haskell: Tail Recursion](http://www.cs.bham.ac.uk/~vxs/teaching/Haskell/handouts/tail-recursion.pdf)
 * [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
 * [School of Haskell](https://www.schoolofhaskell.com/school/starting-with-haskell/introduction-to-haskell)
 
-[call stack]: https://en.wikipedia.org/wiki/Call_stack
 [containers]: http://hackage.haskell.org/package/containers
 [Data.List]: hackage.haskell.org/package/base/docs/Data-List.html
-[Data.Sequence]: http://hackage.haskell.org/package/containers/docs/Data-Sequence.html
-[Data.String]: https://hackage.haskell.org/package/base/docs/Data-String.html
-[Data.Text]: https://hackage.haskell.org/package/text/docs/Data-Text.html
-[lazy evaluation]: https://wiki.haskell.org/Lazy_evaluation
-[pattern matching]: https://www.haskell.org/tutorial/patterns.html
-[recursion]: https://en.wikibooks.org/wiki/Haskell/Recursion
-[tail recursion]: https://wiki.haskell.org/Tail_recursion
-[text]: http://hackage.haskell.org/package/text
-
+[Data.String]: hackage.haskell.org/package/base/docs/Data-String.html
+[Data.Tuple]: hackage.haskell.org/package/base/docs/Data-Tuple.html
