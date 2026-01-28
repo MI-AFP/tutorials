@@ -1,177 +1,329 @@
 # FP and first Haskell app
 
-## Functional programming concepts
+This first tutorial is focused on getting you familiar with functional programming concepts and Haskell programming language as well as the tools we will use during this course. By end of this tutorial, you should be able to create simple Haskell applications on your own and understand basic FP concepts.
 
-Functional programming is a programming paradigm (i.e. a style of building the structure and elements of computer programs) that treats computation as the evaluation of mathematical functions and avoids changing-state and mutable data. FP app is made of expressions or declarations instead of statements. Functional programming has its origins in lambda calculus, a formal system developed in the 1930s.
+## Intro to functional programming
 
-### Lambda calculus
+Functional programming (FP) is a programming paradigm that is **strongly influenced by mathematics and formal logic**. At its core, it views computation as the evaluation of expressions rather than the execution of step-by-step instructions. Programs are described *declaratively*: instead of explaining how to compute something, we describe what the result should be.
 
-Lambda calculus is good to understand (at least basics) when you want to start with FP. You should get familiar mainly with the principle of reduction of some more or less complex expression to the simplest and irreducible form. That will make it a lot easier to understand basics of functional programming and Haskell if you are used to the object-oriented world.
+Historically, functional programming grew out of **lambda calculus**, a formal system developed in the 1930s to study computation, functions, and substitution. Because of this origin, many FP concepts have precise mathematical definitions and are often presented in a theoretical way.
 
-* [Lambda calculus (wikipedia)](https://en.wikipedia.org/wiki/Lambda_calculus)
-* [Lambda calculus (Stanford)](https://plato.stanford.edu/entries/lambda-calculus/)
-* [The Lambda Calculus for Absolute Dummies (like myself)](http://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
+However, this course is about applied functional programming.
 
-For FIT CTU students, there are subjects [BI-PPA](https://courses.fit.cvut.cz/BI-PPA/) and [MI-PSL](https://courses.fit.cvut.cz/MI-PSL/) which also cover basics of lambda calculus and functional programming.
+We will not focus on formal proofs, reduction rules, or theoretical machinery for its own sake. Instead:
 
-### Function as first class-object
+* we will introduce theoretical ideas only when they help explain practical behavior,
+* we will relate FP concepts to familiar mathematics (functions, equations, composition), and
+* we will focus on how these ideas help you write clear, correct, and maintainable code.
 
-A programming language is said to have [first-class functions](https://en.wikipedia.org/wiki/First-class_function) if it treats functions as first-class citizens or objects. It means that the language support following concepts:
+You do not need a strong mathematical background to follow this course. When mathematical intuition is useful, we will build it gradually and concretely.
 
-* passing function as argument,
-* returning function as result,
-* anonymous and nested functions,
-* closures (and non-local variables),
-* assigning functions to variables,
-* and equality of functions.
+### Functional programming vs. imperative programming
 
-Some might not be absolutely clear to you at the moment, some are familiar from some math courses, but we will see all of them in practice during the course.
+In imperative and object-oriented programming, programs are usually described as a sequence of commands that change program state over time. In functional programming, programs are instead built from expressions that evaluate to values.
 
-### FP concepts and dictionary
+A rough intuition:
 
-* **Pure function** = function without side effect, always return the same result for the same input
-* **Side effect** = modification of non-local state (global variable, input/output, raising exception, call function causing side effect, etc.)
-* **Immutable variables** = after setting (binding) name to expression, you can not modify it
-* **Referential transparency** = expression is said to be referentially transparent if it can be replaced with its corresponding value without changing the program's behavior
-* **Recursion** = recursion occurs when a thing is defined in terms of itself or of its type (applies for functions, for example, factorial, and for types, like tree structure)
+* imperative programming: “*do this, then do that*”
+* functional programming: “*this value is defined as…*”
 
-Principles [[jdegoes](https://twitter.com/jdegoes/status/974045822424776704?s=09)]:
+This difference has important consequences:
 
-1. Orthogonal Composability: composable blocks should address a single concern.
-2. Maximum Polymorphism: data types & functions should require minimum structure necessary.
-3. Maximum Deferment: defer types, decisions, effects, evaluation to the last moment.
+* less reliance on mutable state,
+* easier reasoning about code,
+* better composability of program parts.
+
+We will see these benefits in practice very early.
+
+### Mathematics as intuition, not as theory
+
+Many FP ideas map directly to concepts you already know from mathematics:
+
+* functions as mappings from inputs to outputs,
+* expressions that can be replaced by their values,
+* composition of functions, or
+* defining things by equations.
+
+In this course, mathematics serves as intuition and vocabulary, not as formal theory. When we say that a function is pure or that an expression is referentially transparent, we will always connect that idea to concrete code examples and practical consequences.
+
+If you are interested in deeper theoretical foundations, the following resources provide excellent background reading:
+
+* [Lambda calculus (Wikipedia)](https://en.wikipedia.org/wiki/Lambda_calculus)
+* [Lambda calculus (Stanford Encyclopedia of Philosophy)](https://plato.stanford.edu/entries/lambda-calculus/)
+* [The Lambda Calculus for Absolute Dummies](http://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
+
+For FIT CTU students, related material is covered in:
+
+* [BI-PPA (Programming Paradigms)](https://courses.fit.cvut.cz/BI-PPA/)
+* [MI-PSL (Programming in Scala)](https://courses.fit.cvut.cz/MI-PSL/)
+
+These are **optional** and not required for this course. You can always find additional resources in the "Further reading" section at the end of each tutorial.
+
+Be aware that some FP programmers are very focused on formalism, theory, and mathematical rigor (often instead of practical application, clarity, and maintainability of the code). While these aspects are important in some contexts, this course emphasizes practical application and understanding over formal proofs.
+
+### What “functional” will mean in this course
+
+Throughout the course, functional programming will primarily mean working with the following ideas:
+
+* **Pure functions** = functions without side effects, whose result depends only on their input
+* **Immutability** = values do not change once defined
+* **Composition** = building complex behavior by combining small functions
+* **Explicit effects** = side effects are controlled and visible in types
+* **Strong static typing** = using the type system to express and enforce program structure
+
+Each of these concepts will be introduced in context, with examples in Haskell, and motivated by practical problems rather than abstract definitions.
 
 ## Haskell - the programming language
 
-[Haskell] is a pure functional programming language with strong static typing and non-strict evaluation. It is also standardized (actual standard is [Haskell 2010] and 2020 is under development). Although it is language with academic and strong math background, it is being used in [research][haskell_research], [education][haskell_education] as well as in [industry][haskell_industry] for various projects. It was created as one common language based on many previous functional languages during the 1990s. Main language implementation is [Glasgow Haskell Compiler (GHC)][GHC], which we will use extensively in this course.
+[Haskell] is a pure functional programming language with strong static typing and non-strict evaluation. It is also standardized (actual standard is [Haskell 2010] and Haskell 2020 is still not here). Although it is language with academic and strong math background, it is being used in [research][haskell_research], [education][haskell_education] as well as in [industry][haskell_industry] for various projects. It was created as one common language based on many previous functional languages during the 1990s. Main language implementation is [Glasgow Haskell Compiler (GHC)][GHC], which we will use extensively in this course.
 
 [haskell_research]: https://wiki.haskell.org/Haskell_in_research
 [haskell_education]: https://wiki.haskell.org/Haskell_in_education
 [haskell_industry]: https://wiki.haskell.org/Haskell_in_industry
 
+## Why Haskell?
+
+There are many programming languages that support functional programming today, including multi-paradigm languages such as JavaScript, Python, Scala, Kotlin, or Rust, as well as primarily functional languages like OCaml, F#, or Clojure.
+
+In this course, we use Haskell not because it is the only functional language, but because it is a particularly good language for learning functional programming principles clearly and systematically.
+
+Haskell has several properties that make it well suited for this purpose:
+
+* **Purity by default** = In Haskell, functions are pure unless stated otherwise. Side effects (such as input/output, mutation, or randomness) are explicit and controlled. This makes functional concepts visible rather than optional.
+* **Strong static typing with type inference** = Haskell’s type system allows you to express rich program structure while still keeping code concise. Types serve as documentation, correctness checks, and design tools — not just as annotations.
+* **Direct correspondence to mathematical intuition** = Haskell code often looks close to equations or definitions you might write on paper. This makes it easier to relate programs to mathematical ideas such as functions, composition, and abstraction.
+* **Minimal hidden behavior** = Compared to multi-paradigm languages, Haskell avoids implicit mutation, implicit nulls, or ad-hoc control flow. This reduces accidental complexity and forces you to model problems explicitly.
+
+Because of these characteristics, Haskell tends to teach you functional programming whether you want it or not. That is a feature, not a drawback, in a learning environment.
+
+Once you understand functional programming in Haskell, **transferring these ideas to other languages becomes significantly easier**.
+
 ## The tools we use
 
-* [GHC] = the compiler. There are some more (Hugs, NHC, JHC, UHC, etc.), but this is classified as most widely used.
-* [Cabal] = system for building and packaging.
-* [Stack] = managing Haskell projects, works with [Cabal] for you.
+* [GHC] = the compiler and interactive environment. There are some more (Hugs, NHC, JHC, UHC, etc.), but this is classified as most widely used. It is de-facto standard for Haskell programming.
+* [Cabal] = system for building and packaging. This is the standard tool for building Haskell projects and managing dependencies.
+* [Stack] = a project and dependency management tool. It uses Cabal under the hood but makes project management much easier.
+* [HLS (Haskell Language Server)] = language server for Haskell, provides IDE features like autocompletion, type info, diagnostics, etc.
+* [GHCup] = tool for installing GHC, Cabal, Stack, HLS, etc. and managing their versions. It simplifies the setup process and ensures you have compatible versions of the tools.
 
-:point_right: Please, install these (or check if installed already) - you can follow instruction on official websites one by one or (recommended and better) install [GHCup], which includes all of those and also most common packages.
+:point_right: You should install these tools before proceeding. The recommended way is to use [GHCup] which will handle installation and version management for you (no matter if you are on Linux, macOS, or Windows). Follow the instructions and install the recommended versions of GHC, Cabal, Stack, and HLS.
 
 ### Editors and IDEs
 
-There are several editors you may use for writing Haskell programs, most probably there is some extension for your favorite editor. We recommend one of those:
+Haskell does not require a specific editor or IDE. You can use any editor you are comfortable with, as long as it supports syntax highlighting and language server integration.
 
-* [Vim with plugins](https://wiki.haskell.org/Vim)
-* [IntelliJ IDEA with HaskForce](http://haskforce.com) (or visit their [GitHub repo](https://github.com/carymrobbins/intellij-haskforce))
-* [Atom with plugins](https://atom-haskell.github.io/overview/)
-* [Visual Studio Code with plugins](https://medium.com/@dogwith1eye/setting-up-haskell-in-vs-code-with-stack-and-the-ide-engine-81d49eda3ecf)
+Common choices include:
 
-### Sites for searching
+* **Vim** with [Haskell plugins](https://wiki.haskell.org/Vim) for command-line enthusiasts
+* **Visual Studio Code** with [Haskell extension](https://marketplace.visualstudio.com/items?itemName=haskell.haskell) for a modern and user-friendly experience
+* **IntelliJ IDEA** with [Haskell LSP](https://plugins.jetbrains.com/plugin/24123-haskell-lsp) for those who prefer JetBrains IDEs
+* **Emacs** with [Haskell mods](https://wiki.haskell.org/Emacs) for Emacs lovers
 
-* [Hoogle] = "Google" for Haskell world
-* [Hackage] = package archive, there are packages which can you install and use standalone or as modules for your projects (similar to PyPI for Python, RubyGems for Ruby, etc.)
-* [Stackage] = package archive, alternative to [Hackage], only stable packages
+The exact editor choice is not important for the course. Pick one you like and set it up to work with HLS for the best experience. If you are not sure, Visual Studio Code is a good starting point.
 
-:point_right: Take a look at them...
+### Sites for searching and documentation
 
-### Haskell, JavaScript and new languages
+When working with Haskell, you will frequently look up functions, types, and libraries. The following sites are essential:
 
-If you like to build (frontend/backend) JavaScript applications you can do that nicely with Haskell or similar language. There are multiple options, most known are:
+* [Hoogle] is a search engine for Haskell functions and types. You can search by name or by type, which is extremely useful once you get used to it.
+* [Hackage] is the central package repository (similar to *PyPI* for Python or *npm* for JavaScript). It contains thousands of libraries and tools for Haskell including their documentation and browseable source code.
+* [Stackage] is a curated set of stable packages. Stackage provides tested collections of library versions that are known to work well together. Tools like *Stack* use Stackage snapshots to ensure **reproducible builds**.
 
-* [GHCJS]
-* [Haste]
-* [PureScript]
-* [Elm] (will be covered in later lectures)
+You will use these resources regularly throughout the course, so get familiar with them (maybe bookmark them). Of course, getting help via search engines like Google or Stack Overflow is also common practice. Nowadays, AI-based tools like ChatGPT or GitHub Copilot can also assist you in finding information or generating code snippets (but always verify the output and be aware of possible hallucinations).
 
-This is a nice example of practical usage of Haskell for web projects! It is so much easier (and safer) to write JavaScript in Haskell than just plain JavaScript. Some of those are not just Haskell dialects or libraries but new languages deeply inspired by Haskell. For more information, read about [The JavaScript Problem](https://wiki.haskell.org/The_JavaScript_Problem). We will slightly look at this at the end of this course.
+:point_right: Take a time and investigate them a bit so you are ready later on, whenever you need to find some function or library.
 
-## Try to be interactive
+### Haskell and related languages
 
-Now you should have [GHC] installed from package or via Stack (and others as well, but we won't need an editor for this time), you can test it out with the following command.
+Haskell has influenced many modern languages and ecosystems, including frontend and backend development for the web.
 
-```console
-% ghc --version
-The Glorious Glasgow Haskell Compilation System, version 9.4.8
-% stack exec -- ghc --version
-The Glorious Glasgow Haskell Compilation System, version 9.4.5
-```
+There are several languages and tools that are either based on Haskell or heavily inspired by it, such as:
 
-First, let's try the interactive environment and evaluate some basic expression in Haskell for the first time.
+* **PureScript** (for frontend web development)
+* **Elm** (for frontend web development, covered later)
+* **Idris** (dependently typed functional programming)
+* (historically also tools like GHCJS or Haste)
+
+Moreover, Haskell inspired other well-known languages even if they are not purely functional, such as **Scala**, **F#**, **Rust**, **Python**, **Swift** or **Java**.
+
+## Try Haskell interactively with GHCi
+
+GHCi is an interactive environment (so called *REPL* = Read-Eval-Print Loop) for Haskell. It lets you evaluate expressions, inspect their types, debug, and experiment quickly before you write full source files.
+
+### Starting GHCi
 
 ```
 % ghci
-GHCi, version 9.4.8: http://www.haskell.org/ghc/  :? for help
-ghci> "Hello, world!"
-"Hello, world!"
-ghci> putStrLn "Hello, world!"
-Hello, world!
+GHCi, version 9.x.x: https://www.haskell.org/ghc/  :? for help
+ghci>
 ```
 
-In prompt you see (by default) imported modules, in this case just `Prelude` - the most basic one (try to lookup Prelude module in [Hoogle] and check the content of it). Then you can write and evaluate Haskell expression. In the example above we wrote a string using double quotes and result was the string (no surprise, nothing to do more with that). We then used a function `putStrLn` to print a string to output (notice that there are no quotes around).
+At the prompt you can write Haskell **expressions**, the REPL will read them, evaluate them, and print the result. Alternatively, you can use GHCi commands which start with `:` (colon), such as `:?` for help (those are not Haskell expressions!).
 
-### Basic math & logics
+### Expressions
 
-In Haskell you can use math operators as you are used to.
-
-```
-ghci> 5 + 5
-10
-ghci> 5 + 5 * 3
-20
-ghci> (5 + 5) * 3
-30
-ghci> 2 ^ 8
-256
-ghci> 2 / 3
-0.6666666666666666
-```
-
-Integer division and modulo are done by functions. You can call functions in prefix notation (no brackets and no commas):
+In Haskell, most things you write are expressions. **An expression evaluates to a value**. For example, a number like `5` is an expression that evaluates to the integer value `5`. A string like `"Hello"` is an expression that evaluates to the string value `Hello`.
 
 ```
-ghci> div 7 2
-3
-ghci> mod 7 2
-1
+ghci> 5
+5
+
+ghci> "Hello"
+"Hello"
 ```
 
-Same goes for logic and comparison (you might be used to `!=` or `<>` for not-equal, but `!` and `<>` are used for something else in Haskell we will find out during the course):
+That’s the simplest possible interaction: evaluate an expression and show its result.
+
+Now compare that to a **function** that *performs output*:
+
+```
+ghci> putStrLn "Hello"
+Hello
+```
+
+Here `putStrLn "Hello"` is still an **expression** (more specially function application with `"Hello"` as argument) — but its result is an **effectful computation**, not a pure string value (we’ll later talk about IO and effects explicitly).
+
+Note: `putStrLn` is a function with one **parameter** of type `String`. It simply prints that string to the standard output followed by a newline. It comes from the **standard module** called `Prelude` which is imported by default in GHCi and all Haskell source files.
+
+### Every expression has a type
+
+A key point now: **every expression has a type**, and GHC can *infer* it.
+
+In GHCi you can ask for the type of any expression using `:type` (or `:t`) followed by the expression.
+
+```
+ghci> :type "Hello"
+"Hello" :: String
+```
+
+We can read this as: the expression `"Hello"` is of type `String` (`::` means "*is of type*"). If you have older version of GHCi, you might see `[Char]` instead of `String` - they are the same thing (type synonym).
+
+This is the first math connection worth making explicit:
+* In mathematics, we say that an object has a certain type or belongs to a certain set, e.g., `5 ∈ ℤ` (alt. `5 : ℤ`) means that the number `5` is an integer.
+* In Haskell, we say that an expression has a certain type, e.g., `5 :: Int` means that the expression `5` is of type `Int`.
+
+Types are not decoration — they are part of the meaning of the program. The type system helps ensure correctness, guides program structure, and enables powerful abstractions. **Type inference** means that you often do not need to write types explicitly; GHC can figure them out for you. It does so by analyzing how expressions are constructed and combined. It always tries to find the most general type that fits the expression.
+
+```
+ghci> :type 5
+5 :: Num p => p
+```
+
+Here `Num p => p` means that `5` can be any type `p` that is an instance of the `Num` typeclass (we will cover typeclasses later). Basically, it means that `5` can be used as *any numeric type* (like `Int`, `Integer`, `Float`, `Double`, etc.).
+
+### Boolean expressions
+
+Comparison produces `Bool` values (`True` or `False`), and boolean operators compose like normal expressions:
 
 ```
 ghci> 5 > 7
 False
+
 ghci> 5 == 7
 False
+
 ghci> 5 /= 7
 True
+
 ghci> not (5 /= 7)
 False
+
 ghci> False || True
 True
+
 ghci> False && True
 False
+
 ghci> not False && True
 True
 ```
 
-### Types
+### Basic arithmetic and precedence
 
-A very useful thing in GHCi is that you can check the type of an expression.
+Haskell’s arithmetic works as you expect:
+
+```
+ghci> 5 + 5
+10
+
+ghci> 5 + 5 * 3
+20
+
+ghci> (5 + 5) * 3
+30
+
+ghci> 2 ^ 8
+256
+```
+
+Just, remember that `/` is for fractional division (result is fractional number):
+
+```
+ghci> 7 / 2
+3.5
+```
+
+Some operations are functions, not operators.
+
+```
+ghci> div 7 2
+3
+
+ghci> mod 7 2
+1
+```
+
+Here notice that `div` and `mod` are functions for integer division and modulus, respectively. **Functions are applied** by writing the function name followed by its arguments separated by spaces. There are no parentheses or commas.
+
+```
+ghci> :t div
+div :: Integral a => a -> a -> a
+
+ghci> :t mod
+mod :: Integral a => a -> a -> a
+
+ghci> :t abs
+abs :: Num a => a -> a
+```
+
+You can see that both `div` and `mod` take two arguments of some integral type resulting in a value of the same type. However, `abs` takes one argument of some numeric type and returns a value of the same type. Again, in math that could be written as (see the similarities?):
+
+* `div : ℤ → ℤ → ℤ`
+* `mod : ℤ → ℤ → ℤ`
+* `abs : ℝ → ℝ`
+
+Another note on **type signatures**: `->` means "function from ... to ...". So `a -> a -> a` means "function that takes an argument of type `a` and returns a function that takes another argument of type `a` and returns a value of type `a`". In other words, it is a function with two arguments of type `a` returning a value of type `a`. Type signatures are always read from left to right, you can write brackets to make it clearer: `a -> (a -> a)`.
+
+### Type inference and type constraints
+
+Ask for types:
 
 ```
 ghci> :type 2 ^ 8
 2 ^ 8 :: Num a => a
+
 ghci> :type 2 / 3
 2 / 3 :: Fractional a => a
 ```
 
-The double semicolon `::` means "is of type" and you can use it for explicitly stating the type of your expressions. But this is not typecasting as you might know, you must conform the restriction, in this case, `Fractional a` (typeclasses will be covered deeply in next lessons).
+This is Haskell saying:
+
+* This expression works for **any type** `a` that behaves like numbers (`Num a`).
+* For `/`, it needs a stronger requirement though: `Fractional a` (result of `/` is a value of **any fractional type**).
+
+You can also explicitly choose a concrete type by using a **type annotation** with `::`:
 
 ```
 ghci> (2 / 3) :: Double
 0.6666666666666666
+
 ghci> (2 / 3) :: Float
 0.6666667
+```
+
+But you cannot force the impossible:
+
+```
 ghci> (2 / 3) :: Int
 
 <interactive>:2:2: error:
@@ -180,9 +332,11 @@ ghci> (2 / 3) :: Int
       In an equation for ‘it’: it = (2 / 3) :: Int
 ```
 
+This is a practical payoff of types: the compiler tells you what mathematical *contract* you violated.
+
 You can see that error message exactly tells us what is wrong! `Int` is not an instance of `Fractional` which we need when using `/` in the expression `(2 / 3) :: Int`. This is kind of obvious but when you will have a bigger project with source files, you will find GHC error messages very useful.
 
-If you need to change type, find a suitable function. Some of them are in `Prelude`: `toInteger`, `fromInteger`, `toRational`, etc. Another quite important is `show` for showing anything as `String`. How these work will be covered later on in more detail as we get to typeclasses and polymorphism!
+If you need to change type, find a suitable function. Some of them are in `Prelude`: `toInteger`, `fromInteger`, `toRational`, etc. Another quite important is `show` for showing anything as `String`. How these work will be covered later on in more detail as we get to type classes and polymorphism!
 
 ```
 ghci> :t toInteger (7::Int)
@@ -193,17 +347,9 @@ ghci> toRational (2/16)
 1 % 8
 ```
 
-Similarly you can do such thing with functions, because we are in functional language! Function `abs` (absolute value) takes a number and returns a number. That means it doesn't work for strings...
-
-The type signature is very math-like... Instance (type) of `Num` is for example `Integer` and you know functions from math which have type `Integer -> Integer` (domain and co-domain).
+Similarly you can do such thing with functions, because we are in functional language! Function `abs` (absolute value) takes a number and returns a number. That means it doesn't work for strings:
 
 ```
-ghci> :type abs
-abs :: Num a => a -> a
-ghci> abs (-5)
-5
-ghci> abs (-10.65)
-10.65
 ghci> abs "z"
 
 <interactive>:26:1: error:
@@ -212,258 +358,465 @@ ghci> abs "z"
       In an equation for ‘it’: it = abs "z"
 ```
 
-The operators are functions as well - Haskell is functional language. All you need to do is put it in brackets. Plus takes two numbers and returns a number. You can then use `(+)` as a function in prefix notation and not infix.
+### Operators are functions
+
+In Haskell, operators are functions written infix. You can use them like normal functions by putting them in parentheses:
 
 ```
 ghci> :type (+)
 (+) :: Num a => a -> a -> a
+
+ghci> 5 + 4
+9
+
 ghci> (+) 5 4
 9
 ```
 
-On the other hand you might want to use some functions in infix to improve readability and you need `` ` `` for that.
+And you can use a normal function in infix form using backticks:
 
 ```
-ghci> :t div
-div :: Integral a => a -> a -> a
 ghci> 5 `div` 3
 1
+
 ghci> 5 `mod` 3
 2
 ```
 
-### Giving a name to an expression
+This is often useful for readability (especially for functions that naturally read better in infix form, like `div`, `mod`, or user-defined functions).
 
-In GHCi you can name an expression with `let` and assignment.
+### Naming expressions (let bindings)
+
+In GHCi you can name an expression with `let` and assignment (for a long time now, GHCi supports naming without `let` as well, so you can just write `x = 5`).
 
 ```
 ghci> let x = 5
+
 ghci> :type x
 x :: Num t => t
-ghci> let x = 5 :: Integer
+
+ghci> x = 5
+
+ghci> :type x
+x :: Num t => t
+```
+
+The word *Let* is again bringing us closer to mathematics where we often say "*Let x be ...*" when defining something.
+
+If you want, you can add a concrete type using type annotation with `::`:
+
+```
+ghci> x = 5 :: Integer
+
 ghci> :type x
 x :: Integer
 ```
 
-You can create functions as well. Notice that the type is automatically inferred. It happens every time when possible and you don't explicitly state the type.
+In Haskell, `x` is not a variable in the imperative sense. It is best described as:
+
+* a name bound to an expression, or
+* a binding.
+
+After this definition, the name `x` refers to the value of the expression `5` (of a concrete or inferred type).
+
+Important properties of such bindings:
+
+* `x` cannot change = Once the name `x` is bound to `5`, it always refers to `5`. (In GHCi, you can give the name later to something else, but in source files, you cannot.)
+* `x` is not a memory location like in imperative languages = There is no concept of variable assignment or mutation (updating the value of `x`).
+* `x` is closer to a mathematical symbol than to a variable in C, Java, or Python.
+
+### Defining functions
+
+**Function definitions** work the same way:
 
 ```
-ghci> let myFunc x y = 2 * x + y
+ghci> myFunc x y = 2 * x + y
+
 ghci> :t myFunc
 myFunc :: Num a => a -> a -> a
+
 ghci> myFunc 5 3
 13
 ```
 
-### Source file
+A note here, **function definition** here is `myFunc x y = 2 * x + y` which means that `myFunc` is a **function with two parameters** `x` and `y` (local bindings, again no mutable variables!) and its result is `2 * x + y`. You can see that **function application** is just writing the function name followed by its arguments separated by spaces. A possible **function declaration** (type signature) for `myFunc` would be `myFunc :: Integer -> Integer -> Integer` (we didn't write it explicitly here, but GHC inferred it for us to more general form `Num a => a -> a -> a`).
 
-OK, but if you close GHCi (CTRL+D/Z or `:quit`/`:q`) then you lost your code. For making it persistent you need a source file. You can name with as you like but in Haskell we use `.hs` file extension (or `.lhs` if code is part of document - [literate Haskell]).
+## From GHCi to source files
+
+Working in GHCi is useful for exploration, but once you close it, everything you defined is lost.
+To write real programs, we put definitions into source files.
+
+A Haskell source file:
+
+* contains **named definitions** (bindings),
+* is saved with the `.hs` extension,
+* describes *what values and functions are*, not how to execute steps.
+
+### Creating a simple source file
 
 Let's create a simple source file `01_test_haskell.hs` and create two functions there. We can also use comments (`{- -}` for multiline and `--` for single line comment).
 
 ```haskell
 {-
-   My first Haskell source file to be tested out with GHCi
+   My first Haskell source file
 
-   BTW This is multiline comment
+   This is a multiline comment.
 -}
 
--- This is single line comment
+-- This is a single-line comment
 
--- First function: Linear function for Integers
+-- Linear function: a * x + b
 linear :: Integer -> Integer -> Integer -> Integer
 linear a b x = a * x + b
 
--- Second function: check if three lenghts form triangle
+-- Check whether three lengths can form a triangle
 isTriangle :: Double -> Double -> Double -> Bool
-isTriangle a b c = (a + b > c) && (a + c > b) && (b + c > a)
+isTriangle a b c =
+    (a + b > c) &&
+    (a + c > b) &&
+    (b + c > a)
 ```
 
-Now we can load it with `:load` to GHCi:
+### Definitions in source files
+
+Each top-level definition has the form:
+
+```haskell
+name = expression
+```
+
+or, for functions:
+
+```haskell
+name parameters = expression
+```
+
+This is best read as **an equation, not an assignment**. For example:
 
 ```
-ghci> :load FPCourse/files/01_test_haskell.hs
+linear a b x = a * x + b
+```
+
+means: *For any values a, b, and x, linear a b x is defined as a * x + b.*
+
+There is no state, no mutation, and no execution order implied here — just definitions!
+
+### Type signatures as contracts
+
+You can optionally provide a **type signature** before a definition:
+
+```haskell
+linear :: Integer -> Integer -> Integer -> Integer
+```
+
+This states:
+
+* the number of arguments,
+* their types, and
+* the result type.
+
+Type signatures: 
+
+* document intent,
+* help the compiler catch mistakes,
+* and make code easier to reason about.
+
+Although Haskell can often infer types automatically, **writing type signatures is strongly recommended**, especially in source files it is considered as good practice. They serve as documentation and help catch errors early.
+
+### Loading a source file into GHCi
+
+You can load a source file into GHCi using `:load` (or `:l`):
+
+```
+ghci> :load 01_test_haskell.hs
 [1 of 1] Compiling Main             ( 01_test_haskell.hs, interpreted )
 Ok, modules loaded: Main.
 ```
 
-You can see that file is being compiled, imported as `Main` and then if everything is OK, you can use it in GHCi. Another useful command in GHCi is `:info` which can tell you where is definition located.
+The file is compiled and its definitions become available in GHCi (`Main` is the default module name for files without an explicit `module` declaration).
+
+You can now use the functions:
 
 ```
 *Main> linear 5 3 7
 38
-*Main> 5 * 7 + 3
-38
-*Main> :type linear
-linear :: Integer -> Integer -> Integer -> Integer
-*Main> :info linear
-linear :: Integer -> Integer -> Integer -> Integer
-  	-- Defined at 01_test_haskell.hs:10:1
+
+*Main> isTriangle 3 4 5
+True
 ```
 
-For browsing content of actual module (in our case `Main`) is great command `:browse` and you can specify which module you want to browse if not just the actual.
+### Inspecting definitions
+
+GHCi provides several commands to explore loaded code.
+
+Check a type:
+
+```
+*Main> :type linear
+linear :: Integer -> Integer -> Integer -> Integer
+```
+
+Find where a name is defined:
+
+```
+*Main> :info linear
+linear :: Integer -> Integer -> Integer -> Integer
+        -- Defined at 01_test_haskell.hs:7:1
+```
+
+List everything defined in the current module (or in a specific module):
 
 ```
 *Main> :browse
 linear :: Integer -> Integer -> Integer -> Integer
 isTriangle :: Double -> Double -> Double -> Bool
+
 *Main> :browse Prelude
 ...
 ```
 
-Now we can add another function to the file:
+### Updating code
+
+Now we can add another functions to the file:
 
 ```haskell
 conforms :: Integer -> Bool
 conforms x = (x > 10 && x < 15) || x == 0
 -- . is function composition (as in math)
 notConforms = not . conforms
+
+-- use of if-then-else expression
+conforms' :: Integer -> String
+conforms' x = if conforms x then "conforms" else "does not conform"
+
+-- basic pattern matching
+isZero :: Num a => a -> Bool
+isZero 0 = True   -- pattern matching for 0
+isZero _ = False  -- wildcard pattern (_ = "anything else" and not bind it)
 ```
 
-But you need to recompile the file in GHCi so the change can take effect. You can use `:load` again, but if you don't want to write the filename (and path), you can use `:reload`.
+If you modify the source file, GHCi does not pick up changes automatically.
+To recompile and reload the file, use:
 
 ```
 *Main> :reload
 [1 of 1] Compiling Main             ( 01_test_haskell.hs, interpreted )
 Ok, modules loaded: Main.
+
 *Main> :browse
 linear :: Integer -> Integer -> Integer -> Integer
 isTriangle :: Double -> Double -> Double -> Bool
 conforms :: Integer -> Bool
 notConforms :: Integer -> Bool
+...
 ```
 
-## First project
+This replaces the current module with a new version built from the file. That is different from rebinding names interactively with `let`:
 
-We tried some basic work with the interactive environment which is nice and useful but how is it related to real-world application? As you know from other programming languages the code should be placed in source files and those should be compiled to executable (or to JavaScript as we mentioned before).
+* in source files, definitions are fixed until you recompile,
+* you cannot redefine the same name twice at the top level of a file (try it and see what happens).
 
-### Source file and compilation
+## Compiling a program with GHC
 
-Let's try a classic way with compilation via plain [GHC]. We can do the most basic program - the "Hello, world!". Create a file `01_hw.hs` just with function `main` as follows:
+So far, we have:
+
+* evaluated expressions in GHCi,
+* written definitions in source files,
+* loaded those files interactively.
+
+That is of course not enough for real applications. Now we will take a small step further and compile a Haskell program into an **executable** using the compiler directly.
+
+This section shows what happens *without* Stack. Later, **Stack will automate and extend this workflow**.
+
+### A minimal executable
+
+Create a file `01_hw.hs` with:
 
 ```haskell
+main :: IO ()
 main = putStrLn "Hello, world!"
 ```
 
-Now use `ghc` compiler to compile the file:
+Here, `main` is a definition with a special meaning:
 
-```console
+* it is the entry point of the program,
+* its type `IO ()` explicitly indicates that the program performs input-output effects.
+
+Everything else in the file follows the same principles as before: `main` is still just a name bound to an expression, in this case, an effectful computation that prints a string.
+
+### Compiling with GHC
+
+Use the GHC compiler to compile the source file into an executable:
+
+```
 % ghc 01_hw.hs
 [1 of 1] Compiling Main             ( 01_hw.hs, 01_hw.o )
 Linking 01_hw ...
 ```
 
-You can see some similar output as when you were loading a file in GHCi just here is not interpreting, but linking and `01_hw.o`. If you list your directory, there are now these files:
+GHC performs several steps here:
+
+1. type-checks the code,
+2. compiles it into an object file (`01_hw.o`),
+3. links it into an executable (`01_hw`).
+
+It is a simple one-file program, so there is only one source file to compile into one object file. In real projects, there are usually multiple source files (modules) that GHC compiles and links together.
+
+After compilation, you will see several new files in the directory:
 
 * `01_hw.hs` = source file
-* `01_hw.hi` = interface file (compilation info)
-* `01_hw.o` = object file (compiled file before linking)
-* `01_hw` = executable (linked)
+* `01_hw.hi` = interface file (type and module information)
+* `01_hw.o` = object file
+* `01_hw` = executable
 
-And you can run the executable:
+You can now run the program:
 
-```console
+```
 % ./01_hw
 Hello, world!
 ```
 
-Now, let's say we want to have logic stuff in a different source file (module). Create a file `01_hw/HWLib.hs` with:
+### Multiple source files (modules)
+
+As programs grow, code is split into multiple files and modules. Create a directory `01_hw/` with two files: `HWLib.hs` and `Main.hs`.
 
 ```haskell
+-- 01_hw/HWLib.hs
 module HWLib where
 
 greet :: String -> String
 greet x = "Hello, " ++ x ++ "!"
 ```
 
-And appropriate `01_hw/Main.hs`:
+(Notice that the file name `HWLib.hs` matches the module name `HWLib`. Same for `Main.hs` and module `Main`. Modules and filenames must correspond like this and use PascalCase.)
 
 ```haskell
+-- 01_hw/Main.hs
+--
+-- implicit module Main:
+-- module Main where
+
 import HWLib
 
-main = do
+
+main :: IO ()
+main = do  -- 'do' notation for sequencing IO actions
     putStrLn "Enter your name:"
+    -- 'getLine' is an IO action that reads a line from input
+    -- result is bound to 'name' using <- syntax
     name <- getLine
     putStrLn (greet name)
 ```
 
-Now how to make it work together? Do you know `Makefile` (for example, from `C/C++`)? Don't worry... GHC is a great tool and does such painful work for you (reads imports and looking up the files - you just need to have a standard naming of modules/files):
+Instead of compiling each file separately, you can compile the whole program at once by specifying the *main source file*. GHC will automatically find and compile the imported modules as needed (no need for complicated `Makefile`s).
 
-```console
+```
 % ghc --make Main.hs
 [1 of 2] Compiling HWLib            ( HWLib.hs, HWLib.o )
 [2 of 2] Compiling Main             ( Main.hs, Main.o )
 Linking Main ...
+```
+
+GHC in this case:
+
+1) reads import declarations,
+2) finds required source files,
+3) compiles modules in the correct order,
+4) links a final executable, that you can run:
+
+```
 % ./Main
 Enter your name:
 Marek
 Hello, Marek!
 ```
 
-### Stack project instead
+## First project with Stack
 
-Compiling application made from multiple source codes is not so complicated in the end. But still for project management, having project structure nice and especially simple management of dependencies (it can be a real pain to get it working with some specific versions) we will use [Stack].
+In the previous section, we compiled a Haskell program directly using GHC.
+While this works well for small examples, real projects quickly need more structure and automation.
 
-Let's do the *Hello, world!* app with [Stack]. First, verify that you have it installed.
+This is where [Stack] comes in as a *project management tool* that builds on top of GHC and Cabal. It addresses several practical concerns at once:
 
-```console
+* managing project structure,
+* handling dependencies and their versions,
+* selecting and installing the correct compiler version,
+* ensuring reproducible builds across different machines.
+
+In other words, Stack automates the manual steps we just performed, while preserving the same underlying compilation model. It is a really powerful tool, you can find more by reading documentation or just with `stack --help` or read [docs](https://docs.haskellstack.org/en/stable/README/).
+
+### Creating a new Stack project
+
+First, verify that Stack is installed:
+
+```
 % stack --version
-Version 2.13.1, Git revision 8102bb8afce90fc954f48efae38b87f37cabc988 (9949 commits) aarch64 hpack-0.36.0
 ```
 
-Then you can create a new project with default template:
+Create a new project using a standard template:
 
-```console
+```
 % stack new HelloWorld
-Downloading template "new-template" to create project "HelloWorld" in HelloWorld/ ...
-
-The following parameters were needed by the template but not provided: author-name
-You can provide them in /home/user/.stack/config.yaml, like this:
-templates:
-  params:
-    author-name: value
-Or you can pass each one as parameters like this:
-stack new HelloWorld new-template -p "author-name:value"
-
-
-The following parameters were needed by the template but not provided: author-email, author-name, category, copyright, github-username
-You can provide them in /home/user/.stack/config.yaml, like this:
-templates:
-  params:
-    author-email: value
-    author-name: value
-    category: value
-    copyright: value
-    github-username: value
-Or you can pass each one as parameters like this:
-stack new HelloWorld new-template -p "author-email:value" -p "author-name:value" -p "category:value" -p "copyright:value" -p "github-username:value"
-
-Looking for .cabal or package.yaml files to use to init the project.
-Using cabal packages:
-- HelloWorld/
-
-Selecting the best among 15 snapshots...
-
-* Matches lts-21.25
-
-Selected resolver: lts-21.25
-Initialising configuration using resolver: lts-21.25
-Total number of user packages considered: 1
-Writing configuration to file: HelloWorld/stack.yaml
-All done.
+...
+% cd HelloWorld
 ```
 
-Now the whole project has been created for you. You should edit the `package.yaml` file which specifies the project (author, email, URL, etc.) and thanks to [hpack] is a nicer form which is then used to generate `HelloWorld.cabal`. Then use the same code from the previous example to `app/Main.hs` and `src/Lib.hs`.
+Stack generates a complete project structure for your new Haskell application. There are various templates available (and you can adjust them); the default one is a simple executable project.
+
+### Project structure
+
+A newly created Stack project typically looks like this:
+
+
+```
+HelloWorld/
+├── app/
+│   └── Main.hs
+├── src/
+│   └── Lib.hs
+├── test/
+│   └── Spec.hs
+├── .gitignore
+├── LICENSE
+├── package.yaml
+├── README.md
+└── stack.yaml
+```
+
+You do not need to understand every file immediately. The most important parts are (check them out):
+
+* `src/` – application logic (library code)
+* `app/` – executable entry point(s), this is where `main` lives
+* `test/` – test suite(s)
+* `package.yaml` – project metadata and dependencies (using [hpack] format for managing Cabal files)
+* `stack.yaml` – compiler version and build configuration
+
+In larger real-world projects, a single Stack project can contain multiple packages (libraries and executables), but in this simple case we have just one executable package called `HelloWorld` with a library component (`src/Lib.hs`) and an executable component (`app/Main.hs`).
+
+### Writing library code
 
 ```haskell
 -- src/Lib.hs
 module Lib
-    ( greet
+    ( greet  -- export only 'greet' function
     ) where
 
 greet :: String -> String
-greet x = "Hello, " ++ x ++ "!"
+greet name =
+    "Hello, " ++ name ++ "!"
+
+hiddenFunction :: String -> String
+hiddenFunction secret =
+    "Secret: " ++ secret
 ```
+
+This module:
+
+* defines pure functionality,
+* exports only what should be visible from outside,
+* contains no input/output or effects.
+
+### Writing the entry point
 
 ```haskell
 -- app/Main.hs
@@ -478,98 +831,74 @@ main = do
     putStrLn (greet name)
 ```
 
-Now you don't use GHC directly, but call it via `stack build`:
+Again, effectful operations are explicitly localized in `main`. The *pure function* `greet` is reused without modification.
 
-```console
+**Pure function** = a function that always produces the same output for the same input and has no side effects (like modifying global state or performing I/O). It has nice mathematical properties and is easier to reason about, test, and reuse. Moreover, it is guaranteed that on the same input, it will always return the same output without any hidden behavior.
+
+### Building the project
+
+Now build the project simply with:
+
+```
 % stack build
-No compiler found, expected minor version match with ghc-9.4.8 (x86_64) (based on resolver setting in /home/user/.stack/global-project/stack.yaml).
-To install the correct GHC into /home/user/.stack/programs/x86_64-linux/, try running "stack setup" or use the "--install-ghc" flag. To use your system GHC installation, run "stack config set system-ghc --global true", or use the "--system-ghc" flag.
 ```
 
-As you see `stack` doesn't want to use system-wide installation of `ghc` but local instead by default. Just run `stack setup` so `stack` will prepare local `ghc` (it will take some time) and then try to build.
+If Stack reports that the required GHC version is not installed, it will offer to install it for you (using GHCup under the hood). Just confirm and wait until the installation finishes. In some older versions of Stack, you might need to do:
 
-```console
+```
 % stack setup
-Preparing to install GHC to an isolated location.
-This will not interfere with any system-level installation.
-Downloaded ghc-9.4.8.
-Installed GHC.
-stack will use a sandboxed GHC it installed
-For more information on paths, see 'stack path' and 'stack exec env'
-To use this GHC and packages outside of a project, consider using:
-stack ghc, stack ghci, stack runghc, or stack exec
-
-% stack init
-Looking for .cabal or package.yaml files to use to init the project.
-Using cabal packages:
-- HelloWorld/HelloWorld.cabal
-
-Selecting the best among 11 snapshots...
-
-* Matches lts-21.25
-
-Selected resolver: lts-21.25
-Initialising configuration using resolver: lts-21.25
-Total number of user packages considered: 1
-Writing configuration to file: stack.yaml
-All done.
-
-% stack build
-Building all executables for `HelloWorld' once. After a successful build of all of them, only specified executables will be rebuilt.
-HelloWorld-0.1.0.0: configure (lib + exe)
-Configuring HelloWorld-0.1.0.0...
-HelloWorld-0.1.0.0: build (lib + exe)
-Preprocessing library for HelloWorld-0.1.0.0..
-Building library for HelloWorld-0.1.0.0..
-[1 of 2] Compiling Lib              ( src/Lib.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/Lib.o )
-[2 of 2] Compiling Paths_HelloWorld ( .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/autogen/Paths_HelloWorld.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/Paths_HelloWorld.o )
-Preprocessing executable 'HelloWorld-exe' for HelloWorld-0.1.0.0..
-Building executable 'HelloWorld-exe' for HelloWorld-0.1.0.0..
-[1 of 2] Compiling Main             ( app/Main.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe-tmp/Main.o )
-[2 of 2] Compiling Paths_HelloWorld ( .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/autogen/Paths_HelloWorld.hs, .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe-tmp/Paths_HelloWorld.o )
-Linking .stack-work/dist/x86_64-linux-tinfo6/Cabal-2.4.0.1/build/HelloWorld-exe/HelloWorld-exe ...
-HelloWorld-0.1.0.0: copy/register
-Installing library in /home/user/Projects/MI-AFP/tests/HelloWorld/.stack-work/install/x86_64-linux-tinfo6/lts-21.25/9.4.8/lib/x86_64-linux-ghc-8.6.3/HelloWorld-0.1.0.0-8b39YCi0nmn4QsoDKix2j8
-Installing executable HelloWorld-exe in /home/user/Projects/MI-AFP/tests/HelloWorld/.stack-work/install/x86_64-linux-tinfo6/lts-21.25/9.4.8/bin
-Registering library for HelloWorld-0.1.0.0..
-stack build  6.16s user 0.94s system 96% cpu 7.329 total
 ```
 
-Everything ended up OK and you are finally able to run the application (`HelloWorld-exe` is defined in `package.yaml`, thus also `HelloWorld.cabal`, and you may change it):
+The `setup` command installs the correct GHC version specified in `stack.yaml`. After that, you can run `stack build` again.
 
-```console
+### Running the application
+
+After a successful build, run the application with:
+
+```
 % stack exec HelloWorld-exe
-Enter your name:
-Marek
-Hello, Marek!
 ```
 
-For debugging you can run `ghci` with project preloaded:
+Here `HelloWorld-exe` is the name of the executable defined in `package.yaml` (you can check it there). Stack ensures that the correct environment is set up so that the application can find its dependencies. Eventually, a Stack project may contain multiple executables, so you specify which one to run.
 
-```console
+There is also option to use `stack run` which builds (if needed) and runs the application in one step:
+
+```
+% stack run
+```
+
+Note: there are no new files created in the project directory after building with Stack. The compiled artifacts are stored in a hidden `.stack-work/` directory managed by Stack. You can explore it if you want, but usually you do not need to worry about it. There is also `stack clean` command to remove all build artifacts and `stack path` to show various important paths related to the project.
+
+### Interactive REPL with Stack
+
+You can also start an interactive session with the entire project loaded:
+
+```
 % stack ghci
-Using main module: 1. Package `HelloWorld' component exe:HelloWorld-exe with main-is file: /home/user/Projects/MI-AFP/tests/HelloWorld/app/Main.hs
-The following GHC options are incompatible with GHCi and have not been passed to it: -threaded
-Configuring GHCi with the following packages: HelloWorld
-GHCi, version 8.6.3: http://www.haskell.org/ghc/  :? for help
-[1 of 2] Compiling Lib              ( /home/user/Projects/MI-AFP/tests/HelloWorld/src/Lib.hs, interpreted )
-[2 of 2] Compiling Main             ( /home/user/Projects/MI-AFP/tests/HelloWorld/app/Main.hs, interpreted )
-Ok, two modules loaded.
-Loaded GHCi configuration from /tmp/haskell-stack-ghci/3b07e5cf/ghci-script
-*Main Lib> 
- :browse
-main :: IO ()
+```
+
+This provides:
+
+* all project modules,
+* all dependencies,
+* the same environment used for building.
+
+Inside GHCi, you can explore modules as before:
+
+```
 *Main Lib> :browse Lib
 greet :: String -> String
 ```
 
-[Stack] is a really powerful tool, you can find more by reading documentation or just with `stack --help` or read [docs](https://docs.haskellstack.org/en/stable/README/).
+### Managing dependencies
 
-### Stack config files and dependencies
+As mentioned, Stack handles dependencies automatically. You specify them in `package.yaml`, and Stack takes care of downloading, building, and linking them. No need to manually manage library versions or deal with complex build scripts. In `stack.yaml`, you can adjust what resolver (set of package versions) to use, add extra dependencies, and configure build options.
 
-You might have noticed that [Stack] uses `package.yaml` to generate `.cabal` and there is some `stack.yaml`. It also somehow takes care of the needed dependencies. Let's say you need to your collection of type Set. Of course, you could implement it on your own, but reinventing the wheel is unnecessary! Use `Data.Set` which is already here (we will cover details about this and other data structures in Haskell in the future).
+First, you must find the package you need (using [Hoogle], [Hackage], or [Stackage]) and then add it to the `dependencies` section of `package.yaml`. It is good practice to check the license, documentation, and whether the package is actively maintained.
 
-If you look up `Data.Set` ([Hoogle], [Stackage] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Set.html)). If you now try to do this in your `Lib.hs`:
+If you look up `Data.Set` ([Hoogle], [Stackage] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers/docs/Data-Set.html)). In Stackage, you can also see which version is included in the snapshot (resolver) you use.
+
+However, if you now try to add the follow in your `Lib.hs`:
 
 ```haskell
 import Data.Set
@@ -577,7 +906,7 @@ import Data.Set
 namesSet = insert "Robert" (insert "Marek" empty)
 ```
 
-After trying to build with `stack build` you should get this error stating that it could not find module `Data.Set`:
+The `stack build` will fail due to missing dependency:
 
 ```console
 /home/.../HelloWorld/src/Lib.hs:5:1: error:
@@ -600,7 +929,7 @@ dependencies:
 # ...
 ```
 
-Then after the build you can do for example this with `stack ghci`:
+Then after the build you can also try it out with `stack ghci`:
 
 ```
 *Main Lib> namesSet
@@ -616,9 +945,7 @@ Further, [Stack] also provides [dependency visualization](https://docs.haskellst
 
 ## Task assignment
 
-To test out the workflow check the dummy homework [MI-AFP/hw00](https://github.com/MI-AFP/hw00) where you will learn how you should get, complete, check, and submit homework (especially useful if you are not familiar with [GitHub] and [Travis CI]). By working on such homework, you might also learn new things which you encounter in tests and skeletons.
-
-For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). The task consists of writing simple expressions, looking up information with [Hoogle], [Stackage], [Hackage] and/or GHCi, and working with dependencies of project.
+For the first assignment, use the `hw01` project and follow the instructions in the `README.md` file there. It is a very basic exercise to get you familiar with Haskell syntax, GHCi, and Stack project.
 
 ## Further reading
 
@@ -630,22 +957,12 @@ For your first assignment, visit [MI-AFP/hw01](https://github.com/MI-AFP/hw01). 
 * [GHC User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/)
 
 [Cabal]: https://www.haskell.org/cabal/
-[Elm]: http://elm-lang.org
 [GHC]: https://www.haskell.org/ghc/
-[GHCJS]: https://github.com/ghcjs/ghcjs
 [GHCup]: https://www.haskell.org/ghcup/
-[GitHub]: https://github.com
 [Hackage]: https://hackage.haskell.org
 [Haskell]: https://www.haskell.org
 [Haskell 2010]: https://www.haskell.org/onlinereport/haskell2010/
-[Haste]: https://haste-lang.org
-[hindent]: https://github.com/commercialhaskell/hindent
-[hlint]: https://hackage.haskell.org/package/hlint
 [Hoogle]: https://www.haskell.org/hoogle/
 [hpack]: https://github.com/sol/hpack
-[literate Haskell]: https://wiki.haskell.org/Literate_programming
-[PureScript]: http://www.purescript.org
 [Stack]: https://docs.haskellstack.org
 [Stackage]: https://www.stackage.org
-[stylish-haskell]: https://github.com/jaspervdj/stylish-haskell
-[Travis CI]: https://travis-ci.org
