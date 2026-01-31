@@ -1,19 +1,58 @@
 # Structuration, branching, and evaluation
 
+In this tutorial we look at how **Haskell structures computations**: how a function can choose between different results, how complex expressions can be decomposed into smaller named parts, and how (and when) expressions are actually evaluated.
+
+Unlike imperative languages, branching in Haskell is **not control flow** in the sense of *what happens next*, but a way of defining **which value an expression denotes**. Constructs such as `if-then-else`, `case-of`, guards, and patterns should therefore be understood as expressions and equations, not as commands.
+
+This viewpoint is very close to mathematics: functions are defined by **cases**, **conditions**, and **equations**, and some expressions may be **undefined** or only partially defined. Haskell’s lazy evaluation strategy makes this explicit and allows us to work naturally with infinite structures and delayed computation.
+
+By the end of this tutorial, you should understand how branching, local definitions, and evaluation interact, and why thinking in terms of *values rather than execution steps* is essential when programming in a functional language.
+
 ## If and case
 
-As in other languages, also in Haskell you can use `if-then-else` and `case-of` (similar to `switch-case`) expression for branching the computation. But here it has a different meaning: as we are in a side-effect-free environment, it decides about a result variant. Although you've already seen and used `if-then-else` expression during this course, we will look at it in higher detail now.
+Branching in Haskell is often the first place where programmers coming from imperative languages get confused. In languages like C, Java, or Python, branching primarily controls what happens next.
+In Haskell, branching decides which value an expression denotes.
 
-### Own ifThenElse
+In other words: `if-then-else` and `case-of` are expressions, not control-flow statements.
 
-First, let's try to implement own function realising the `if-then-else` branching. What would be the type of such function? We need the condition which is obviously of type `Bool` and then there are two expressions, one is evaluated in case the condition is `True` and the other one in case it is `False`. We can allow any type of such expression by type variable `a` and it will represent the returned type, as well.
+This is much closer to mathematics, where functions are commonly defined by cases.
+
+### `if-then-else` as a value selector
+
+Conceptually, an if-then-else expression chooses between two values based on a condition. In mathematics, this corresponds to a piecewise-defined function:
+
+```math
+f(x) = \begin{cases}
+    a & \text{if } P(x) \\
+    b & \text{otherwise}
+\end{cases}
+```
+
+In Haskell, this is expressed as:
+
+```haskell
+f x = if P x then a else b
+```
+
+As you can see, both branches (`then` and `else`) are expressions that yield values of the same type. The entire `if-then-else` expression itself has a type determined by the types of these branches (for example, if both `a` and `b` are of type `Int`, then the whole expression is of type `Int`).
+
+### Implementing own `ifThenElse`
+
+To make this idea explicit, let’s implement our own version of `if-then-else`.
+
+First, consider the type:
 
 ```haskell
 ifThenElse :: Bool -> a -> a -> a
 ifThenElse condition onTrue onFalse = ...
 ```
 
-But how to implement it without actually using `if-then-else` keywords, so we do not get into a cycle? By pattern matching:
+* the `condition` has type `Bool`;
+* both branches (`onTrue` and `onFalse`) have the same type `a`;
+* the result also has type `a`.
+
+
+We can implement this without using `if`, by pattern matching on `Bool` values:
 
 ```haskell
 ifThenElse :: Bool -> a -> a -> a
@@ -21,7 +60,7 @@ ifThenElse True  onTrue onFalse = onTrue
 ifThenElse False onTrue onFalse = onFalse
 ```
 
-We can even simplify it a bit with ignoring the unneeded argument using `_`:
+We can even simplify it a bit with ignoring the unneeded argument using `_`, i.e., wildcard (as you always should do in Haskell):
 
 ```haskell
 ifThenElse :: Bool -> a -> a -> a
@@ -29,73 +68,91 @@ ifThenElse True  onTrue  _ = onTrue
 ifThenElse False _ onFalse = onFalse
 ```
 
+This already shows an important fact: **branching is just pattern matching on a value**.
+
 We can test our implementation of `ifThenElse` in GHCi and we can see that it works pretty well:
 
 ```
-*Main> x = 7
-*Main> y = 15
-*Main> ifThenElse (x < y) (y - x) (x - y)
+ghci> x = 7
+
+ghci> y = 15
+
+ghci> ifThenElse (x < y) (y - x) (x - y)
 8
-*Main> x = 50
-*Main> ifThenElse (x < y) (y - x) (x - y)
+
+ghci> x = 50
+
+ghci> ifThenElse (x < y) (y - x) (x - y)
 35
 ```
 
-### If, then, else keywords
+### Built-in `if-then-else` syntax
 
-We can see that we are able to implement very simply our own `ifThenElse` but it is not very readable and using nested "ifs" would be even worse. Fortunately, there is the syntax you would expect available in Haskell:
+Of course, Haskell provides the usual syntax, as we already know:
 
 ```
-*Main> if (x < y) then (y - x) else (x - y)
+ghci> if (x < y) then (y - x) else (x - y)
 35
-*Main> if (x < y) then (y - x) else if (x == y) then 0 else (x - y)
-35
-*Main> y = 50
-*Main> if (x < y) then (y - x) else if (x == y) then 0 else (x - y)
-0
 ```
 
-And nested conditions use another `if-then-else` expression in `else` branch (brackets are not necessary as shown above, here for demonstrating the separate expression):
+Nested conditions are written by nesting if expressions:
+
+```haskell
+if x < y then (y - x)
+else if x == y then 0
+else (x - y)
+```
+
+This works because each branch is itself an expression, i.e. you can use brackets:
+
+```haskell
+if x < y then (y - x)
+else (if x == y then 0
+      else (x - y))
+```
+
+Never forget that **type consistency is required**: both branches must have the same type, otherwise you will get a type error:
 
 ```
-*Main> if (x < y) then (y - x) else (if (x == y) then 0 else (x - y))
-0
-```
+ghci> :type (if 8 > 5 then 5 else 3)
+(if 8 > 5 then 5 else 3) :: Num a => a
 
-However, our little exercise enabled us to see the important fact: `if-then-else` constructs are NOT control flow, but expressions providing "conditioned results". It has some type and thus you can not allow type mismatch in the branches:
-
-```
-*Main> :t (if 8 > 5 then 5 else 0)
-(if 8 > 5 then 5 else 0) :: Num t => t
-*Main> :t (if 8 > 5 then (5 :: Int) else 0)
-(if 8 > 5 then (5 :: Int) else 0) :: Int
-*Main> if 8 > 5 then 5 else "No"
+ghci> :type (if 8 > 5 then 5 else "No")
 
 <interactive>:1:16: error:
-    • No instance for (Num [Char]) arising from the literal ‘5’
+    • No instance for (Num String) arising from the literal ‘5’
     • In the expression: 5
-      In the expression: (if 8 > 5 then 5 else "No")
+      In the expression: if 8 > 5 then 5 else "No"
+      In the expression: if 8 > 5 then 5 else "No"
 ```
 
-### Case of
+### Branching by structure with `case-of`
 
-Instead of `switch-case` Haskell offers `case-of` expression as a convenient syntactic sugar of `if-then-else`:
+While `if-else` branches on a `Bool` value, `case-of` branches on the **structure of a value** (typically described by data constructors). It is similar in spirit to `switch-case` you may know, but it is far more powerful.
 
 ```haskell
 data Color = Black | White | RGB Int Int Int
 
-badDescribeBW :: Color -> String
-badDescribeBW c = case c of
-       Black           -> "black"
-       White           -> "white"
-
 describeBW :: Color -> String
 describeBW c = case c of
-       Black           -> "black"
-       White           -> "white"
-       RGB 0 0 0       -> "black"
-       RGB 255 255 255 -> "white"
-       _               -> "unknown"  -- "default" match
+    Black           -> "black"
+    White           -> "white"
+    RGB 0 0 0       -> "black"
+    RGB 255 255 255 -> "white"
+    _               -> "unknown"  -- "default" match
+```
+
+Here, `case-of` performs pattern matching, selecting a result based on which pattern matches the input value.
+
+Mathematically, this is again a definition by cases, but now based on structure, not just a `Bool` condition. The wildcard `_` acts as a default case, matching anything not covered earlier (default case, *otherwise*).
+
+### Exhaustive patterns
+
+```haskell
+badDescribeBW :: Color -> String
+badDescribeBW c = case c of
+    Black -> "black"
+    White -> "white"
 ```
 
 You need to be careful that you cover all the cases with `case-of`. If you hit some case which is not covered an exception will come up at runtime:
@@ -105,31 +162,99 @@ You need to be careful that you cover all the cases with `case-of`. If you hit s
 "*** Exception: files/03_caseColors.hs:(4,19)-(6,33): Non-exhaustive patterns in case
 ```
 
-For that you can use underscore `_` wildcard which acts as default case matching everything:
+### `case-of` with lists
 
-```
-*Main> describeBW (RGB 0 0 0)
-"black"
-*Main> describeBW (RGB 7 7 7)
-"unknown"
-```
-
-As you can see, it uses pattern matching, as it was introduced in the previous lesson. It is the full-featured pattern matching, so matching for lists works, as well.
+Patterns in `case-of` work for all algebraic data types, including lists:
 
 ```haskell
 describeList :: [a] -> String
-describeList xs = "The given list has " ++ case xs of []  -> "no item."
-                                                  [x] -> "just one item."
-                                                  _  -> "more than one item."
+describeList xs =
+    "The given list has " ++ case xs of
+        []  -> "no items."
+        [_] -> "just one item."
+        _   -> "more than one item."
+```
+
+This style is often clearer than nested `if` expressions and highlights the structure of the data being analyzed.
+
+### `case-of` in function definitions
+
+Very often, a `case-of` expression does not need to be written explicitly at all. Instead, the same pattern matching can be moved directly into the function definition itself (*syntactic sugar* again).
+
+The `describeList` function can be rewritten as:
+
+```haskell
+describeList' :: [a] -> String
+describeList' []  = "The given list has no items."
+describeList' [_] = "The given list has just one item."
+describeList' _   = "The given list has more than one item."
+```
+
+These two definitions `describeList` and `describeList'` are **semantically equivalent**.
+
+```math
+\text{describeList}(xs) = 
+    \begin{cases}
+        \text{"The given list has no items."} & \text{if } xs = [] \\
+        \text{"The given list has just one item."} & \text{if } xs = [\_] \\
+        \text{"The given list has more than one item."} & \text{otherwise}
+    \end{cases}
+```
+
+### Order matters
+
+Patterns are matched from top to bottom, so the order of patterns matters. The first matching pattern is selected, and subsequent patterns are ignored.
+
+```haskell
+describeList'' :: [a] -> String
+describeList'' []  = "The given list has no items."
+describeList'' _   = "The given list has more than one item."
+describeList'' [_] = "The given list has just one item."
+```
+
+### Named patterns (as-patterns)
+
+Sometimes, while matching a pattern, we want access both to the decomposed parts and to the whole value. This is exactly what *as-patterns* provide.
+
+An as-pattern has the form: `name@pattern`
+
+```haskell
+duplicateFirstElement :: [a] -> [a]
+duplicateFirstElement [] = []
+duplicateFirstElement list@(x:_) = x : list
+```
+
+Here:
+
+* `(x:_)` decomposes the list,
+* `list` refers to the entire original list.
+
+Without a named pattern, we would have to reconstruct the list manually:
+
+```haskell
+duplicateFirstElement :: [a] -> [a]
+duplicateFirstElement [] = []
+duplicateFirstElement (x:xs) = x : (x:xs)
 ```
 
 ## Guards and patterns
 
-Another widely used way how to create branches is by guards in function declarations. That allows you much more than matching shown in `ifThenElse`. Then you can also use patterns to easily work with some structures in branching.
+So far, we have seen two ways to define functions by cases:
+
+* `if-then-else` – branching on a `Bool`
+* pattern matching (`case-of`) – branching on the structure of values
+
+*Guards* combine these two ideas: they allow us to branch based on `Bool` conditions, while keeping the clarity of pattern-based function definitions.
+
+In mathematics, this corresponds to defining a function by **conditions**.
 
 ### Guards
 
-Guards are written using `|` operator-like keyword after introducing a function name and arguments as in the following example. It may remind you of mathematical definitions of functions. You can write clearly readable Boolean expressions and expected results instead of nested "ifs". The `otherwise` has the same meaning as `True` and it provides a default branch similarly to `_` in the `case-of` expression.
+A function with guards consists of:
+
+* a function name and arguments,
+* a sequence of Boolean conditions introduced by `|`,
+* a result expression for each condition.
 
 ```haskell
 myMax :: (Ord a) => a -> a -> a
@@ -138,7 +263,25 @@ myMax a b
     | otherwise = b
 ```
 
-The order of testing guards is from top to bottom and the first being `True` will be applied. Try it with:
+This should be read as:
+
+> If `a > b`, the result is `a`; otherwise, the result is `b`.
+
+The keyword `otherwise` is just a synonym for `True` and is typically used as the default case.
+
+Again, a similar to math even in the way how it is written:
+
+```math
+\text{myMax}(a, b) =
+    \begin{cases}
+        a & \text{if } a > b \\
+        b & \text{otherwise}
+    \end{cases}
+```
+
+### Order of guards matters
+
+Guards are tested from top to bottom (same as for pattern matching). The first condition that evaluates to `True` determines the result:
 
 ```haskell
 guardsOrder x
@@ -148,7 +291,17 @@ guardsOrder x
     | otherwise = "otherwise"
 ```
 
-It is just important not to forget the difference of `_` ("anything" in `case-of`) and `otherwise` ("True" in guards).
+Even though `x < 0` implies `x < 5`, it is never reached, because the first guard already matches. This mirrors both:
+
+* the order of equations in function definitions
+* the order of patterns in `case-of`
+
+### `_` vs `otherwise`
+
+It is important to distinguish between:
+
+* `_` (also called *hole*) – a pattern that matches anything
+* `otherwise` – a `Bool` expression equal to `True`
 
 ```
 Prelude> :t otherwise
@@ -166,112 +319,160 @@ Prelude> :t _
     • In the expression: _
 ```
 
-### Patterns are syntactic sugar
+### Combining patterns and guards
 
-As we said, pattern matching in a function declaration is the same as pattern matching of `case-of` and of guards. Actually, it is just [syntactic sugar](https://en.wikibooks.org/wiki/Haskell/Syntactic_sugar#Function_Bindings) and the following two functions are equivalent.
-
-```haskell
-myHead1 :: [a] -> a
-myHead1 []    = error "Empty list"
-myHead1 (x:_) = x
-
-myHead2 :: [a] -> a
-myHead2 list = case list of
-                  []    -> error "Empty list"
-                  (x:_) -> x
-
-myHead3 :: [a] -> a
-myHead3 = \list -> case list of   -- lambda expression
-                  []    -> error "Empty list"
-                  (x:_) -> x
-```
-
-### Named patterns
-
-In some cases, if you are matching a pattern with a value, it may be useful to bind a name to the whole value being matched (when you need to use decomposition and the whole as well). As-patterns allow exactly this: they are in the form `name@pattern` and in addition to acting as a regular pattern, it binds the `name` to the whole value being matched by `pattern`. Again, it can be used not just with lists, but also with any other types, such as records.
+Patterns and guards are often used together. Patterns decompose values, while guards express additional conditions:
 
 ```haskell
-duplicateFirstElement1 [] = []
-duplicateFirstElement1 (x:xs) = x:x:xs
-
-duplicateFirstElement2 [] = []
-duplicateFirstElement2 list@(x:xs) = x:list
-
-duplicateFirstElement3 [] = []
-duplicateFirstElement3 list@(x:_) = x:list
-
-foo person@Person{name, age} = -- something
+describeList :: [a] -> String
+describeList [] = "empty list"
+describeList xs
+    | length xs == 1 = "single element"
+    | otherwise      = "longer list"
 ```
 
-## Let in, where
-
-You can define an expression (function or constant) at module (file) level, but then it can be used everywhere in that module/file. If you want to structure your code well and define some local expressions you have two basic ways how to do it - with `let-in` or `where` keywords.
-
-### Let in
-
-`let ... in ...` is an expression that can be written in any place where you can write expressions. After `let` you define expressions (called bindings) that you can then use in the following expression (the one after `in`). It is one of the ways how to locally introduce named expression:
+It can be also written like this but that introduces unnecessary repetition of pattern `xs`:
 
 ```haskell
-circleArea radius = let pi = 3.14159
-                    in pi * radius^2
-
-cylinderVolume radius height = let area = circleArea radius
-                               in height * area
-
-blockVolume width height depth = let area a b = a * b
-                                 in height * area width height
-
-blockSurface width height depth = let area a b = a * b
-                                  in let areaA =  area width height
-                                         areaB =  area width depth
-                                         areaC =  area height depth
-                                     in 2 * (areaA + areaB + areaC)
+describeList :: [a] -> String
+describeList [] = "empty list"
+describeList xs | length xs == 1 = "single element"
+describeList xs | otherwise      = "longer list"
 ```
 
-As you can see, a local binding serves two purposes:
+### Guards vs if-then-else
 
-1. Enables reuse ([DRY!](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself))
-2. Provides a way how to give a name to an expression, thus improving readability of your code.
+Any guard-based definition can be rewritten using `if-then-else`, but guards are usually:
 
-Don't forget that everything is immutable. Try following (and guess what will be the results):
+* clearer
+* closer to mathematical notation
+* easier to extend with more cases
 
 ```haskell
-testLetIn1 = let a = 7
-                 b = 5
-                 c = 10
-             in a
+absValue x =
+    if x >= 0 then x else -x
 
-testLetIn2 = let a = 7
-                 b = 5
-             in let a = 2 * b
-                in a
+-- vs
 
-testLetIn3 = let a = 7
-             in let a = a + 3
-                in a
+absValue x
+    | x >= 0    = x
+    | otherwise = -x
 ```
 
-Sometimes you need to use `let-in` on one line, then you should use `;` or a tuple-like binding. Again it is nothing else than expression.
+## Local definitions: `let-in` and `where`
+
+So far, we have defined functions by equations, patterns, and conditions. Often, however, a function becomes clearer when we name intermediate expressions.
+
+In mathematics, this is usually done by introducing auxiliary variables or helper functions. In Haskell, we do this using local bindings, most commonly via `let-in` and `where`.
+
+### `let-in`: local bindings as expressions
+
+The construct
 
 ```
-*Main> let a = 10; b = 20; c = 30 in a*b*c
-600000
-*Main> let (a, b, c) = (10, 20, 30) in a*b*c
-6000
-*Main> :t let (a, b, c) = (10, 20, 30) in a*b*c
-let (a, b, c) = (10, 20, 30) in a*b*c :: Num a => a
+let ... in ...
 ```
 
-Semicolon is generally a way, how to put more expressions on a single line. However, use it sparingly, it is rather a readability anti-pattern.
+is itself an expression. It introduces local names that are visible only in the expression following in.
 
-### Where
+```haskell
+circleArea radius =
+    let pi = 3.14159
+    in pi * radius^2
+```
 
-This construct is similar to `let-in`, but the bindings come *after* the expression, similar to mathematical definitions:
+This should be read as:
+
+> Let `π` be `3.14159`; then the result of circle area with radius `radius` is `π * radius^2`.
+
+Because `let-in` is an expression, it can be used **anywhere** an expression is allowed.
+
+#### Reuse and readability
+
+Local bindings typically serve two purposes:
+
+1. Avoid repetition (DRY – Don’t Repeat Yourself).
+2. Give a name to a sub-expression, improving readability.
+
+```haskell
+cylinderVolume radius height =
+    let area = circleArea radius
+    in height * area
+```
+
+Bindings may also introduce local functions:
+
+```haskell
+blockVolume width height depth =
+    let area a b = a * b
+    in area width height * depth
+```
+
+#### Shadowing and immutability
+
+All bindings in Haskell are **immutable**. Introducing a new name with `let` does not modify an existing one, it merely **shadows** it.
+
+```haskell
+testLetIn1 =
+    let a = 7
+        b = 5
+        c = 10
+    in a
+-- testLetIn1 == 7
+
+testLetIn2 =
+    let a = 7
+        b = 5
+    in let a = 2 * b  -- shadows previous 'a'
+       in a
+-- testLetIn2 == 10
+
+testLetIn3 =
+    let a = 7
+    in let a = a + 3  -- shadows previous 'a' (but on right side, old 'a' is used)
+       in a
+-- testLetIn3 == 10
+
+testLetIn4 =
+    let a = 7
+        a = 5  -- error: Conflicting definitions for ‘a’
+    in a
+```
+
+#### One-line `let`
+
+When writing `let-in` on a single line, bindings are separated by semicolons:
+
+```haskell
+let a = 10; b = 20; c = 30 in a * b * c
+```
+
+or via pattern matching and ad-hoc tuples:
+
+```haskell
+let (a, b, c) = (10, 20, 30) in a * b * c
+```
+
+Semicolons are syntactically valid but should be used sparingly, as they often reduce readability.
+
+### `where`: definitions after the equation
+
+The `where` construct serves the same purpose as `let-in`, but places bindings after the main expression:
 
 ```haskell
 circleArea radius = pi * radius^2
                   where pi = 3.14159
+```
 
+This style closely resembles mathematical definitions:
+
+> The area of a circle with radius `radius` is `π * radius^2`, where `π = 3.14159`.
+
+#### `where` with functions and recursion
+
+`where` is especially useful for structuring more complex definitions:
+
+```haskell
 quicksort :: (Ord a) => [a] -> [a]
 quicksort [] = []
 quicksort (x:xs) = low ++ [x] ++ high
@@ -281,46 +482,26 @@ quicksort (x:xs) = low ++ [x] ++ high
                        gtPivot y = y >  x
 ```
 
-In contrast to `let-in`, `where` cannot be used everywhere as an expression.
+This reads top-down:
 
-You can also create nested `where` (use nice visual indentation):
+* the main idea of the function first,
+* helper definitions afterwards.
+
+#### Patterns in `where`
+
+Local definitions can themselves introduce further local bindings:
 
 ```haskell
-quicksort :: (Ord a) => [a] -> [a]
-quicksort [] = []
-quicksort (x:xs) = low ++ [x] ++ high
-                 where low  = quicksort (filter lqPivot xs)
-                            where lqPivot y = y <= x
-                       high = quicksort (filter gtPivot xs)
-                            where gtPivot y = y >  x
-
 initials :: String -> String -> String
 initials firstname lastname = [f] ++ ". " ++ [l] ++ "."
-    where (f:_) = firstname
-          (l:_) = lastname
-```
-
-Local bindings after `where` can also be type-annotated and it is generally a good practice, which results in a more expressive code and better type error messages for more complex expressions.
-
-```haskell
-circleArea radius = pi * radius^2
   where
-    pi :: Float
-    pi = 3.14159
+    (f:_) = firstname
+    (l:_) = lastname
 ```
 
-Do not be afraid to nest `where` several levels, this is a nice way how to make your code nicely readable top-down. At some point, you may find your local bindings usable outside, so you just take it and make a global function from it:
+#### `where` with guards
 
-```haskell
-pi :: Float
-pi = 3.14159
-
-circleArea radius = pi * radius^2
-```
-
-### Where with guards
-
-Typical and pretty use is with guards to achieve DRY:
+`where` combines naturally with guards, avoiding repeated computation:
 
 ```haskell
 birthYearToTitle :: Int -> String
@@ -329,179 +510,246 @@ birthYearToTitle year
     | age <= 19 = "Teenager"
     | age <= 65 = "Adult"
     | otherwise = "Senior"
-    where age = currentYear - year
-          currentYear = 2018       -- or from Data.Time
+  where
+    age = currentYear - year
+    currentYear = 2018
 ```
 
-Please be aware that indentation is important in Haskell; Try to move where one space and right and see what happens. This is a common (not only) beginners' trouble. The same holds for `let-in`. We encourage you to take all the previous examples and play with indentation to see, how wrong indentation breaks the expression.
+This mirrors mathematical definitions with shared auxiliary values.
 
-## Evaluation, patterns, and wildcards
+### `let-in` vs `where`
 
-Let us know touch evaluation strategy of Haskell to understand, why it is good to use such things as wildcards and also to be able to understand "bang patterns".
+Both constructs introduce local bindings, but they differ in usage:
 
-### Bottom
+| `let-in`            | `where`                             |
+|---------------------|-------------------------------------|
+| is an expression    | attached to a definition            |
+| can appear anywhere | appears after a function equation   |
+| emphasizes locality | emphasizes readability of structure |
 
-To talk about laziness we often use the term [bottom](https://wiki.haskell.org/Bottom) (&#8869; or `_|_`) which means *a computation that never completes successfully*. Various things can happen - a computation can fail due to some kind of error or it goes into an infinite loop. The term bottom is related to value, as well as to type. Examine those with GHCi:
+In practice:
+
+* use `let-in` inside expressions,
+* use `where` to structure function definitions.
+
+## Evaluation and laziness
+
+So far, we have focused on **what expressions mean**. *Evaluation* answers a different question:
+
+> When is an expression actually computed?
+
+In Haskell, evaluation is **lazy (non-strict)**, meaning that expressions are evaluated **only when their values are needed** (i.e. expression needs to be replaced by its value).
+
+This is one of the defining characteristics of the language. It enables powerful programming techniques, such as working with infinite data structures and separating control flow from evaluation order.
+
+### Bottom (⊥): computations without a value
+
+To talk about evaluation, we need a name for computations that **never successfully produce a value**. In Haskell, this is commonly called **bottom**, written as ⊥.
+
+A computation can be bottom because:
+
+* it crashes with an error,
+* it never terminates,
+* it is explicitly marked as `undefined`.
 
 ```haskell
-data BottomType = BottomType   -- same as unit "()"
+errorBottom :: a
+errorBottom = error "Something went wrong"
 
-bottomValue = bottomValue -- endless
-errorBottom = error "Reached some error"
-undefBottom = undefined
+nonterminatingBottom :: a
+nonterminatingBottom = nonterminatingBottom
+
+undefinedBottom :: a
+undefinedBottom = undefined
 ```
 
-### Haskell is lazy
+A crucial property of bottom is:
 
-Haskell has a lazy non-strict evaluation strategy. It means that no expression is evaluated unless the value is needed. This brings amazing possibilites, mostly creating infinite structures, typically lists:
+> ⊥ has every type, but no value.
+
+This allows such expressions to type-check, even though they fail at runtime.
+
+### Demand-driven evaluation
+
+The key rule of Haskell evaluation is:
+
+> An expression is evaluated only if its value is demanded.
+
+```haskell
+answer :: Int
+answer = 42
+```
+
+Now in GHCi:
 
 ```
-Prelude> let x = 1:x   -- same as "repeat 1" or "[1,1..]"
-Prelude> take 10 x
-[1,1,1,1,1,1,1,1,1,1]
-Prelude> take 20 x
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-Prelude> x
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,...^C Interrupted.
-Prelude> [1,2..]
-[1,2,3,4,5,6,7,8,9,10,11,12,13,14,...^C Interrupted.
-Prelude> let x = undefined
-Prelude> let y = 1 + x
-Prelude> let z = y * 2 + 15
-Prelude> :type y
-y :: Num a => a
-Prelude> :type x
-x :: a
-Prelude> z
+ghci> x = undefined
+
+ghci> answer
+42
+```
+
+Even though `x` is `undefined`, nothing crashes — because value of `x` is never needed.
+
+But if we demand its value:
+
+```ghci> x
 *** Exception: Prelude.undefined
-CallStack (from HasCallStack):
-  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
-  undefined, called at <interactive>:37:5 in interactive:Ghci23
 ```
 
-(For stopping output press CTRL+C in GHCi)
+### Laziness in function arguments
 
-### Haskell can be strict
-
-Sometimes, you may want to enforce a strict evaluation because of performance. There is the `!` symbol and you can read more about it [here](https://wiki.haskell.org/Performance/Strictness). Obviously, bad things will happen if your code contains infinite list or recursion which never ends - you will need to terminate the program!
-
-In a similar way, you can enforce strictness when declaring a data type:
+Function arguments are evaluated only when needed:
 
 ```haskell
-data Pet = Pet !String Int
-
-data Person = Person { username :: !String
-                     , realname :: !String
-                     }
+ignoreSecond :: a -> b -> a
+ignoreSecond x _ = x
 ```
 
-However, strictness is a rather advanced topic, which you do not need to worry about now ;-).
-
-### Function application operator
-
-There is a binary operator `$` called function application and at first sight, it looks quite lame: As its left operand, it takes a function and on right side, there is the operand for the function. So instead of: `func operand`, we write `func $ operand`. Huh?! The point is that '$' has a very low priority, so it is used to avoid brackets for function composition (a very common thing in Haskell, will be covered later). For completeness, there is also a strict application `$!`.
-
+In GHCi:
 
 ```
-Prelude> :type ($)
-($) :: (a -> b) -> a -> b
-Prelude> :type ($!)
-($!) :: (a -> b) -> a -> b
+ghci> ignoreSecond 7 undefined
+7
+ghci> ignoreSecond undefined 10
+*** Exception: Prelude.undefined
 ```
+
+Only the arguments that are actually used are evaluated. This is a direct consequence of laziness and is impossible in strict languages without special constructs.
+
+### When evaluation is forced
+
+Some operations cannot proceed without actual values. For example, arithmetic requires its arguments to be evaluated:
+
+Prelude> 3 + undefined
+*** Exception: Prelude.undefined
+
+This does not contradict laziness — it simply means the *value is now required*. Laziness delays evaluation, but it does not eliminate it.
+
+### Infinite structures
+
+Because evaluation is demand-driven, Haskell allows us to define infinite data structures.
 
 ```haskell
-show (getSiblingsOf (getParentOf (head people)))    -- For LISP lovers only
-
-show $ getSiblingsOf $ getParentOf $ head people    -- A bit nicer
-
-show . getSiblingsOf . getParentOf . head $ people  -- Haskell way (will be covered later on)
+ones :: [Int]
+ones = 1 : ones
 ```
+
+```
+ghci> take 5 ones
+[1,1,1,1,1]
+
+ghci> take 10 ones
+[1,1,1,1,1,1,1,1,1,1]
+```
+
+Only the needed prefix of the list is evaluated.
+
+Trying to evaluate the whole list, however, never finishes:
+
+```
+ghci> ones
+-- runs forever
+```
+
+Mathematically, this is similar to defining an infinite sequence and computing only its first *n* elements.
+
+### Controlling evaluation (briefly)
+
+Sometimes, laziness is not desirable — for example, for performance or memory reasons. Haskell provides tools to force evaluation, such as:
+
+* strict application: `$!`,
+* bang patterns: `!`,
+* strict fields in data types.
+
+These are advanced topics and should be used deliberately, not by default. Sometimes you see `Strict` variants of functions or data structures in libraries, which use strictness internally for efficiency (laziness is not for free and comes with overhead).
+
+## From evaluation to list comprehensions
+
+Laziness becomes especially powerful when combined with **list construction**.
+
+So far, we have created lists using constructors and ranges. Next, we will look at **list comprehensions**, a concise and expressive way to describe lists — often corresponding closely to mathematical set and sequence notation.
+
+Crucially, list comprehensions are *lazy*: even if they describe infinite lists, only the required elements are evaluated.
 
 ### List comprehensions
 
-Creation of lists using a constructor (or its syntactic sugar) is pretty straightforward, but there are two more interesting ways for that. First is used basically for basic ranges and it is called "dot dot notation". You have seen it already. It works with types that are instances of type class `Enum` (you can check within GHCi by `:info Enum`. You can specify start, step and end of the range (inclusive), but you need to be careful with floats and doubles because of their precision - the error cumulatively grows.
+A list comprehension has the form:
 
-```
-Prelude> [1..10]
-[1,2,3,4,5,6,7,8,9,10]
-Prelude> [0,5..20]
-[0,5,10,15,20]
-Prelude> ['a' .. 'z']
-"abcdefghijklmnopqrstuvwxyz"
-Prelude> [1.0,1.05 .. 1.2]
-[1.0,1.05,1.1,1.1500000000000001,1.2000000000000002]
+[ expression | generators, conditions, local bindings ]
+
+
+This mirrors mathematical notation:
+
+```math
+\{ f(x) \mid x \in S, P(x) \}
 ```
 
-A more flexible way is offered by [list comprehensions](https://wiki.haskell.org/List_comprehension). This concept/construct is nowadays used in many other programming languages, as well, such as Python. In "list" you first specify an expression with variables and then after pipe `|`, there are specifications of bindings and restrictions. It is also possible to define local names with `let`.
-
-```
-Prelude> [n*2+1 | n <- [1..5]]
-[3,5,7,9,11]
-Prelude> [(i, j) | i <- [1..5], j <- [0,1]]
-[(1,0),(1,1),(2,0),(2,1),(3,0),(3,1),(4,0),(4,1),(5,0),(5,1)]
-Prelude> [x | x <- [0..10], x `mod` 3 == 1, x /= 7]
-[1,4,10]
-Prelude> take 10 [(i, j) | i <- [1..5], let k=i-5, j <- [k..6]]
-[(1,-4),(1,-3),(1,-2),(1,-1),(1,0),(1,1),(1,2),(1,3),(1,4),(1,5)]
-```
-
-### Lazy Haskell
-
-As we've already seen, Haskell has lazy non-strict evaluation strategy. It means that no expression is evaluated, unless the value is needed. One of the possibilities is creating infinite lists. You may use `undefined` for testing when the expression is evaluated.
-
-```
-Prelude> let x = 1:x
-Prelude> take 10 x
-[1,1,1,1,1,1,1,1,1,1]
-Prelude> take 20 x
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-Prelude> x
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,...^C Interrupted.
-Prelude> [1,2..]
-[1,2,3,4,5,6,7,8,9,10,11,12,13,14,...^C Interrupted.
-Prelude> let x = undefined
-Prelude> let y = 1 + x
-Prelude> let z = y * 2 + 15
-Prelude> :type y
-y :: Num a => a
-Prelude> :type x
-x :: a
-Prelude> z
-*** Exception: Prelude.undefined
-CallStack (from HasCallStack):
-  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
-  undefined, called at <interactive>:37:5 in interactive:Ghci23
-```
-
-(For stopping output press CTRL+C in GHCi)
-
-### Strictness with types
-
-In the previous lesson, we touched the topic of enforcing strictness with `!` in patterns ([bang patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)) and in function application with `$!` operator. Similarly, we can use `!` with type fields like this:
+For example:
 
 ```haskell
-data MyType = MyConstr Int !Int
-
-data MyRec = MyRecConstr { xA ::  Int
-                         , xB :: !Int
-                         }
+[x | x <- [0..10], x `mod` 3 == 1]
 ```
 
-For both cases it means that when data constructor is evaluated, it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
+This generates a list of numbers from 0 to 10 that leave a remainder of 1 when divided by 3.
 
-In order to achieve laziness, Haskell wraps all types with some additional information = *boxed types*. If you don't need laziness and other related properties, it is more efficient to use raw *unboxed types*. We will talk about that as a bonus or at the end of course in the *Performance* section. Now you just need to know roughly what is it about, because it is used in some textual types...
+```math
+\{ x \mid x \in \{0, 1, \ldots, 10\}, x \mod 3 = 1 \}
+```
+
+### Multiple generators
+
+Generators are evaluated left-to-right, producing combinations lazily.
+
+```haskell
+[(x, y) | x <- [1, 2], y <- ['a', 'b']]
+```
+
+### Laziness in list comprehensions
+
+List comprehensions can describe infinite lists, evaluated lazily:
+
+```
+take 5 [n^2 | n <- [1..]]
+[1,4,9,16,25]
+```
+
+Even though `[1..]` is infinite, only the first `5` squares are computed.
+
+### Local bindings in comprehensions
+
+List comprehensions can introduce local names using let:
+
+```haskell
+[(i, j) | i <- [1..5], let j = i * i]
+```
+
+This ties list comprehensions back naturally to local definitions and evaluation.
 
 ## Modules and imports
 
-A Haskell program consists of a collection of modules (similar to other programming languages). In the top level, you can declare and define data types, function, typeclasses and their instances, pattern bindings and so on.
+As we have seen before, Haskell program is organized into modules. A module groups related definitions (functions, types, type classes) and controls what is visible from the outside. This is essential for:
 
-### Module specification
+* structuring larger programs,
+* avoiding name clashes,
+* making dependencies explicit.
 
-Every file forms a module. If there is no specification of the module name, `Main` is used by default, as we saw. A module name must start with a capital letter and then it is an alphanumeric string. Although there is no formal connection between filesystem and modules, if you use GHC (and we do), your module name should reflect the filesystem name. For example module `FPCourse.Lesson3.TestModule` would be placed in `FPCourse/Lesson3/TestModule.hs` with content:
+### Modules
+
+Every Haskell source file defines exactly one module. If no module header is given, the module name defaults to `Main`.
+
+To remind you, a module name:
+
+* starts with a capital letter,
+* consists of alphanumeric components separated by dots,
+* typically mirrors the directory structure.
+
+Example:
 
 ```haskell
 module FPCourse.Lesson3.TestModule (
-    myFunc1, myFunc3
+    myFunc1,
+    myFunc3
 ) where
 
 myFunc1 x = myFunc2 7 x
@@ -511,13 +759,16 @@ myFunc2 x y = x - y
 myFunc3 x y z = x * y + z
 ```
 
-Notice that after the module name, there is an optional list of stuff that can be imported from this module. In this case, you can import `myFunc1` and `myFunc3`, but not `myFunc2`.
+Here:
 
-*Note*: In GHCi, the `:load` command works differently than `import` in normal Haskell code.
+* `myFunc1` and `myFunc3` are public,
+* `myFunc2` is private to the module.
 
-### Import something
+This explicit export list defines the public API of the module.
 
-How to import something from a different module? As in other languages, use the `import` keyword:
+### Importing a module
+
+To use definitions from another module, use the `import` keyword.
 
 ```haskell
 import FPCourse.Lesson3.TestModule
@@ -526,9 +777,16 @@ x = myFunc1 10
 y = FPCourse.Lesson3.TestModule.myFunc1 25
 ```
 
-Plain import will allow you to use all functions exposed from the module with unqualified or qualified (with module name) names.
+A *plain import*:
 
-You can also specify what do you want to import explicitly:
+* brings all exported names into scope,
+* allows both qualified and unqualified usage.
+
+This is convenient, but can pollute the namespace in larger programs.
+
+### Explicit imports (recommended)
+
+A good practice is to import only what you need:
 
 ```haskell
 import FPCourse.Lesson3.TestModule ( myFunc1 )
@@ -537,28 +795,34 @@ x = myFunc1 10
 y = FPCourse.Lesson3.TestModule.myFunc1 25
 ```
 
-In this case, just `myFunc1` is imported. It is a recommended best practice *always* import just things you need, otherwise you pollute your namespace and you may get into name clashes. Also, explicit imports enhance code readability ("Where the heck has this function come from?!")
+Benefits:
 
-### Qualified import
+* improves readability (“where does this come from?”),
+* prevents accidental name clashes,
+* documents dependencies clearly.
 
-Another option how to avoid polluting your namespace is using qualified imports:
+### Qualified imports
+
+To avoid polluting the namespace entirely, you can import a module qualified:
 
 ```haskell
 import qualified FPCourse.Lesson3.TestModule
 
 x = FPCourse.Lesson3.TestModule.myFunc1 10
 y = FPCourse.Lesson3.TestModule.myFunc2 25
+
+myFunc1 :: Int -> Int
+myFunc1 param = FPCourse.Lesson3.TestModule.myFunc1 (param + 5)
 ```
 
-You then need to access the exported functions just by the fully qualified name. In this variant, you may also name explicit imported functions, however it is not that important, as you do not pollute your namespace and do not loose track of origins of functions:
+With a *qualified import*:
 
-```haskell
-import qualified FPCourse.Lesson3.TestModule ( myFunc1 )
+* names must be prefixed by the module name,
+* it is always clear where a function comes from.
 
-x = FPCourse.Lesson3.TestModule.myFunc1 10
-```
+### Qualified imports with an alias
 
-As you can see, writing qualified name can be lenghty. This is when you introduce an alias for the module name with the keyword `as`:
+Fully qualified names can become long, so aliases are commonly used:
 
 ```haskell
 import qualified FPCourse.Lesson3.TestModule as FPTM
@@ -567,163 +831,230 @@ x = FPTM.myFunc1 10
 y = FPTM.myFunc2 25
 ```
 
-This is a usual way when importing a package, which overrides some standard (Prelude) functions:
+This is the most common style when importing larger libraries.
+
+### Avoiding name clashes
+
+Consider this import:
 
 ```haskell
-import Data.Set (size) -- name clash!
+import Data.Set (map)
 ```
+
+Now both `Prelude` (imported implicitly) and `Data.Set` define functions like `map`, which can lead to confusion.
+
+A safer approach is:
 
 ```haskell
 import qualified Data.Set as S
-
-map (+2) [1, 2, 2, 3]
-
-map (+2) (S.fromList [1, 2, 2, 3])   -- wrong map function (from Prelude)!
-
-S.map (+2) (S.fromList [1, 2, 2, 3]) -- correct!
 ```
 
-### Hiding import
+```
+map (+2) [1,2,2,3]
+S.map (+2) (S.fromList [1,2,2,3])
+```
 
-Another thing you can do with import is to hide something, which can be also used to solve name clashes: If you want to import everything from module except one (or several) functions it is the right way to use keyword `hiding`:
+### Hiding imports
+
+Another way to deal with name clashes is to hide specific names. With the following example, `myFunc2` from the module is not imported and can be redefined locally:
 
 ```haskell
-import FPCourse.Lesson3.TestModule hiding ( myFunc3 )
+import FPCourse.Lesson3.TestModule hiding (myFunc2)
 
-myFunc3 :: Int -> Int -- now our function does not clash
-myFunc3 = ...
-
-x = myFunc1 10 -- a function from TestModule
-y = FPTM.myFunc1 25
+myFunc2 :: Int -> Int -> Int
+myFunc2 x y = x + y + 666
 ```
 
 ## Textual types
 
-Textual types [(strings)](https://wiki.haskell.org/Strings) are kind of pain in Haskell. This is mostly because of its long legacy and also laziness/strictness trade-offs. However, as everything, they are not really insidious, just not convenient as they could be (and actually are in newer "Haskells", such as PureScript).
+Working with text is a common task, but in Haskell it comes with some historical and conceptual baggage.
+Unlike many languages that have a single “string” type, Haskell offers **several textual representations**, each optimized for different use cases.
 
-### String
+Understanding these types—and choosing the right one—is important for both correctness and performance.
 
-[String](https://hackage.haskell.org/package/base/docs/Data-String.html) is the string type in the `base` package. It is just a type synonym for `[Char]`, so it comes with all properties of a [list](https://hackage.haskell.org/package/base/docs/Data-List.html), and as such, it is the most common one, especially for non-performance-sensitive applications. But when it comes to performance (and sometimes even Unicode behavior), then problems arise - `String` has big overhead in time and space.
+### `String`
 
-### Text
+The simplest and most familiar textual type is String.
 
-[Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html) from [text](https://hackage.haskell.org/package/text) package is a time and space-efficient implementation of Unicode text. You can convert between `Text` and `String` with functions `pack` and `unpack`. The `Data.Text` package exports functions with same names as there are for `String` (`head`, `length`, `map`, `replace`, etc.), so the advised import style is `import qualified Data.Text as T`.
+```haskell
+type String = [Char]
+```
+
+That is, a `String` is just a list of characters.
+
+Because of this:
+
+* all list operations work on `String`,
+* pattern matching behaves exactly like with lists,
+* it is very convenient for teaching and small programs.
+
+However, this also means:
+
+* high memory overhead,
+* poor performance for large texts,
+* inefficient Unicode handling in some scenarios.
+
+For non-performance-critical code, `String` is perfectly fine. For larger or more serious applications, better alternatives exist.
+
+### `Text`
+
+The text package provides [Data.Text](https://hackage.haskell.org/package/text/docs/Data-Text.html), a time- and space-efficient Unicode text type.
+
+```haskell
+import qualified Data.Text as T
+```
+
+You can convert between String and Text using:
+
+```haskell
+T.pack :: String -> Text
+T.unpack :: Text -> String
+```
+
+Example:
 
 ```
 Prelude> import qualified Data.Text as T
+
 Prelude T> txt = T.pack "my effective text"
+
 Prelude T> :type txt
 txt :: T.Text
+
 Prelude T> T.index txt 1
 'y'
-Prelude T> T.replace "my" "your" txt
+```
 
-<interactive>:13:11: error:
-    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
-    • In the first argument of ‘T.replace’, namely ‘"my"’
-      In the expression: T.replace "my" "your" txt
-      In an equation for ‘it’: it = T.replace "my" "your" txt
+Functions for Text often have the same names as list or String functions, which is why qualified imports are strongly recommended.
 
-<interactive>:13:16: error:
-    • Couldn't match expected type ‘T.Text’ with actual type ‘[Char]’
-    • In the second argument of ‘T.replace’, namely ‘"your"’
-      In the expression: T.replace "my" "your" txt
-      In an equation for ‘it’: it = T.replace "my" "your" txt
-Prelude T> T.replace (T.pack "my") (T.pack "your") txt
-"your effective text"
+A common beginner mistake:
+
+```
 Prelude T> length txt
-
-<interactive>:11:8: error:
-    • Couldn't match expected type ‘[a0]’ with actual type ‘T.Text’
-    • In the first argument of ‘length’, namely ‘txt’
-      In the expression: length txt
-      In an equation for ‘it’: it = length txt
+-- type error
 Prelude T> T.length txt
 17
 ```
 
-There is another variant of the Text package, which is [Data.Text.Lazy](https://hackage.haskell.org/package/text/docs/Data-Text-Lazy.html), which exports same operations and thanks to laziness, it can work with huge texts and it may provide better performance under the right circumstances. [Data.Text.Encoding](https://hackage.haskell.org/package/text/docs/Data-Text-Encoding.html) (and its lazy alternative) may be also useful.
+There are two variants:
 
-### ByteString
+* **strict**: `Data.Text`
+* **lazy**: `Data.Text.Lazy`
 
-Last of the types mentioned here is [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) from [bytestring](https://hackage.haskell.org/package/bytestring) package. Byte vectors are encoded as strict Word8 arrays of bytes and they are used for interoperability between Haskell and C or other lower-level situations. In many ways, the usage is similar to [text](https://hackage.haskell.org/package/text) package (again `pack` and `unpack`, same basic functions, `Lazy` alternative, and so on). Next, there is an option to use vectors with `Char8` instead of `Word8`, which works as Unicode subset (0-255) strings and it is used when working with pure ASCII string representations.
+The lazy variant is useful for very large texts or streaming scenarios and integrates well with Haskell’s lazy evaluation model.
+
+### `ByteString`
+
+`ByteString` represents raw sequences of bytes and is provided by the `bytestring` package and its [Data.ByteString](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString.html) module.
+
+```haskell
+import qualified Data.ByteString as B
+```
+
+It is commonly used for:
+
+* binary data,
+* file I/O,
+* network communication,
+* interoperability with C libraries.
+
+Example:
 
 ```
-Prelude T> import Data.ByteString as B
-Prelude T B> bstr = B.pack [97, 98, 99]
-Prelude T B> bstr
+Prelude> import qualified Data.ByteString as B
+
+Prelude> bstr = B.pack [97, 98, 99]
+
+Prelude> bstr
 "abc"
-Prelude T B> index bstr 2
+
+Prelude> B.index bstr 2
 99
-Prelude T B> B.map (+1) bstr
-"bcd"
+```
 
-Prelude T B> import qualified Data.ByteString.Char8 as C
-Prelude T B C> C.pack "abc"
+Note that this works with bytes (0–255), not characters.
+
+### `ByteString.Char8`
+
+For ASCII-based text, there is a convenient variant [Data.ByteString.Char8](https://hackage.haskell.org/package/bytestring/docs/Data-ByteString-Char8.html):
+
+```haskell
+import qualified Data.ByteString.Char8 as C
+```
+```
+Prelude> C.pack "abc"
 "abc"
-Prelude T B C> B.pack "abc"
 
-<interactive>:28:8: error:
-    • Couldn't match type ‘Char’ with ‘GHC.Word.Word8’
-      Expected type: [GHC.Word.Word8]
-        Actual type: [Char]
-    • In the first argument of ‘pack’, namely ‘"abc"’
-      In the expression: pack "abc"
-      In an equation for ‘it’: it = pack "abc"
-Prelude T B C> cstr = C.pack "abc"
-Prelude T B C> C.index cstr 2
+Prelude> C.index (C.pack "abc") 2
 'c'
 ```
 
-In other cases you need to use encoding to encode/decode bytes to/from text:
+This treats bytes as characters in the range 0–255 and should only be used when Unicode is not required.
 
-```
-Prelude T B> import qualified Data.Text.Encoding as E
-Prelude T B C E> E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
-"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
-Prelude T B C E> x = E.encodeUtf8 (T.pack "život, жизнь, lífið, ਜੀਵਨ, ,حياة")
-Prelude T B C E> x
-"\197\190ivot, \208\182\208\184\208\183\208\189\209\140, l\195\173fi\195\176, \224\168\156\224\169\128\224\168\181\224\168\168, ,\216\173\217\138\216\167\216\169"
-Prelude T B C E> index x 0
-197
-Prelude T B C E> index x 2
-105
+### Encoding and decoding text
+
+To convert between textual data and raw bytes, use encoding modules:
+
+```haskell
+import qualified Data.Text.Encoding as E
 ```
 
-### OverloadedStrings
+```
+Prelude> E.encodeUtf8 (T.pack "život, жизнь, lífið")
+```
 
-As needing to pack all string literals when using non-base string representations is cumbersome, there is a handy [GHC] language extension [OverloadedStrings](https://ocharles.org.uk/blog/posts/2014-12-17-overloaded-strings.html).
+Encoding makes it explicit:
 
-Generally, [GHC] language extensions can be enabled in the source file using pragma `LANGUAGE` as the first line in the file:
+* how characters are represented as bytes,
+* what assumptions are made about character sets.
+
+This explicitness is one of Haskell’s strengths, even if it feels verbose at first.
+
+### `OverloadedStrings` (GHC extension)
+
+Having to manually pack every string literal can be annoying. The language extension OverloadedStrings helps with this.
+
+Enable it in a source file:
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
-
-module XY ...
 ```
 
-In GHCi, the extension can be enabled using the `:set` directive:
+or in GHCi:
 
 ```
-Prelude> :set -XOverloadedStrings
+:set -XOverloadedStrings
 ```
 
-After that, a string literal type can be inferred by its usage in the source code:
+Now *string literals become polymorphic*:
+
+```
+Prelude> :type "abc"
+"abc" :: IsString p => p
+```
+
+This allows code like the following, without explicit `pack`:
 
 ```
 Prelude> import qualified Data.Text as T
-Prelude T> :type "abc"
-"abc" :: [Char]
-Prelude T> :set -XOverloadedStrings
-Prelude> :type "abc"
-"abc" :: Data.String.IsString p => p
-Prelude T> T.length "abc" -- no need to pack the literal any more!
+
+Prelude> T.length "abc"
 3
 ```
 
+### Which textual type to use
+
+A practical rule of thumb:
+
+* `String` = teaching, small programs, quick scripts
+* `Text` = most real-world Unicode text processing
+* `ByteString` = binary data, I/O, networking
+
+You can always convert between them when needed and sometimes your choice will depend on library support.
+
 ## Task assignment
 
-The homework to practice branching and slightly working with modules is in repository [MI-AFP/hw03](https://github.com/MI-AFP/hw03).
+For the second assignment, navigate to the `hw03` project and follow the instructions in the `README.md` file there. It will test your skills in branching, local definitions, and working with modules.
 
 ## Further reading
 
