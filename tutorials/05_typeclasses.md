@@ -2,34 +2,114 @@
 
 ## Typeclasses
 
-Typeclass is a class of types with a definition of common functions for all instances of that class. Please note that the term "class" here means a [mathematical class in the set theory](https://en.wikipedia.org/wiki/Class_(set_theory)), not an [object-oriented class](https://en.wikipedia.org/wiki/Class_(computer_programming))!.
+A **typeclass** is Haskell’s mechanism for **ad-hoc polymorphism**: it lets you write functions that work for *many different types*, as long as those types support a required set of operations.
 
-Typeclasses represent a powerful means for polymorphism in a strong static type system. They can be related to interfaces in Java or protocols in Clojure, however, they are more powerful.
+In other words:
+
+> A typeclass is a *contract* (a set of functions and laws) that a type may implement.
+
+⚠️ Note: the word *class* here means a **mathematical class** (set-like collection of things), not an object-oriented class. In Haskell, typeclasses do not define data or state — they define *capabilities*.
+
+### Why typeclasses matter (engineering view)
+
+Typeclasses solve a very common engineering problem:
+
+> I want one generic algorithm, but I need the input type to support certain operations.
+
+For example:
+
+- sorting needs ordering (`Ord`)
+- printing needs formatting (`Show`)
+- equality checks need equality (`Eq`)
+- numeric algorithms need arithmetic (`Num`, `Fractional`, ...)
+
+This is expressed directly in types:
+
+```haskell
+sort   :: Ord a  => [a] -> [a]
+show   :: Show a => a -> String
+(==)   :: Eq a   => a -> a -> Bool
+(+)    :: Num a  => a -> a -> a
+(/)    :: Fractional a => a -> a -> a
+```
 
 ### Kinds
 
-In the type theory, a kind is the type of a type constructor or, less commonly, the type of a higher order type operator. A kind system is essentially a simply-typed lambda calculus 'one level up' from functions to their types, endowed with a primitive type, denoted `*` and called 'type', which is the kind of any (monomorphic) data type. Simply you can observe this with GHCi and `:kind` command on various types. For example kind `* -> *` tells that you need to specify one type argument to create a type with kind `*` so you can have values of it.
+In Haskell, not everything at the type level is a *fully specified type*.
+
+Some things are **type constructors** — meaning: they still need one or more type arguments before they become a real type you can have values of. Recall from the previous tutorial that `Maybe` is a type constructor, and `Maybe Int` is a fully specified type. The same goes for `Either`, `[]`, etc. This is related to partial application of type constructors, which is a powerful feature of Haskell.
+
+A **kind** is simply the *type of a type-level thing*.
+
+You can think of it as:
+
+- **types** classify *values*
+- **kinds** classify *types and type constructors*
+
+The simplest kind is:
+
+- `Type` (historically written as `*`)
+
+It is the kind of normal, concrete types such as `Int`, `Bool`, or `Maybe Int`.
+
+You can inspect kinds in GHCi:
 
 ```
-Prelude> :kind Integer
-Integer :: *
-Prelude> :kind Maybe
+ghci> :kind Int
+Int :: *
+
+ghci> :kind Maybe
 Maybe :: * -> *
-Prelude> :kind Either
+
+ghci> :kind Either
 Either :: * -> * -> *
-Prelude> :kind (Either Integer)
-(Either Integer) :: * -> *
-Prelude> :kind (Either Integer String)
-(Either Integer String) :: *
+
+ghci> :kind (Either Int)
+(Either Int) :: * -> *
+
+ghci> :kind (Either Int String)
+(Either Int String) :: *
 ```
+
+Kinds behave almost exactly like function types:
+
+* `*` is like a *value type*
+* `* -> *` is like a function that takes a type and returns a type
+* `* -> * -> *` is like a function that takes two types and returns a type
+
+So:
+
+* `Maybe` is not a type — it is a type constructor
+* `Maybe Int` is a type
+* `Either` is a type constructor of two arguments
+* `Either Int` is a type constructor of one argument (partially applied)
+* `Either Int String` is a type
+
+This is the type-level version of partial application you already know from values. We will later on see how this is useful for typeclasses and polymorphism.
 
 ### Polymorphism
 
-[Polymorphism](https://en.wikipedia.org/wiki/Polymorphism_(computer_science)) (from Greek πολύς, polys, "many, much" and μορφή, morphē, "form, shape") is the provision of a single interface to entities of different types. A polymorphic type is one whose operations can also be applied to values of some other type, or types. Polymorphism is usually connected with object-oriented programming today, however, there are even more powerful types of polymorphism in functional programming languages, such as Haskell or Clojure.
+[Polymorphism](https://en.wikipedia.org/wiki/Polymorphism_(computer_science)) (Greek πολύς “many” + μορφή “shape”) means writing code that works for multiple types.
 
-We already used type classes and type variables - the basic enablers of polymorphism in Haskell. **Parametric polymorphism** refers to the situation when the type of a value contains one or more (unconstrained) type variables, so that the value may adopt any type that results from substituting those variables with concrete types. It is when the type variable *is not constrained* by some type class. For example, length of a list `[a]` works for any type `a`. In this tutorial, there was the `map` function with type `(a -> b) -> [a] -> [b]` - also a parametric polymorphism. This type of polymorphism doesn't know anything about the type which it will be used with. The behaviour is abstracted regardless of a concrete type. This is a somewhat limiting but extremely useful property known as versatility.
+In Haskell, you will encounter polymorphism in two everyday forms:
 
-**Ad-hoc polymorphism** refers to the situation when a value is able to adopt any one of a defined set of types because it, or a value it uses, has been given a separate definition for each of those types. This is a situation when the type variable *is constrained* by some type class. Thanks to that extra information about the given *still-generic* type, it is possible to use behaviour defined during class instantiation. Haskell even allows class instances to be defined for types which are themselves polymorphic - you can make your implementation of an arbitrary list an instance of some class. This polymorphism is not only about functions, but also about values - recall `Bounded` class with `minBound` and `maxBound` values which are different for each instance.
+* **Parametric polymorphism** (unconstrained): This is the classic *generic* polymorphism: the code works for any type because it makes **no assumptions about that type**. In the following example, the function `length` works for any list of any type, and `id` works for any type at all; `a` and `b` are unconstrained type variables:
+
+```haskell
+length :: [a] -> Int
+map :: (a -> b) -> [a] -> [b]
+id :: a -> a
+```
+
+* **Ad-hoc polymorphism** (constrained): This is the kind of polymorphism that typeclasses provide: the code works for any type that **implements a certain interface** (i.e., supports certain operations). In the following example, `sort` works for any list of any type `a`, as long as `a` is an instance of the `Ord` typeclass (i.e., it supports ordering):
+
+```haskell
+(==)  :: Eq a   => a -> a -> Bool
+sort  :: Ord a  => [a] -> [a]
+show  :: Show a => a -> String
+```
+
+Unlike in many OO languages, this is not subtyping. It’s closer to dictionary-passing: the compiler chooses the right implementation based on the type and inserts it implicitly for you.
 
 There are some other types of polymorphism that are implemented in some extensions to Haskell, e.g. [rank-N types](https://wiki.haskell.org/Rank-N_types) and [impredicative types](https://wiki.haskell.org/Impredicative_types). But there are also types of polymorphism that are not supported in Haskell, for example, subtyping and inclusion polymorphism.
 
@@ -71,297 +151,362 @@ move (dx, dy) p = setLocation (x + dx, y + dy) p
     (x, y) = getLocation p
 ```
 
-## Basic typeclasses in detail
+## Common typeclasses
+
+These are the typeclasses you will encounter constantly in real Haskell code.
+
+They describe *very basic structure* that many types naturally support:
+
+- equality
+- ordering
+- textual representation
+- enumeration
+- bounds
+
+Understanding these well is crucial before moving to more abstract ones.
 
 ### Deriving
 
-We have already used the keyword `deriving` many times. It is kind of magic which will automatically derive an instance of desired typeclass(es) so you don't have to write functions on your own.
-
-You can derive only built-in typeclasses:
-
-* `Eq` = (in)equality based on arguments
-* `Ord` = `compare`, `min`, `max` and comparison operators
-* `Show` = to `String` conversion
-* `Read` = from `String` conversion
-* `Enum` = enumerations only (no arguments), list `..` syntax
-* `Bounded` = only for enumerations or just one arguments, `minBound` and `maxBound`
-
-You can use `deriving` for your own classes, but you need to put some (advanced) effort in it by using [Data.Derive](https://hackage.haskell.org/package/derive) and [Template Haskell](https://wiki.haskell.org/Template_Haskell).
-
-### Read and Show
-
-If you derive default implementation of instances for `Show` and `Read` the string representing the data is actually the same as you would write it in Haskell code:
-
-```
-Prelude> data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Show, Read)
-Prelude>
-Prelude> myTree = Node (Leaf 8) (Node (Leaf 70) (Leaf 15))
-Prelude> show myTree
-"Node (Leaf 8) (Node (Leaf 70) (Leaf 15))"
-Prelude> read "Node (Leaf 5) (Leaf 100)"
-*** Exception: Prelude.read: no parse
-Prelude> (read "Node (Leaf 5) (Leaf 100)") :: Tree Int
-Node (Leaf 5) (Leaf 100)
-```
+Haskell can automatically generate instances for several standard typeclasses using `deriving`.
 
 ```haskell
-class Show a where
-  showsPrec :: Int -> a -> ShowS
-  show :: a -> String
-  showList :: [a] -> ShowS
-  {-# MINIMAL showsPrec | show #-}
-        -- Defined in ‘GHC.Show’
+data Person = Person
+  { name :: String
+  , age  :: Int
+  }
+  deriving (Eq, Ord, Show, Read)
 ```
 
-When you make own `read` and `show`, you should ensure that after using `read` on a string produced by `show`, you will get the same data:
+This works when:
 
-```haskell
-data Tree a = Leaf a | Node (Tree a) (Tree a)
+* all fields already have instances of those classes
+* the instance can be derived structurally
 
-size :: Num a => Tree b -> a
-size (Leaf _)   = 1
-size (Node l r) = size l + size r
+Deriving is structural:
 
-instance (Show a) => Show (Tree a) where
-  show (Leaf x)   = show x
-  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
-```
+* `Eq` compares fields
+* `Ord` compares fields lexicographically
+* `Show` prints constructor syntax
+* `Read` parses constructor syntax
 
- `show` is (quite often) abused to represent fancy string representations, but it is adviced to name such functions differently (such as `myShow`), or to use a pretty-printing library such as [Text.PrettyPrint](https://hackage.haskell.org/package/pretty-1.1.3.6/docs/Text-PrettyPrint.html), [pretty](https://hackage.haskell.org/package/pretty), [pretty-simple](https://hackage.haskell.org/package/pretty-simple) or [prettyprinter](https://hackage.haskell.org/package/prettyprinter).
+If the generated behavior is what you want — use it. If not, write your own instance (you will see soon how).
 
-Typeclass `Read` is a bit more complex. If you want to make your own implementation, you need to write a parser. Parsing will be covered later on during the course. Basically, it tries to convert `String` to `a` and return it together with the remaining `String`.
-
-```haskell
-class Read a where
-  readsPrec :: Int -> ReadS a
-  readList :: ReadS [a]
-  GHC.Read.readPrec :: Text.ParserCombinators.ReadPrec.ReadPrec a
-  GHC.Read.readListPrec :: Text.ParserCombinators.ReadPrec.ReadPrec [a]
-  {-# MINIMAL readsPrec | readPrec #-}
-        -- Defined in `GHC.Read'
-```
-
-### Numerics
-
-For numbers, there are several built-in typeclasses making numeric computing more flexible:
-
-* `Num`
-  * `Real`
-    * `Integral`
-    * `RealFrac`
-  * `Fractional`
-    * `Floating`
-    * `RealFloat` (subclass of `Floating` and `RealFrac`)
-
-If you don't need to explicitly specify the type of number, use the typeclass constraint in the declaration of function type. This is a general rule of thumb: be as much generic, as possible.
-
-### Comparison
-
-There are two basic typeclasses - `Eq` and its subclass `Ord` that specify comparisons.
+### Eq — equality
 
 ```haskell
 class Eq a where
   (==) :: a -> a -> Bool
   (/=) :: a -> a -> Bool
   {-# MINIMAL (==) | (/=) #-}
-        -- Defined in ‘GHC.Classes’
-
-class Eq a => Ord a where
-  compare :: a -> a -> Ordering
-  (<) :: a -> a -> Bool
-  (<=) :: a -> a -> Bool
-  (>) :: a -> a -> Bool
-  (>=) :: a -> a -> Bool
-  max :: a -> a -> a
-  min :: a -> a -> a
-  {-# MINIMAL compare | (<=) #-}
-        -- Defined in ‘GHC.Classes’
 ```
 
-You can again implement your own instances of those classes:
+This defines structural equality. Minimal requirement for custom instances: define either (==) or (/=).
+
+**Laws** (that are expected but not enforced by the compiler), for all `x`, `y`, `z`:
+
+* Reflexivity: `x == x`
+* Symmetry: `x == y  ⇒  y == x`
+* Transitivity: `(x == y && y == z) ⇒ x == z`
+
+Example of custom instance:
 
 ```haskell
-data Tree a = Leaf a | Node (Tree a) (Tree a)
+data User = User Int String
 
-size :: Num a => Tree b -> a
-size (Leaf _)   = 1
-size (Node l r) = size l + size r
-
-instance (Show a) => Show (Tree a) where
-  show (Leaf x)   = show x
-  show (Node l r) = show l ++ " " ++ show r     -- would be possible to write read for this?
-
-instance Eq (Tree a) where
-    (==) t1 t2 = (size t1) == (size t2)
-
-instance Ord (Tree a) where
-    compare t1 t2 = compare (size t1) (size t2)
+instance Eq User where
+  (User id1 _) == (User id2 _) = id1 == id2
 ```
 
-### Enum and Bounded
+### Ord — ordering
 
-Class `Enum` defines operations on sequentially ordered types and it is a subclass of `Bounded` which defines just `minBound` and `maxBound` values. As you can see below, `Enum` describes 8 functions but only 2 are required (other will be derived based on that). Functions `toEnum` and `fromEnum` serve for specifying the order by numbering with `Int`s.
+```haskell
+class Eq a => Ord a where
+  compare :: a -> a -> Ordering
+  (<), (<=), (>), (>=) :: a -> a -> Bool
+  min, max :: a -> a -> a
+  {-# MINIMAL compare | (<=) #-}
+
+data Ordering = LT | EQ | GT
+```
+
+Notice that `Ord` is a subclass of `Eq`, so you need to have an instance of `Eq` to be able to create an instance of `Ord`. The minimal requirement for custom instances: define either `compare` or `(<=)`.
+
+**Laws** (expected but not enforced), for all `x`, `y`, `z`:
+
+* Totality: `compare x y` is always `LT`, `EQ`, or `GT`
+* Transitivity: `x <= y && y <= z ⇒ x <= z`
+* Consistency with `Eq`: `x == y ⇒ compare x y == EQ`
+
+Again, custom instance:
+
+```haskell
+data Person = Person String Int
+
+instance Ord Person where
+  compare (Person _ age1) (Person _ age2) =
+    compare age1 age2
+```
+
+### Show — textual representation as a String
+
+```haskell
+class Show a where
+  show :: a -> String
+```
+
+This is for converting values to human-readable strings. The minimal requirement for custom instances: define `show`.
+
+Derived `Show` produces a string that looks is a valid Haskell code. Custom instances can produce any string representation you want. But then you should preferably implement both Show and Read, they should round-trip: `read (show x) == x`. General recommendation: do not abuse `show` for pretty-printing.
+
+### Read — parsing from String
+
+```haskell
+class Read a where
+  read :: String -> a
+```
+
+This is for parsing values from strings. Derived `Read` expects the string to be in the same format as produced by `Show`. Typically, you write custom parsers using dedicated libraries if needed, rather than implementing `Read` directly.
+
+### Enum — enumeration
 
 ```haskell
 class Enum a where
-    succ :: a -> a
-    pred :: a -> a
-    toEnum :: Int -> a
-    fromEnum :: a -> Int
-    enumFrom :: a -> [a]
-    enumFromThen :: a -> a -> [a]
-    enumFromTo :: a -> a -> [a]
-    enumFromThenTo :: a -> a -> a -> [a]
-    {-# MINIMAL toEnum, fromEnum #-}
+  toEnum :: Int -> a
+  fromEnum :: a -> Int
+  enumFrom :: a -> [a]
+  enumFromTo :: a -> a -> [a]
+  enumFromThen :: a -> a -> [a]
+  enumFromThenTo :: a -> a -> a -> [a]
+
+data Day = Mon | Tue | Wed | Thu | Fri
+  deriving (Enum, Show)
+
+[Mon .. Fri]
+-- [Mon,Tue,Wed,Thu,Fri]
 ```
 
-When you derive `Enum`, the order will be generated as left-to-right order of data constructors (without parameters, an enumeration consists of one or more nullary ones). Similarly, deriving `Bounded` will use the first and the last data constructor.
+Naturally, `Enum` is for types that have a sequential ordering. The minimal requirement for custom instances: define either `toEnum` and `fromEnum`, or `enumFrom` and `enumFromTo`. Derived `Enum` assigns consecutive integers starting from 0 to the constructors. Custom instances can define any mapping between the type and integers, as well as any enumeration behavior.
 
-Enumerations have also the `..` syntactic sugar. For example, `[1..10]` is translated to `enumFromThen 1 10` and `[1,5..100]` is translated to `enumFromThenTo`
-
-## Mathematical Typeclasses
-
-Now we are going to spend some time with predefined and important typeclasses that capture important concepts in Haskell that are widely used in many projects. Typeclass always says something about the structure of the type and what you can do with that. Also, there are some laws and it is very tightly related to math -- specifically the algebra and the category theory.
-
-After learning common typeclasses, it is not just easier to use them and understand a code written by other developers, but it also helps with designing own custom typeclasses. You can always find out more about a typeclass and instances with GHCi `:info` command.
-
-### Intro: Mathematical foundations
-
-The relation between math and Haskell is very strong. You can observe it everywhere. Haskell functions are very similar to mathematical functions when you talk about their type, definitions with `let` and `where` keywords, guards with `otherwise`, function compositions, and so on. In this tutorial, we are going to see this relation even more -- with typeclasses that come from the mathematical world. You should be already familiar with [basic abstract algebra](https://en.wikipedia.org/wiki/Algebra#Abstract_algebra) (esp. algebraic structures with a single binary operation).
-
-When getting into the math, you should know that Haskell is based not just on the basic algebra, set theory, and logic, but also on the category theory. In order to sometimes mention the relation, we will briefly explain what it is about. If you want to know more, please refer to some mathematical tutorials on your own.
-
-#### Category theory
-
-Category theory is a higher abstraction level over *Monoid*, *Semigroup*, and similar algebraic structures. Actually, it is so abstract that it can describe so many things ... that it is very hard to comprehend. The "best practice" among programmers is to learn it bit by bit and return to it from time to time until things "click" together. This "click" means putting together the theory and its practical applications.
-
-A **category** is a structure or collection *C* with three components:
-
-* a collection of **objects**, *ob(C)*,
-* a collection of **morphisms**, *hom(C)*, that ties two objects together; sometimes they are called **arrows**,
-* a **composition** of morphisms (similar to function composition).
-
-There are many categories, for example, **Set** category has all possible sets as objects, standard functions as morphisms, and classical function composition. There are also three laws:
-
-1. the composition of category must be associative (i.e., *f ∘ (g ∘ h) = (f ∘ g) ∘ h*),
-2. the category needs to be closed under the composition operation (i.e., for all applies *h = f ∘ g ⇒ h ∈ C*),
-3. for every object *A ∈ ob(C)* there is an identity function *idA: A → A*, *idA ∈ hom(C)*.
-
-#### The Hask category
-
-In Haskell, we have the **Hask** category where:
-
-* *ob(Hask)* are **types** (`Char`, `Int`, `Double`, `[Integer]`, `Person`, `Int -> String`, etc.),
-* *hom(C)* are **functions** (`show`, `id`, `length`, `words`, `flip`, `reverse`, etc.),
-* composition is **function composition** `(.)`.
-
-The identity function is for every *o ∈ ob(Hask)* the polymorphic `id` function. The associativity of the composition is assured and in *hom(C)* there are all the functions, even those created by composition. That's it for now -- now we will show some typeclasses, their laws and come back to **Hask** when necessary...
-
-### Semigroup, Monoid, ...
-
-`Monoid` is the most simple typeclass we will learn. You can recall the [monoid](https://en.wikipedia.org/wiki/Monoid) from the algebra -- it is an algebraic structure with one binary operation that is associative and there is also one identity element. The same goes for Haskell -- the operation is called `mappend` and the identity is `mempty` (the first letter `m` if for **m**onoid).
-
-Since `base-4.11.0.0`, the `Monoid` is a subclass of `Semigroup` (just like in algebra). `Semigroup` defines just binary operation which is associative. In Haskell, the binary operation is `(<>)` (infixr 6)
+### Bounded — upper and lower bounds
 
 ```haskell
-class Semigroup s where
-  (<>) :: s -> s -> s               -- binary associative operation
+class Bounded a where
+  minBound :: a
+  maxBound :: a
 
-class Semigroup m => Monoid m where
-  mempty  :: m                      -- identity of mappend
-  mappend :: m -> m -> m
-  mappend = (<>)                    -- binary operation from Semigroup
-  mconcat :: [m] -> m
-  mconcat = foldr mappend mempty    -- fold with mappend (catamorphism)
+data Direction = North | South | East | West
+  deriving (Bounded, Enum)
+
+minBound :: Direction
+-- North
+
+maxBound :: Direction
+-- West
 ```
 
-The law of monoid says that `mappend` must be associative and `mempty` is a real identity when working with `mappend`:
+With this, you can enumerate all values of a type using `enumFrom minBound` or `enumFromTo minBound maxBound` (or `[ minBound .. maxBound ]`). Derived `Bounded` assigns the first constructor as `minBound` and the last constructor as `maxBound`. Custom instances can define any values as bounds. Notice that you need to specify the type when using `minBound` and `maxBound`, as they are polymorphic.
+
+
+## Custom typeclasses
+
+So far, we have used predefined typeclasses like `Eq`, `Ord`, and `Show`. But one of the most powerful features of Haskell is that **you can define your own typeclasses** to describe reusable abstractions.
+
+A custom typeclass answers the question:
+
+> What structure must a type provide to participate in this abstraction?
+
+### When should you define a typeclass?
+
+Use a typeclass when:
+
+- multiple unrelated types should support the same *concept*
+- you want to write generic algorithms constrained by capabilities
+- the abstraction is about *behavior*, not data
+
+Do **not** use a typeclass:
+
+- when there will be only one instance
+- when you need runtime dispatch
+- when the behavior depends on configuration/state
+
+Typeclasses are about **static capability-based polymorphism**.
+
+### Basic syntax
+
+A typeclass defines:
+
+- a name
+- a type variable
+- a set of function signatures
+- optional default implementations
 
 ```haskell
-mappend x (mappend y z) == mappend (mappend x y) z
--- the same in infix:
-x `mappend` (y `mappend` z) == (x `mappend` y) `mappend` z
-
-mappend x mempty == x
-mappend mempty x == x
+class Located a where
+  getLocation :: a -> (Int, Int)
 ```
 
-If you take a look at the documentation of [Data.Monoid](https://hackage.haskell.org/package/base/docs/Data-Monoid.html), you might notice few more things:
+> Any type a that is an instance of Located must provide a function getLocation.
 
-* by default, a synonym for `mappend` is `(<>)` so you can simply use it as operator `x <> b` (notice that it is not the same as not-equals in other languages),
-* multiple newtypes for specifying monoid for basic types, like `Sum` and `Product` for numeric types, `All` and `Any` for booleans, `First` and `Last` for maybes and few more.
-
-
-```
-Prelude> import Data.Monoid
-Prelude Data.Monoid> :info Sum
-newtype Sum a = Sum {getSum :: a}       -- Defined in ‘Data.Monoid’
-...
-Prelude Data.Monoid> :info Product
-newtype Product a = Product {getProduct :: a}
-...
-Prelude Data.Monoid> (Product 5) <> (Product 2)
-Product {getProduct = 10}
-Prelude Data.Monoid> mempty :: Product  Int
-Product {getProduct = 1}
-Prelude Data.Monoid> (Sum 5) <> (Sum 2)
-Sum {getSum = 7}
-Prelude Data.Monoid> mempty :: Sum Int
-Sum {getSum = 0}
-Prelude Data.Monoid> mconcat (map Sum [1..5])
-Sum {getSum = 15}
-Prelude Data.Monoid> mconcat (map Product [1..5])
-Product {getProduct = 120}
-```
-
-#### Example: textual types
-
-One of the very practical usages of `mappend` is string concatenation, which is independent of its concrete implementation:
+### Creating instances
 
 ```haskell
-{-# LANGUAGE OverloadedStrings #-}
-import Data.Text (Text)
+data NamedPoint = NamedPoint
+  { pointName :: String
+  , pointX    :: Int
+  , pointY    :: Int
+  }
 
-s1 :: String
-s1 = "hello"
-s2 :: String
-s2 = "monoid"
-
-t1 :: Text
-t1 = "hello"
-t2 :: Text
-t2 = "monoid"
-
-s1 <> ", " <> s2 -- instead of s1 ++ ", " ++ s2
-t1 <> ", " <> t2 -- works the same for text!
+instance Located NamedPoint where
+  getLocation p = (pointX p, pointY p)
 ```
 
-Here, obviously `mappend` is string concatenation and `mempty = ""`.
+Now any function (including constructors) requiring `Located a` can work with `NamedPoint`.
 
-#### Example: Maybe
+### Default implementations
 
-From `:info Monoid`, we can see that `Maybe a` is an instance of `Monoid` iff (=if and only if) `a` is an instance of `Monoid`. Then, the `(<>)` is "propagated" inside and obviously the identity is `Nothing`.
+Typeclasses may define default behavior which instances can override. This allows you to provide a common implementation that works for many types, while still allowing customization when needed.
 
-```
-Prelude Data.Maybe Data.Semigroup> (Just "a") <> (Just "b")
-Just "ab"
-Prelude Data.Maybe Data.Semigroup> (Just "a") <> Nothing
-Just "a"
-Prelude Data.Maybe Data.Semigroup> (Just "a") <> Nothing <> (Just "b")
-Just "ab"
-Prelude Data.Maybe Data.Semigroup> Nothing <> Nothing
-Nothing
-Prelude Data.Maybe Data.Semigroup> mconcat [Just "a", Nothing, Just "b"]
-Just "ab"
-Prelude Data.Maybe Data.Semigroup> mempty :: Maybe String
-Nothing
+```haskell
+class (Located a) => Movable a where
+  setLocation :: (Int, Int) -> a -> a
+
+  move :: (Int, Int) -> a -> a
+  move (dx, dy) obj =
+    let (x, y) = getLocation obj
+    in setLocation (x + dx, y + dy) obj
 ```
 
-#### Verify the laws
+Only `getLocation` (from `Located`) and `setLocation` must be implemented while `move` is automatically available.
 
-As said, there are some laws (identity and associativity in this case) that should be valid, but the compiler cannot enforce it. Whenever you introduce your own instance of `Monoid` or other structure with some laws that are expected to be valid, use tests to prove it. One way is to write the properties on your own. The second and better one is to use [checkers](https://hackage.haskell.org/package/checkers), where many standard properties are prepared for you...
+This is extremely powerful:
 
-#### Others from basic algebra
+* you define minimal core operations
+* derive richer behavior from them
+
+This pattern appears everywhere in the standard library.
+
+### Minimal complete definition
+
+Many typeclasses document a minimal complete definition. This is the smallest set of functions you must implement to create a valid instance. The rest can be derived from these. For example, for `Eq`, you can implement either `(==)` or `(/=)`, and the other will be automatically defined in terms of it.
+
+```haskell
+class Eq a where
+  (==) :: a -> a -> Bool
+  (/=) :: a -> a -> Bool
+  {-# MINIMAL (==) | (/=) #-}
+```
+
+This means:
+
+* You can implement `(==)` and get `(/=)` for free.
+* You can implement `(/=)` and get `(==)` for free.
+* You can also implement both if you want, but it’s not required.
+
+If you violate the minimal complete definition, compilation will fail. You can define such `MINIMAL` pragma in your own typeclasses to guide users on what they need to implement.
+
+### Typeclass inheritance
+
+A typeclass can inherit from another typeclass, meaning that any type that is an instance of the child class must also be an instance of the parent class. This allows you to build more complex abstractions on top of simpler ones.
+
+```haskell
+class Located a => Movable a where
+  setLocation :: (Int, Int) -> a -> a
+```
+
+### One instance per type per class
+
+> For each (Type, Typeclass) pair, there may be only one instance.
+
+This ensures **coherence**: the compiler can always determine which implementation to use based on the type. This is different from some other languages that allow multiple implementations and require explicit disambiguation.
+
+If you need multiple behaviors for the same type, you can use **newtypes** to create distinct types that wrap the original type, and then define different instances for those newtypes.
+
+```
+newtype ByLength = ByLength String
+
+instance Eq ByLength where
+  s1 == s2 = length s1 == length s2
+```
+
+This allows alternative behavior safely without breaking coherence.
+
+### Multi-parameter typeclasses
+
+Sometimes behavior can relate to multiple types:
+
+```haskell
+class Convertible a b where
+  convert :: a -> b
+```
+
+This requires the `MultiParamTypeClasses` language extension. It allows you to define relationships between different types, but it also introduces complexity in instance resolution, so it should be used with care. You may encounter this pattern in libraries that need to express conversions or interactions between different types.
+
+### Mental model
+
+A typeclass defines:
+
+* a **set of types**
+* that provide certain **operations**
+* and obey certain *laws**
+
+In mathematical language:
+
+> A typeclass describes a structure.
+
+In engineering language:
+
+> A typeclass describes a capability contract.
+
+
+## Mathematical typeclasses
+
+The typeclasses in this section describe **algebraic structure**. Unlike `Eq` or `Show`, which describe basic capabilities,
+these typeclasses describe deeper structure about:
+
+- combination
+- transformation
+- composition
+- sequencing
+
+They are the foundation of idiomatic Haskell.
+
+### Semigroup and Monoid — combining values
+
+The simplest algebraic structure in Haskell is a **Semigroup**.
+
+```haskell
+class Semigroup a where
+  (<>) :: a -> a -> a
+```
+
+This defines a single binary operation `(<>)` that takes two values of type `a` and returns a new value of type `a`. The operation must be associative, meaning that the grouping of operations does not matter:
+
+```haskell
+(x <> y) <> z == x <> (y <> z)
+```
+
+A `Monoid` extends `Semigroup` by adding an identity element.
+
+```haskell
+class Semigroup a => Monoid a where
+  mempty  :: a
+  mconcat :: [a] -> a
+```
+
+This means that there is a value `mempty` such that for any value `x` of type `a` (identity laws):
+
+```haskell
+mempty <> x == x
+x <> mempty == x
+```
+
+You already know some instances of `Monoid`:
+
+- `Sum` and `Product` for numbers (with addition and multiplication, respectively)
+- `[]` for lists (with concatenation)
+- `Maybe` for optional values (with `First` and `Last` variants)
+- `String` (with concatenation) just as lists
+- `All` and `Any` for booleans (with conjunction and disjunction, respectively)
 
 Apart from basic `Monoid` from algebra, there are also other variants. You might find interesting to learn more about:
 
@@ -371,9 +516,9 @@ Apart from basic `Monoid` from algebra, there are also other variants. You might
 
 It is possible to write own instances of `Monoid` or other typeclasses. However, mind that compiler *won't* check if laws are valid in your instance. For such checks, you can use testing frameworks (esp. property testing), which will be covered later on.
 
-### Functor
+### Functor — structure-preserving transformation
 
-A functor is a way to apply a function to values inside some structure, while the structure remains intact. For example, if you want to change values in a list, tree or in Either without dealing with complexity and internal structure.
+A `Functor` lets you **apply a function inside a structure**.
 
 ```haskell
 class Functor f where                -- f is type constructor of kind * -> *
@@ -392,100 +537,55 @@ fmap (f . g) == fmap f . fmap g
 Let's try it with basic containers like list, `Maybe`, and `Either`:
 
 ```
-Prelude> fmap (*2) [1..5]   -- just like map!
+ghci> fmap (*2) [1..5]   -- just like map!
 [2,4,6,8,10]
-Prelude> fmap (show . (*2)) [1..5]   -- just like map!
+
+ghci> fmap (show . (*2)) [1..5]   -- just like map!
 ["2","4","6","8","10"]
-Prelude> fmap (*2) (Just 7)
+
+ghci> fmap (*2) (Just 7)
 Just 14
-Prelude> fmap (*2) Nothing
+
+ghci> fmap (*2) Nothing
 Nothing
-Prelude> fmap (+10) (Left 5)
+
+ghci> fmap (+10) (Left 5)
 Left 5     -- no change!
-Prelude> fmap (+10) (Right 5)
+
+ghci> fmap (+10) (Right 5)
 Right 10   -- changed, because "Either c" is functor for whatever "c" - it doesn't care
 ```
 
 Just as with Monoid, you can take a look at the documentation of [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html). Again, there is an operator alias, in this case `(<$>)` for `fmap` (denoting a sort of "wrapped" or "inside" apply). There are two more -- `<$` and `$>` (just flipped `<$`). Flipped version of `(<$>)` is `(<&>)`.
 
 ```
-Prelude Data.Functor> (*2) <$> [1..5]
+ghci> (*2) <$> [1..5]
 [2,4,6,8,10]
-Prelude Data.Functor>  [1..5] <&> (*2)
+
+ghci>  [1..5] <&> (*2)
 [2,4,6,8,10]
-Prelude Data.Functor> 2 <$ [1..5]
+
+ghci> 2 <$ [1..5]
 [2,2,2,2,2]
-Prelude Data.Functor> [1..5] $> 2
+
+ghci> [1..5] $> 2
 [2,2,2,2,2]
-Prelude> (*2) <$> (Just 7)
+
+ghci> (*2) <$> (Just 7)
 Just 14
-Prelude> 2 <$ (Just 7)
+
+ghci> 2 <$ (Just 7)
 Just 2
-Prelude> (Just 7) $> 2
+
+ghci> (Just 7) $> 2
 Just 2
 ```
 
 These examples might seem a bit too simple, but you can have any instance of `Functor` without knowing the structure and implementation of it and affect what is inside by these two (four if counting also flipped) simple operators.
 
-#### Lifting
-
-[Lifting](https://wiki.haskell.org/Lifting) is a concept that allows you to transform a function into a corresponding function within another (usually a more general) setting. Lifting is again a concept taken from mathematics and category theory (see [wikipedia](https://en.wikipedia.org/wiki/Lift_(mathematics)).
-
-```haskell
-
-data Point2D a = Point2D a a
-               deriving Show
-
-instance Functor Point2D where
-    fmap f (Point2D x y) = Point2D (f x) (f y)
-
-liftF0 :: a -> Point2D a
-liftF0 x = Point2D x x
-
-liftF1 :: (a -> b) -> Point2D a -> Point2D b
-liftF1 = fmap
-
-liftF2 :: (a -> b -> c) -> Point2D a -> Point2D b -> Point2D c
-liftF2 f (Point2D x1 x2) (Point2D y1 y2) = Point2D (f x1 y1) (f x2 y2)
-
-origin :: Point2D Int
-origin = liftF0 0
-
-doublePoint :: Point2D Int -> Point2D Int
-doublePoint = liftF1 (*2)
-
-plusPoints :: Point2D Int -> Point2D Int -> Point2D Int
-plusPoints = liftF2 (+)
-```
-
-#### Functors on Hask category
-
-In mathematics, a functor is a type of mapping between categories arising in category theory. Functors can be thought of as homomorphisms between categories. In the category of small categories, functors can be thought of more generally as morphisms. ([wikipedia](https://en.wikipedia.org/wiki/Functor))
-
-We have some categories which have objects and morphisms that relate our objects together. Functor *F: C → D* relates categories *C* and *D* together - it is a transformation between categories:
-
-- maps every object *A* from category *C* to object *F(A)* in category *D*
-- maps every morphism *f: A → B* from category *C* to morphism *F(f): F(A) → F(B)* in category *D*
-
-```haskell
-class Functor (f :: * -> *) where
-   fmap :: (a -> b) -> f a -> f b
--- fmap :: (a -> b) -> (f a -> f b)
-```
-
-There is also the identity law for functions and they must be homomorphic that, of course, apply for functors in Haskell:
-
-```haskell
-fmap id == id
-
-fmap (f . g) = fmap f . fmap g
-```
-
 ### Applicative
 
-Another important typeclass is [Control.Applicate](https://hackage.haskell.org/package/base/docs/Control-Applicative.html). Notice that it is not "Data" anymore, but "Control" instead! It is an intermediate structure between a `Functor` and a `Monad`. It is simpler than `Monad`, not so powerful, but sufficient in many use cases, and also easier to understand - it is **Applicative functor**.
-
-In functor, we applied a function over a "wrapped" value to get a resulting "wrapped" value. In applicative, we have the function wrapped, as well:
+`Applicative` extends `Functor` and functions now can be wrapped as well:
 
 ```haskell
 class Functor f => Applicative f where
@@ -520,29 +620,29 @@ u <*> pure y = pure ($ y) <*> u
 ```
 
 ```
-Prelude> linfunc x = 2 * x + 10
-Prelude> (Just lin
+ghci> linfunc x = 2 * x + 10
+ghci> (Just lin
 lines    linfunc
-Prelude> (Just linfunc) <*> (Just 5)
+ghci> (Just linfunc) <*> (Just 5)
 Just 20
-Prelude> pure linfunc <*> (Just 5)
+ghci> pure linfunc <*> (Just 5)
 Just 20
-Prelude> pure linfunc <*> Nothing
+ghci> pure linfunc <*> Nothing
 Nothing
-Prelude> Nothing <*> (Just 5)
+ghci> Nothing <*> (Just 5)
 Nothing
-Prelude> (Just 5) <* (Just 10)
+ghci> (Just 5) <* (Just 10)
 Just 5
-Prelude> (Just 5) *> (Just 10)
+ghci> (Just 5) *> (Just 10)
 Just 10
 
-Prelude> pure linfunc <*> (Left 7)
+ghci> pure linfunc <*> (Left 7)
 Left 7
-Prelude> pure linfunc <*> (Right 15)
+ghci> pure linfunc <*> (Right 15)
 Right 40
-Prelude> (Right 5) *> (Left 10)
+ghci> (Right 5) *> (Left 10)
 Left 10
-Prelude> (Right 5) <* (Left 10)
+ghci> (Right 5) <* (Left 10)
 Left 10
 Prelude Control.Applicative> (Right 15) <**> pure linfunc
 Right 40
@@ -562,7 +662,7 @@ Right 22
 
 In Haskell terminology, we call `Functor f => f a` an **action**. Actions have the power to do some side effect but not necessarily (e.g., `Just "no effect"`). For example, `liftA2` is described as a function that lifts a binary function to actions. Special sort of actions are I/O actions that do something with input and output, but there can be also other actions making side effects.
 
-### Monad
+### Monad — sequencing dependent effects
 
 The most famous (and [scary](https://camo.githubusercontent.com/f2c3667a2cdf19c0cf203fad44c81d197c4cd740/68747470733a2f2f692e696d67666c69702e636f6d2f317a6e707a622e6a7067) :-)) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases.
 
@@ -612,11 +712,11 @@ Monads in Haskell are so useful that they got their own special syntax called `d
 Imagine we have a sequence operation like this:
 
 ```haskell
-Prelude> Just 7 >>= (\x -> Just (show x ++ "!"))
+ghci> Just 7 >>= (\x -> Just (show x ++ "!"))
 Just "7!"
-Prelude> Just 7 >>= (\x -> Just "!" >>= (\y -> Just (show x ++ y)))
+ghci> Just 7 >>= (\x -> Just "!" >>= (\y -> Just (show x ++ y)))
 Just "7!"
-Prelude> print 3 >> print 5 >> print 7
+ghci> print 3 >> print 5 >> print 7
 3
 5
 7
@@ -682,17 +782,94 @@ main = do
 
 For other loops, visit [Control.Monad.Loops](https://hackage.haskell.org/package/monad-loops/docs/Control-Monad-Loops.html) and this [article](https://conscientiousprogrammer.com/blog/2015/12/11/24-days-of-hackage-2015-day-11-monad-loops-avoiding-writing-recursive-functions-by-refactoring/).
 
-#### Monads in category theory
+### Intution for Functors, Applicatives, and Monads
 
-Again, monad comes from math and more specifically from category theory. A monad is a special type of functor, from a category to that same category (i.e., it is *endofunctor*), that supports some additional structure. Monad is a functor *M: C → C* with two morphisms for every object *X* from *C*:
+* **Functor** = transform values inside a structure
+* **Applicative** = combine independent computations in a structure
+* **Monad** = combine dependent computations in a structure
 
-1. *unit: X → M(X)* ~ `return :: Monad m => a -> m a`
-2. *join: M(M(X)) →  M(X)* ~ `(>>=) :: Monad m => m a -> (a -> m b) -> m b`
+## Haskell and Category Theory
 
+Throughout this chapter, we have repeatedly mentioned algebra and category theory. Let’s now connect the dots clearly.
+
+## The Hask category
+
+Category theory studies abstract structure. A **category** consists of:
+
+1. Objects
+2. Morphisms (arrows) between objects
+3. Composition of morphisms
+4. Identity morphisms
+
+In Haskell, there is a natural (informal) category called **Hask**:
+
+- Objects → types (`Int`, `Bool`, `Maybe Int`, ...)
+- Morphisms → functions (`Int -> String`, etc.)
+- Composition → `(.)` (function composition, associative)
+- Identity → `id` (for each type, there is an identity function)
+
+## Functor in categorical terms
+
+In category theory, a **functor** is a mapping between categories that:
+
+- maps objects to objects
+- maps morphisms to morphisms
+- preserves identity
+- preserves composition
+
+In Haskell:
+
+```haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+```
+
+This does exactly that:
+
+* maps type `a` to `f a`
+* maps function `a -> b` to `f a -> f b`
+* preserves identity (`fmap id == id`)
+* preserves composition (`fmap (f . g) == fmap f . fmap g`)
+
+So Functor is not just inspired by category theory — it is the direct encoding of the categorical definition.
+
+### Monad in categorical terms
+
+In category theory, a monad is:
+
+* an endofunctor (a functor from a category to itself)
+* equipped with two natural transformations:
+
+  * unit
+  * multiplication (join)
+
+In Haskell:
+
+* endofunctor → `m :: * -> *`
+* unit → `return :: a -> m a`
+* multiplication → `join :: m (m a) -> m a`
+
+The bind operator:
+
+```haskell
+(>>=) :: m a -> (a -> m b) -> m b
+```
+
+is just a convenient formulation of `join`.
+
+Monad laws correspond exactly to categorical monad laws. You do not need the formalism — but you should recognize that Monads are not just a random invention, but a deep mathematical structure that has been studied for decades.
+
+### Does it matter?
+
+Category theory gives Haskell programmers a powerful language for describing and reasoning about abstractions. It helps us understand why certain patterns work, how different abstractions relate to each other, and how to design new ones. While you can write Haskell code without knowing category theory, learning it can deepen your understanding and open up new ways of thinking about programming.
+
+As software engineers, we often deal with complex systems and abstractions. Category theory provides a unifying framework that can help us manage this complexity and design better software. It’s like having a map of the landscape of programming concepts, which can guide us in our journey as developers.
+
+Real takeaway: You don’t need to be a category theory expert to be a good Haskell programmer, but learning the basics can give you a deeper understanding of the language and its abstractions (abstractions are essential for writing good code). It's a powerful tool in your mental toolbox.
 
 ## Task assignment
 
-The homework to practice working with typeclasses is in repository [MI-AFP/hw05](https://github.com/MI-AFP/hw05).
+For the assignment, navigate to the `hw05` project and follow the instructions in the `README.md` file there. It will test your skills in defining typeclasses, creating instances, and using them in practice.
 
 ## Further reading
 
