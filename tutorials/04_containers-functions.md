@@ -1,510 +1,750 @@
-# Types, containers, and advanced functions
+# Containers and higher-order functions
 
-## Important "base" types
+In the previous lectures, we learned how to define functions, use pattern matching, guards, and work with basic types.
 
-We already know basic data types (from `base` package) such as [Data.Char](https://hackage.haskell.org/package/base/docs/Data-Char.html), [Bool](https://hackage.haskell.org/package/base/docs/Data-Bool.html), or [Data.Int](https://hackage.haskell.org/package/base/docs/Data-Int.html) and structures like [Data.List](https://hackage.haskell.org/package/base/docs/Data-List.html) and [Data.Tuple](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) pretty well. But of course, there are more widely used types and we are going to know some more now.
+In this lesson, we move one level higher:
 
-### Maybe
+* from individual values to containers of values,
+* from simple functions to functions that manipulate other functions,
+* and from programming intuition to a lightweight mathematical understanding of what is happening.
 
-In most programming languages, there is a notion of `null` or `nil` or even `None` value. Such a value is usable, but it leads often to undesired crashes of "Null pointer exception". As Haskell is type-safe, it does not allow such rogue surprises to happen, but instead deals with a possible "null" situation in a managed way.
+The goal is not category theory though. The goal is to see that Haskell programs are built from well-structured mathematical ideas — in a way that remains practical for software engineers
 
-If we were to design such a solution, we may use ADTs like that:
+## Important "base" types (revisited)
+
+We already know the basic data types from the `base` package such as:
+
+* [`Bool`](https://hackage.haskell.org/package/base/docs/Data-Bool.html)
+* numeric types ([`Int`](https://hackage.haskell.org/package/base/docs/Data-Int.html), [`Integer`](https://hackage.haskell.org/package/base/docs/Data-Integer.html), [`Double`](https://hackage.haskell.org/package/base/docs/Data-Double.html), ...)
+* [`Char`](https://hackage.haskell.org/package/base/docs/Data-Char.html)
+* [lists](https://hackage.haskell.org/package/base/docs/Data-List.html) `[a]`
+* [tuples](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) `(a, b)`
+
+These are concrete types.
+
+Now we move toward something more powerful: parameterized types and algebraic data types (ADTs).
+
+Mathematically, you can think of a type as a set of values.
+
+* `Bool` ≅ { `True`, `False` }
+* `()` ≅ { `()` } (exactly one value)
+* `[Int]` ≅ the set of all finite sequences of integers
+
+An algebraic data type builds new types from old ones using:
+
+* **sum** types (choice: *either this or that*)
+* **product** types (combination: *this and that*)
+
+This time, we start with a fundamental example of a sum type.
+
+### Maybe = optional value
+
+In many programming languages, there exists a special value like: `null`, `nil`, or `None` that is used to represent the absence of a value. Unfortunately, they often lead to runtime errors like:
+
+> Null pointer exception
+
+Haskell avoids this design. Instead of having a universal "invalid" (or better "no") value, Haskell encodes optionality *in the type itself*.
+
+If we were designing this idea manually, we might write:
 
 ```haskell
 data IntOrNull = I Int | NullInt
 data StringOrNull = S String | NullString
-data ValueOrNull a = Value a | Null
-
-myDiv     :: Int -> Int -> ValueOrNull Int
-myDiv x 0 = Null
-myDiv x y = Value (x `div` y)
-
-divString     :: Int -> Int -> String
-divString x y = case (myDiv x y) of
-                  Null      -> "Division by zero is not allowed!"
-                  Value res -> "Result: " ++ show res
 ```
 
-In Haskell, we have a pretty structure called `Maybe` which does exactly that for us and there are some functions helping with common usage. It is a very important structure and you will be dealing with it very often. You can find more about in the documentation of [Data.Maybe](https://hackage.haskell.org/package/base/docs/Data-Maybe.html).
+But this does not scale. So we generalize the idea:
 
-It is defined as:
+```haskell
+data ValueOrNull a = Value a | Null
+```
+
+This is a **polymorphic sum type**: for any type `a`, a value is either:
+
+* a real value of type `a`, or
+* the special constructor `Null`.
+
+Haskell already provides this abstraction, called `Maybe`, in the [`Data.Maybe`](https://hackage.haskell.org/package/base/docs/Data-Maybe.html) module:
 
 ```haskell
 data Maybe a = Nothing | Just a
 ```
 
-```
-Prelude Data.Maybe> :type Just 10
-Just 10 :: Num a => Maybe a
-Prelude Data.Maybe> :type Nothing
-Nothing :: Maybe a
-Prelude Data.Maybe> fromJust (Just 10)
-10
-Prelude Data.Maybe> fromJust Nothing
-*** Exception: Maybe.fromJust: Nothing
-Prelude Data.Maybe> fromMaybe "default" Nothing
-"default"
-Prelude Data.Maybe> fromMaybe "default" (Just "something")
-"something"
-Prelude Data.Maybe> catMaybes [Just 6, Just 7, Nothing, Just 8, Nothing, Just 9]
-[6,7,8,9]
+Mathematically, you can think of it as:
+
+```math
+\text{Maybe}(A) = A \cup \{\bot\}
 ```
 
-Is `Maybe` a good container for the following case? What if we need to propage details about the error in the communication (unknown recipient, timeout, bad metadata, etc.)?
+That is: all values of `A`, plus one extra distinguished value `⊥` (pronounced "bottom") that represents the absence of a value.
+
+This means:
+
+* `Just x` represents a valid value,
+* `Nothing` represents absence of value.
+
+Let's take a look at an example:
 
 ```haskell
--- Communicator interface
-data Message = Message { msgSender    :: String
-                       , msgRecipient :: String
-                       , msgMetadata  :: [(String, String)]
-                       , msgBody      :: String
-                       }
+saveDiv :: Int -> Int -> Maybe Int
+saveDiv _ 0 = Nothing
+saveDiv x y = Just (x `div` y)
+```
 
-sendAndReceive :: Communicator -> Message -> Maybe Message
-sendAndReceive comm msg = sendSync comm msg  -- some library "magic", various errors
+Notice that the possibility of failure is now visible in the type signature. The caller of `saveDiv` must now handle the case of `Nothing`, which forces them to consider the possibility of failure and prevents runtime errors.
 
-printReceivedMessage :: Maybe Message -> String
-printReceivedMessage Nothing    = "Unknown error occured during communication."
-printReceivedMessage (Just msg) = msgSender msg ++ ": " ++ msgBody msg
+That is a key idea in functional programming:
 
-myCommunicator = printReceivedMessage . sendAndReceive comm
+> We encode computational effects (like failure) in types.
+
+As you can see from the following example, use of `safeDiv` forces the caller to handle the possibility of failure:
+
+```haskell
+divString :: Int -> Int -> String
+divString x y = case saveDiv x y of
+    Nothing -> "Division by zero is not allowed."
+    Just result -> "The result is: " ++ show result
 ```
 
 ### Either
 
-`Maybe` is also used to signal two types of results: an error (`Nothing`) and a success (`Just value`). However, it does not tell what is the error in case of `Nothing`. There is a standard type for such use cases, and it is called `Either`:
+`Maybe` distinguishes between "something" and "nothing". It models *absence*, but not *information about absence*. That can be sufficiant in some cases, but in others, we want to know *why* something is absent. For that, we can use the `Either` type:
 
 ```haskell
 data Either a b = Left a | Right b
 ```
 
-The `Left` variant holds an error value (such as a message) and the `Right` variant holds the success result value. There are again several utility functions available (see [Data.Either](https://hackage.haskell.org/package/base/docs/Data-Either.html)):
+Mathematically, you can think of it as a disjoint union of two sets (sum type):
 
+```math
+\text{Either}(A, B) = A \sqcup B
+```
 
-```
-Prelude Data.Either> :type Left 7
-Left 7 :: Num a => Either a b
-Prelude Data.Either> :type Right "Message"
-Right "Message" :: Either a [Char]
-Prelude Data.Either> lefts [Left 7, Right "Msg1", Left 8, Right "Msg2"]
-[7,8]
-Prelude Data.Either> rights [Left 7, Right "Msg1", Left 8, Right "Msg2"]
-["Msg1","Msg2"]
-Prelude Data.Either> partitionEithers [Left 7, Right "Msg1", Left 8, Right "Msg2"]
-([7,8],["Msg1","Msg2"])
-```
+A value of type `Either a b` is either:
+
+* a value of type `a` wrapped in the `Left` constructor, or
+* a value of type `b` wrapped in the `Right` constructor.
+
+Importantly, the two *sides* may have different types (but don't have to). This allows us to encode more information about the nature of the value. For example, we can use `Either String Int` to represent a computation that can either fail with an error message (a `String`) or succeed with an integer result.
+
+By convention, `Left` is often used to represent an error or failure case, while `Right` is used to represent a success case. However, this is just a convention but a very strong and common one.
+
+Let's refine the previous simple division example to use `Either` instead of `Maybe`:
 
 ```haskell
--- Communicator interface
-data Message = Message { msgSender    :: String
-                       , msgRecipient :: String
-                       , msgMetadata  :: [(String, String)]
-                       , msgBody      :: String
-                       }
-
-data CommError = Timeout
-               | Disconnected
-               | UnkownRecipient
-               | IncorrectMetadata
-               | GeneralError String
-               deriving Show
-
-sendAndReceive :: Communicator -> Message -> Either CommError Message
-sendAndReceive comm msg = sendSync comm msg  -- some library "magic"
-
-printReceivedMessage :: Either CommError Message -> String
-printReceivedMessage (Left  err) = "Error occured during communication: " ++ show err
-printReceivedMessage (Right msg) = msgSender msg ++ ": " ++ msgBody msg
-
-myCommunicator = printReceivedMessage . sendAndReceive comm
+saveDiv :: Int -> Int -> Either String Int
+saveDiv _ 0 = Left "Division by zero is not allowed."
+saveDiv x y = Right (x `div` y)
 ```
+
+Again, the caller of `saveDiv` must now handle both cases, but they also get more information about the nature of the failure:
+
+```haskell
+divString :: Int -> Int -> String
+divString x y = case saveDiv x y of
+    Left errorMsg -> errorMsg
+    Right result -> "The result is: " ++ show result
+```
+
+If we would like to express `Maybe` in terms of `Either`, we can do it like this:
+
+* `Maybe a` ≅ `Either () a`
+* `Nothing` ≅ `Left ()`
+* `Just x` ≅ `Right x`
+
+This brings us to the next topic: the "unit" type, in other words what is `()`.
 
 ### Unit
 
-Although we said there is no `null`, `nil` or `None`, we still have one dummy value/type called "Unit" and it is designated as an empty tuple `()`.
+Earlier we said that Haskell does not have `null`, `nil`, or `None`. However, it does have a special type called **Unit**:
 
-```
-Prelude> :info ()
-data () = ()    -- Defined in ‘GHC.Tuple’
-Prelude> :type ()
-() :: ()
+```haskell
+data () = ()
 ```
 
-It is semantically more similar to `void` from other languages and you can use it wherever you don't want to use an actual type. For example, using `Either` to simulate  `Maybe`, you could do `Either a ()`. For more about [unit type, read wikipedia](https://en.wikipedia.org/wiki/Unit_type).
+It defines a type `()` that has exactly one value, also written `()`. This type is used when we want to indicate that there is no meaningful value to return. It is often used as the return type of functions that perform side effects (like printing to the console) but do not return any meaningful value.
+
+Mathematically, you can think of it as a singleton set (a set containing exactly one element):
+
+```math
+\text{Unit} = \{()\} \cong \{\ast\}
+```
+
+This is more comparable to `void` in languages like C or Java, but it is a proper (but trivial) type with a single possible value, which allows us to use it in more flexible ways. For example, we can use `Either () String` to represent a computation that can either fail with no information (the `Left ()` case) or succeed with a string result (the `Right String` case).
+
 
 ## Other containers
 
-As in other programming languages or programming theory, there are various types of containers - data types/structures, whose instances are collections of other objects. As for collections with an arbitrary number of elements, we talked about lists, which are simple to use and have a nice syntactic-sugar notation in Haskell. However, there are also other versatile types of containers available in the package [containers] and others, such as [array](https://hackage.haskell.org/package/array), [vector](https://hackage.haskell.org/package/vector), and more (use [Hoogle] or [Hackage]).
+In programming (and in mathematics), we often work not only with individual values, but with collections of values.
 
-### Sequence
+Haskell already gives us one extremely important container: the list `[a]`. Lists are simple, expressive, and work very well for many problems — especially when you process data sequentially. However, lists are not always the best choice.
 
-The `Seq a` is a type from [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) that represents a **finite** sequence of values of type `a`. Sequences are very similar to lists, working with sequences is not so different, but some operations are more efficient - constant-time access to both the front and the rear and Logarithmic-time concatenation, splitting, and access to any element. But in other cases, it can be slower than lists because of overhead created for making operations efficient. The size of a `Seq` must not exceed `maxBound::Int`!
+Depending on what you need, you might prefer containers with:
+
+* faster lookup,
+* faster concatenation,
+* uniqueness of elements (sets),
+* key-value mapping (maps),
+* tree/graph structure.
+
+Most of the common immutable containers are provided by the package: [`containers`](https://hackage.haskell.org/package/containers). But there are more such as [`array`](https://hackage.haskell.org/package/array), [`vector`](https://hackage.haskell.org/package/vector), [`unordered-containers`](https://hackage.haskell.org/package/unordered-containers), etc. You can always check the [Hackage](https://hackage.haskell.org/) for more.
+
+It is very common, that such containers use similar interfaces, so you can easily switch between them without changing much of your code. We will see that the naming of functions is often the same. For example, `Data.Map` and `Data.Set` have functions like `fromList`,`insert`, `delete`, `member`, etc. that work in a similar way.
+
+### Sequence (`Seq`)
+
+The type `Seq a` from [`Data.Sequence`](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html) represents a **finite sequence** of values of type `a`.
+
+You can think of it as a *better list* in situations where you need:
+
+* fast insertion at both ends,
+* efficient concatenation,
+* efficient splitting, or
+* random access.
+
+Compared to lists:
+
+* lists are optimized for prepending (x : xs)
+* sequences are optimized for both ends (<| and |>)
 
 ```
-Prelude> import Data.Sequence
+ghci> import Data.Sequence
+
 Prelude Data.Sequence> seq1 = 1 <| 2 <| 15 <| 7 <| empty
+
 Prelude Data.Sequence> seq1
 fromList [1,2,15,7]
-Prelude Data.Sequence> :type seq1
-seq1 :: Num a => Seq a
+
 Prelude Data.Sequence> 3 <| seq1
 fromList [3,1,2,15,7]
+
 Prelude Data.Sequence> seq1 |> 3
 fromList [1,2,15,7,3]
-Prelude Data.Sequence> seq1 >< (fromList [2, 3, 4])
+
+Prelude Data.Sequence> seq1 >< fromList [2,3,4]
 fromList [1,2,15,7,2,3,4]
+
 Prelude Data.Sequence> sort seq1
 fromList [1,2,7,15]
 ```
 
-### Set
+### Set (`Set`)
 
-The `Set e` type represents a set of elements of type `e`. Most operations require that `e` be an instance of the `Ord` class. A `Set` is strict in its elements. If you know what is *set* in math and/or programming, you can be very powerful with them.
+The type `Set a` from [`Data.Set`](https://hackage.haskell.org/package/containers/docs/Data-Set.html) represents a mathematical set:
+
+* elements are unique,
+* order is not important conceptually,
+* membership testing is efficient.
+
+Most operations require `Ord a`, which means that the elements must be orderable (this is because `Set` is implemented as a balanced binary tree).
 
 ```
-Prelude> import Data.Set
+ghci> import Data.Set
+
 Prelude Data.Set> set1 = insert 4 $ insert 2 $ insert 0 $ singleton 2
+
 Prelude Data.Set> set1
 fromList [0,2,4]
+
 Prelude Data.Set> delete 2 set1
 fromList [0,4]
-Prelude Data.Set> delete 3 set1
-fromList [0,2,4]
-Prelude Data.Set> mem
-member  mempty
+
 Prelude Data.Set> member 4 set1
 True
+
 Prelude Data.Set> member (-6) set1
 False
+
 Prelude Data.Set> Data.Set.filter (>3) set1
 fromList [4]
+
 Prelude Data.Set> set2 = insert 5 (insert 3 (singleton 2))
-Prelude Data.Set> set2
-fromList [2,3,5]
-Prelude Data.Set> set1
-fromList [0,2,4]
+
 Prelude Data.Set> intersection set1 set2
 fromList [2]
+
 Prelude Data.Set> union set1 set2
 fromList [0,2,3,4,5]
 ```
 
-There is an efficient implementation of integer sets, which uses big-endian Patricia trees (works better mainly with union and intersection). Use qualified import like `import qualified Data.IntSet as IntSet` to work with it.
+There is also a specialized version of `Set` for integers: [`Data.IntSet`](https://hackage.haskell.org/package/containers/docs/Data-IntSet.html), which is more efficient but only works with `Int` values (faster than `Set Int`).
 
-### Map
+### Map (`Map`)
 
-The `Map k v` type represents a finite map (sometimes called a dictionary) from keys of type `k` to values of type `v`. A Map is strict in its keys but lazy in its values (by default we use [Data.Map.Lazy](https://hackage.haskell.org/package/containers/docs/Data-Map-Lazy.html). You may use [Data.Map.Strict](https://hackage.haskell.org/package/containers/docs/Data-Map-Strict.html) instead if you will eventually need all the values stored and/or the stored values are not so complicated to compute (no big advantage of laziness).
+The type `Map k v` represents a finite mapping:
+
+* from keys of type `k`
+* to values of type `v`
+
+This is also known as:
+
+* dictionary,
+* associative array,
+* key-value store.
+
+Maps are implemented also as balanced binary trees, so most operations require `Ord k` (the keys must be orderable).
+
+There are two main variants:
+
+* `Data.Map.Lazy` (values are lazy, default)
+* `Data.Map.Strict` (values are evaluated eagerly)
 
 ```
-Prelude> import Data.Map
+ghci> import Data.Map
+
 Prelude Data.Map> map1 = insert "suchama4" "Marek Suchanek" (singleton "perglr" "Robert Pergl")
+
 Prelude Data.Map> map1 ! "suchama4"
 "Marek Suchanek"
-Prelude Data.Map> map1 ! "suchamar"
-"*** Exception: Map.!: given key is not an element in the map
-CallStack (from HasCallStack):
-  error, called at ./Data/Map/Internal.hs:610:17 in containers-0.5.11.0-K2TDqgYtGUcKxAY1UqVZ3R:Data.Map.Internal
+
 Prelude Data.Map> map1 !? "suchamar"
 Nothing
+
 Prelude Data.Map> map1 !? "suchama4"
 Just "Marek Suchanek"
+
 Prelude Data.Map> size map1
 2
+
 Prelude Data.Map> delete "suchama4" map1
 fromList [("perglr","Robert Pergl")]
-Prelude Data.Map> delete "suchamar" map1
-fromList [("perglr","Robert Pergl"),("suchama4","Marek Suchanek")]
-Prelude Data.Map> map2 = insert "suchama4" "Marek Suchanek" (singleton "stengvac" "Vaclav Stengl")
-Prelude Data.Map> map2 = insert "suchama4" "Marek Sushi Suchanek" (singleton "stengvac" "Vaclav Stengl")
-Prelude Data.Map> union map1 map2
-fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Suchanek")]
-Prelude Data.Map> union map2 map1
-fromList [("perglr","Robert Pergl"),("stengvac","Vaclav Stengl"),("suchama4","Marek Sushi Suchanek")]
-Prelude Data.Map> intersection map1 map2
-fromList [("suchama4","Marek Suchanek")]
 ```
 
-Again, there is an efficient implementation of maps, where the keys are of `Int`. It uses same mechanisms as `Data.IntSet` - use `import qualified Data.IntMap as IntMap`.
+Two important lookup operators:
 
-### Graph and Tree
+* `(!)` throws an exception if the key is missing (unsafe),
+* `(!?)` returns `Maybe v` (safe) = same as `Map.lookup` function and should be preferred in most cases.
 
-Finally, [containers] specify also [Data.Tree](https://hackage.haskell.org/package/containers/docs/Data-Tree.html) and [Data.Graph](https://hackage.haskell.org/package/containers/docs/Data-Graph.html), both in a very generic manner. If you ever need to work with trees or graphs, it is convenient to use those instead of reinventing the wheel yourself.
+There is again a specialized version of `Map` for integer keys: [`Data.IntMap`](https://hackage.haskell.org/package/containers/docs/Data-IntMap.html), which is more efficient but only works with `Int` keys (faster than `Map Int v`).
 
-## More about functions
+### Tree and Graph
 
-Creating new own functions or using the predefined ones from libraries is common in most programming languages. However, in a pure functional language, first-class functions enable to do much more. Generally, we architecture the programme by *composing functions* and other "tricks".
+The containers package also provides generic data structures for:
+
+* trees: [`Data.Tree`](https://hackage.haskell.org/package/containers/docs/Data-Tree.html)
+* graphs: [`Data.Graph`](https://hackage.haskell.org/package/containers/docs/Data-Graph.html)
+
+You typically use them when:
+
+* you want to model hierarchical data (tree),
+* you want to model dependencies or connectivity (graph),
+* you want a standard, well-tested implementation.
+
+They are especially useful because they integrate nicely with the rest of the ecosystem.
+
+### Summary of `containers`
+
+The `containers` package provides a rich set of data structures that are essential for functional programming in Haskell. They allow us to work with collections of data in a way that is efficient, expressive, and integrates well with the functional programming paradigm.
+
+* Use **lists** `[a]` for simple, sequential data processing.
+* Use **sequences** `Seq a` for efficient access and modification at both ends.
+* Use **sets** `Set a` for collections of unique elements with efficient membership testing.
+* Use **maps** `Map k v` for key-value associations with efficient lookup.
+* Use **trees** and **graphs** for hierarchical and relational data structures.
+* Use `IntSet` and `IntMap` for optimized performance when working with integer keys.
+
+
+## Functions as first-class values
+
+So far, we have been talking about data:
+
+* simple types (`Int`, `Bool`, `()`)
+* algebraic types (`Maybe`, `Either`)
+* containers (`List`, `Seq`, `Set`, `Map`)
+
+But in functional programming, the real power lies not only in *what* we store — but in *how we transform it*.
+
+In imperative languages, functions are often secondary while data is central, and functions manipulate it. In Haskell (and FP), functions are *first-class values* that can be passed around, stored in data structures, and returned from other functions. This allows us to write highly abstract and reusable code.
+
+That is a key idea in functional programming and consequence of the mathematical idea that:
+
+> A function is just another value - an element of a function space.
+
+We already know that functions written in mathematics like:
+
+```math
+f: A \to B
+```
+
+can be represented in Haskell as:
+
+```haskell
+f :: A -> B
+```
+
+But `->` is not just a notation for function types. It is also a type constructor that takes two types `A` and `B` and produces a new type `A -> B`, which is the type of functions that take an argument of type `A` and return a value of type `B`. Just like `(A, B)` constructs a product type (tuple) or `Either A B` constructs a sum type (either `A` or `B`),  `A -> B` constructs a function type (functions from `A` to `B`).
+
+`(A -> B)` is a type, and values of this type are functions.
 
 ### Currying
 
-When we talk about "currying", in Haskell it has (almost) nothing to do with dishes or spices. A famous mathematician and logician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry) (the language is named after him) developed with others technique called currying: *translating the evaluation of a function that takes multiple arguments (or a tuple of arguments) into evaluating a sequence of functions, each with a single argument*. Technically, the original author of this is [Moses Schönfinkel](https://en.wikipedia.org/wiki/Moses_Sch%C3%B6nfinkel), so sometimes you may even come across a very nice name ["Schönfinkelization"](http://www.natansh.in/2012/07/27/schonfinkelization/).
+Let's consider a function of two arguments. In mathematics there are two common and equivalent ways to write it:
 
-Currying can be achieved in all functional programming languages, but Haskell is special in that *all functions are curried by default*, similarly to pure lambda calculus. Let's se how we parenthesize function types:
+First, as a function on pairs (tuples):
+
+```math
+f: A \times B \to C
+```
+
+This one takes a pair of values (a tuple) and returns a value of type `C`. In Haskell, we can write it as:
 
 ```haskell
-myFunc1 :: a ->  b -> c
-myFunc1 :: a -> (b -> c)
+f :: (a, b) -> c
 ```
 
-This means that the type annotation is right-associative. We can read that `myFunc1` takes value of `a` and returns a function that takes value of `b` and result is a value of `c`. It is possible to apply value of `a` and "store" the function `b -> c` for later application or reuse:
+Second, as a curried function:
+
+```math
+f: A \to (B \to C)
+```
+
+This one takes a value of type `A` and returns a function of type `B -> C`, which takes a value of type `B` and returns a value of type `C`. In Haskell, we can write it as:
+
+```haskell
+f :: a -> b -> c
+```
+
+In Haskell, all functions are curried by default, which means that they are of the second form. The first form can be achieved using tuples, but it is not the default and is not as common. If you would wonder why *curry*, it is named after the mathematician [Haskell Curry](https://en.wikipedia.org/wiki/Haskell_Curry), who developed the technique of currying in the context of combinatory logic.
+
+If we now look at `->` as a type constructor, we can see that it is right-associative, which means that `a -> b -> c` is the same as `a -> (b -> c)`. That is why all functions in Haskell are curried by default.
 
 ```
-Prelude> let myFunc x y z = x * y + z
-Prelude> :type myFunc
+ghci> let myFunc x y z = x * y + z
+
+ghci> :type myFunc
 myFunc :: Num a => a -> a -> a -> a
-Prelude> :type (myFunc 8)
+
+ghci> :type (myFunc 8)
 (myFunc 8) :: Num a => a -> a -> a
-Prelude> :type (myFunc 8 7)
+
+ghci> :type (myFunc 8 7)
 (myFunc 8 7) :: Num a => a -> a
-Prelude> :type (myFunc 8 7 1)
+
+ghci> :type (myFunc 8 7 1)
 (myFunc 8 7 1) :: Num a => a
-Prelude> myFunc 8 7 1
-57
-Prelude> myFunc2 = myFunc 8 7
-Prelude> myFunc2 1
-57
-Prelude> myFunc2 2
-58
 ```
 
-So what is currying useful for? It enables a very powerful abstraction technique called **[partial application](https://en.wikipedia.org/wiki/Partial_application)**. Without going into a detail, partial application is currying + taking care of the context (closure) enabling us to achieve *reification* (a more concrete behaviour).
+Each application consumes one argument and returns another function — until fully applied.
 
-Imagine this situation of a polygon library:
+### Partial application
+
+This behavior gives us something extremely powerful:
+
+> We can supply only some arguments and obtain a new function.
 
 ```haskell
-type Size = Double
-type NoVertices = Word
-newtype Polygon = Polygon [(Double, Double)]
-
-computeRegularPolygonPoints :: (Double, Double) -> NoVertices -> Size -> [(Double, Double)]
-computeRegularPolygonPoints (cX, cY) nVertices r = [ (x i, y i) |  i <- map fromIntegral [0..(nVertices-1)] ]
-  where n = fromIntegral nVertices
-        x i = cX + r * cos(2 * pi * i / n)
-        y i = cY + r * sin(2 * pi * i / n)
-
-mkPolygon :: NoVertices -> Size -> Polygon
-mkPolygon = computeRegularPolygonPoints (0, 0)
-
-mkHexagon :: PSize -> Polygon
-mkHexagon = mkPolygon 6
-
-mkRectangle :: PSize -> Polygon
-mkRectangle = mkPolygon 4
-
---etc.
+myFunc2 :: Num a => a -> a
+myFunc2 = myFunc 8 7
 ```
-Here we create *specialized* versions of polygon constructor functions by providing the `Size` parameter. As functions can be parameters, as well, we can reify the behaviour, as well:
+
+In simple terms: we partially apply `myFunc` to the first two arguments (`8` and `7`) and get a new function `myFunc2` that takes one argument and adds it to the product of `8` and `7`.
+
+Mathematically, you can think of it as:
+
+```math
+f: A \to B \to C
+```
+
+then partially applied:
+
+```math
+f(a): B \to C
+```
+
+and then:
+
+```math
+\left(f(a)\right)(b): C
+```
+
+When we partially apply a function, Haskell internally remembers the arguments we supplied. This is called (and may be known also from other programming languages) a **closure**. It is important to understand that a closure it not something magical or special. It is just a function that has some of its arguments fixed. The fact that it can remember those arguments is just a consequence of how functions work in Haskell and FP. Closures are one of the fundamental building blocks of functional architecture.
+
+### `curry` and `uncurry`
+
+Haskell provides two standard functions for converting between curried and uncurried forms:
 
 ```haskell
-genericSort :: Ord a => (a -> a -> Ordering) -> [a] -> [a]
-genericSort orderingFn numbers = undefined -- use the orderingFn to sort the numbers
-
-fastOrderingFn :: Ord a => a -> a -> Ordering
-fastOrderingFn = undefined -- a fast, but not too reliable ordering algorithm
-
-slowOrderingFn :: Ord a => a -> a -> Ordering
-slowOrderingFn = undefined -- a slow, but precise ordering algorithm
-
-fastSort :: Ord a => [a] -> [a]
-fastSort = genericSort fastOrderingFn
-
-goodSort :: Ord a => [a] -> [a]
-goodSort = genericSort slowOrderingFn
+curry :: ((a, b) -> c) -> (a -> b -> c)
+uncurry :: (a -> b -> c) -> ((a, b) -> c)
 ```
 
-This technique is very elegant, DRY and it is a basis of a good purely functional style. Its object-oriented relatives are the [Template Method design pattern](https://en.wikipedia.org/wiki/Template_method_pattern) brother married with the [Factory Method design pattern](https://en.wikipedia.org/wiki/Factory_method_pattern) – quite some fat, bloated relatives, aren't they?
-
-As you can see, the "parametrising" parameters must come first, so we can make a curried version of the constructor function. At the same time, the order of parameters can be switched using the `flip` function that takes its (first) two arguments in the reverse order of `f`:
-
-```haskell
-flip :: (a -> b -> c) -> b -> a -> c
 ```
-Then we can have:
+ghci> let addPair (x, y) = x + y
 
-```haskell
-data Something = SomethingRecord { complexFields :: () }
+ghci> :type addPair
+addPair :: Num a => (a, a) -> a
 
-genericSort :: [Something] -> (Something -> Something -> Ordering) -> [Int]
-genericSort numbers orderingFn = -- use the orderingFn to sort the numbers
-
-fastOrderingFn :: Something -> Something -> Ordering
-fastOrderingFn = -- a fast, but not too reliable ordering algorithm
-
-slowOrderingFn :: Something -> Something -> Ordering
-slowOrderingFn = -- a slow, but precise ordering algorithm
-
-fastSort :: [Something] -> [Something]
-fastSort = (flip generalSort) fastOrderingFn
-
-goodSort :: [Something] -> [Something]
-goodSort = (flip generalSort) slowOrderingFn
-```
-
-which is of course equivalent (but bloated and not idiomatic!) to:
-
-```haskell
-fastSort :: [Something] -> [Something]
-fastSort numbers = generalSort numbers fastOrderingFn
-```
-
-As we said, all functions in Haskell are curried. In case you want to make them not curried, you can use tuples to "glue" parameters together:
-
-```haskell
-notCurried :: (a, b) -> (c, d) -> e
-```
-
-However, we do this *just* in case they are inherently bound together like key-value pairs.
-
-There are also `curry` and `uncurry` functions available to do such transformations:
-
-```
-Prelude> :type curry
-curry :: ((a, b) -> c) -> a -> b -> c
-Prelude> let myFunc (x, y) = x + y
-Prelude> :type myFunc
-myFunc :: Num a => (a, a) -> a
-Prelude> myFunc (1, 5)
+ghci> (curry addPair) 1 5
 6
-Prelude> (curry myFunc) 1 5
-6
-Prelude> :type (curry myFunc)
-(curry myFunc) :: Num c => c -> c -> c
-Prelude> :type uncurry
-uncurry :: (a -> b -> c) -> (a, b) -> c
-Prelude> let myFunc x y = x + y
-Prelude> :type (uncurry myFunc)
-(uncurry myFunc) :: Num c => (c, c) -> c
+
+ghci> :type uncurry (+)
+uncurry (+) :: Num a => (a, a) -> a
 ```
 
-If you like math, then it is the same difference as between *f*: &#8477; &rarr; &#8477; &rarr; &#8477; and *g*: &#8477; × &#8477; &rarr; &#8477;.
+Mathematically, this corresponds to the equivalence:
 
-In most other functional languages, like Lisp (Clojure) and Javascript, the situation is the opposite to Haskell: the functions are by default not curried and there are functions (usually called `curry`), which enable partial function application – see e.g. [this post](https://blog.benestudio.co/currying-in-javascript-es6-540d2ad09400).
+```math
+\text{curry} : (A \times B \to C) \to (A \to (B \to C))
+```
+
+```math
+\text{uncurry} : (A \to (B \to C)) \to (A \times B \to C)
+```
+This equivalence is fundamental in lambda calculus. It shows that there is no loss of generality in using curried functions, and that we can always convert between the two forms as needed.
+
+### Higher-order functions (HOFs)
+
+A higher-order function (HOF) is a function that:
+
+* takes a function as an argument, and/or
+* returns a function as a result.
+
+Example of a function that takes a function as an argument:
+
+```haskell
+applyTwice :: (a -> a) -> a -> a
+applyTwice f x = f (f x)
+
+result = applyTwice (+1) 5
+```
+
+Example of a function that returns a function as a result:
+
+```haskell
+makeAdder :: Int -> (Int -> Int)  -- same as: Int -> Int -> Int
+makeAdder x = \y -> x + y
+
+add5 :: Int -> Int
+add5 = makeAdder 5
+```
+
+In pure **lambda calculus**, all functions are higher-order. There are no primitive data types — only functions.
+
+For example, a lambda abstraction
+
+```haskell
+\x -> x + 1
+```
+
+corresponds directly to:
+
+```math
+\lambda x. x + 1
+```
+
+In fact, currying, partial application, and composition all emerge naturally from lambda calculus. Naturally, Haskell’s function system is directly inspired by lambda calculus.
+
 
 ### Function composition
 
-As stated in the beginning, function composition is the main means of devising an **architecture** of a functional programme. It works similarly to function composition in math: Having two functions, one with type `a -> b` and second with type `b -> c` you can create a composed one with type `a -> c`. In Haskell, a composition is done using  the dot `(.)` operator:
+One of the central architectural ideas in functional programming is:
+
+> Build programs by composing small functions.
+
+This is not metaphorical. It is literally mathematical **function composition** which you may know very well from math. If we have two functions:
+
+```math
+f: A \to B
+g: B \to C
+```
+
+Then we can compose them to get a new function:
+
+```math
+g \circ f: A \to C
+```
+
+where
+
+```math
+(g \circ f)(a) = g(f(a))
+```
+
+And in Haskell, we can do the same thing using the `(.)` operator:
 
 ```haskell
-Prelude> :type (5+)
+(.) :: (b -> c) -> (a -> b) -> (a -> c)
+```
+
+Notice that the order of arguments is reversed compared to the mathematical notation. In Haskell, `g . f` means "first apply `f`, then apply `g` to the result". This is a common convention in programming languages, where the composition operator is often defined in a way that allows for more natural reading from left to right. It is also right-associative, which means that `f . g . h` is the same as `f . (g . h)`. In this way, you can compose multiple functions together without needing parentheses (forming a **pipeline**).
+
+Also, the type signature of `(.)` reflects the fact that it takes two functions and returns a new function that is their composition. The operator `(.)` is thus itself a **higher-order function**.
+
+```
+ghci> :type (5+)
 (5+) :: Num a => a -> a
-Prelude> :type (5*)
+
+ghci> :type (5*)
 (5*) :: Num a => a -> a
-Prelude> :type show
+
+ghci> :type show
 show :: Show a => a -> String
-Prelude> show ( (5+) ( (5*) 5 ) )
-"30"
-Prelude> (show . (5+) . (5*)) 5
-"30"
-```
 
-Or using the earlier introduced `($)` application:
+ghci> show ( (5+) ( (5*) 5 ) )
+"30"
 
-```
-Prelude> show . (5+) . (5*) $ 5
+ghci> (show . (5+) . (5*)) 5
 "30"
 ```
 
-Again, like in math, *f*: A &rarr; B and *g*: B &rarr; C, then (*f* &#8728; *g*): A &rarr; C.
+Notice that function composition works only with functions that have compatible types and a single argument. If you want to compose functions with multiple arguments, you can use `curry` and `uncurry` to convert them to the appropriate form.
 
-### The "pointfree" style
+### Function application
 
-It is very common in FP to write functions as a composition of other functions without mentioning the actual arguments they will be applied to. Consider the following two examples and notice that although the result is the same, the first one is a way more declarative, concise and readable.
+Function application in Haskell has the **highest precedence**.
+
+That means:
 
 ```haskell
-sumA = foldr (+) 0
-sumB xs = foldr (+) 0 xs
+foo 5 + 3
 ```
 
-Those are very simple examples but you can build more complex ones with function composition `(.)` and partially applied or plain functions.
+is parsed as:
 
 ```haskell
-myFunc :: Int -> String
-myFunc = show . (5+) . (5*)
+(foo 5) + 3
 ```
 
-Now you might ask why we call this a "pointfree" style, when there are actually more points. The confusion comes from the origin of the term, which is (again) math: it is a function that does not explicitly mention the points (values) of the space on which the function acts.
+There is a defined operator for function application: `($)`, which is right-associative and has the **lowest precedence**. It is defined as:
 
-### Fixity and precedence
-
-You might wonder how it works in Haskell that the following expression is evaluated in the correct order you would expect without using brackets:
-
-```
-Prelude> 5 + 2^3 - 4 + 2 * 2
-13
-Prelude> 5 * sin pi - 3 * cos pi + 2
-5.0
+```haskell
+($) :: (a -> b) -> a -> b
+f $ x = f x
 ```
 
-The first basic rule is that a function application binds the most. For example, in `foo 5 + 4` it will first evaluate `foo 5` and then add `4` (`foo 5 + 4` is the same as `(+) (foo 5) 4`. If you want to avoid that, you need to use brackets `foo (5 + 4)` or a function application operator `foo $ 5 + 4` (or strict `$!`).
-
-For infix operators (`+`, `**`, `/`, `==`, etc.) and functions (with backticks: `div`, `rem`, `quot`, `mod`, etc.), there is a special infix specification with one of three keywords:
-
-- `infix` = Non-associative operator (for example, comparison operators)
-- `infixl` = Left associative operator (for example, `+`, `-`, or `!!`)
-- `infixr` = Right associative operator (for example, `^`, `**`, `.`, or `&&`)
-
-Each of them should be followed by precedence (0 binds least tightly, and level 9 binds most tightly, default is 9) followed by the function/operator name. To see it in action, you can use `:info` to discover this specification for existing well-known operators and infix functions:
+This becomes useful when you want to avoid parentheses:
 
 ```
-Prelude> :info (+)
-...
-infixl 6 +
-Prelude> :info (&&)
-...
-infixr 3 &&
-Prelude> :info div
-...
-infixl 7 `div`
+ghci> (show . (5+) . (5*)) 5
+"30"
+
+ghci> show . (5+) . (5*) $ 5
+"30"
 ```
 
-You can also check *Table 4.1* of [The Haskell 2010 Language: Chapter 4 - Declarations and Bindings](https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-820061).
+### The "point-free" style
 
-### Own operators
+In functional programming, it is common to define functions *without explicitly naming their arguments*. This is known as **point-free style** (or tacit programming). It emphasizes the composition of functions rather than the manipulation of data.
 
-You already know that operators are just functions and that you can switch always between prefix and infix:
+Compare the two definitions of the same function:
+
+```haskell
+add1 :: Num a => a -> a
+add1 x = x + 1
+
+-- point-free style
+add1' :: Num a => a -> a
+add1' = (+1)
+```
+
+Both mean the same thing, but the second version is more declarative:
+
+* it describes what the function is,
+* not how it receives its input.
+
+The name comes from mathematics: a point-free definition does not explicitly mention the “points” (values) of the domain. (It is not related to the "dot" operator for composition, but it is often used together with it.)
+
+Point-free style is great when:
+
+* the function is a clean composition,
+* it improves readability,
+* it avoids boilerplate.
+
+But it can become unreadable if overused. A good rule of thumb: *Use point-free style when it makes the code clearer, not when it makes it shorter*.
+
+### Operators, associativity and precedence
+
+When reading Haskell code, it is important to understand **how expressions are parsed**. There are two main rules that determine evaluation structure:
+
+1) Function application has the highest priority, always.
+2) Infix operators have precedence and associativity (called *fixity*).
+
+Every infix operator in Haskell has a **fixity declaration** containing associativity (no, left, right) and precedence information:
+
+```haskell
+infix  n operator -- non-associative
+infixl n operator -- left-associative
+infixr n operator -- right-associative
+```
+
+where `n` is an integer from 0 to 9 (inclusive) that determines precedence. Higher numbers bind more tightly. The default precedence is 9. Any infix operator without an explicit fixity declaration is left-associative with precedence 9 (`infixl 9`).
+
+We can easily inspect the fixity of operators using `:info` in GHCi:
 
 ```
-Prelude> (+) 5 7
-12
-Prelude> 7 `div` 2
-3
-Prelude> foo x y z = x * (y + z)
-Prelude> (5 `foo` 3) 12
-75
+ghci> :info (+)
+class Num a where
+  ...
+  (+) :: a -> a -> a
+  infixl 6 +
 ```
 
-You can define own operator as you would do it with function:
+For widely known operators, we can also take a look at the table:
+
+| Precedence | Associativity | Example operators |
+|------------|---------------|-------------------|
+| 9          | right         | `.`               |
+| 8          | right         | `^`, `^^`, `**`   |
+| 7          | left          | `*`, `/`, `mod`, `div` |
+| 6          | left          | `+`, `-`          |
+| 5          | right         | `++`, `:`         |
+| 4          | non-          | `==`, `/=`, `<`, `>`, `<=`, `>=` |
+| 3          | right         | `&&`              |
+| 2          | right         | `||`              |
+| 1          | left          | `>>=`, `>>`       |
+| 1          | right         | `=<<`             |
+| 0          | right         | `$`               |
+
+To see this in practice:
 
 ```
-Prelude> (><) xs ys = reverse xs ++ reverse ys
-Prelude> (><) "abc" "xyz"
-"cbazyx"
-Prelude> "abc" >< "xyz"
-"cbazyx"
-Prelude> :info (><)
+ghci> 1 + 2 * 3
+7
+
+ghci> (1 + 2) * 3
+9
+
+ghci> 1 + 2 * 3 ^ 4
+163
+```
+
+With non-associative operators, you must use parentheses to disambiguate:
+
+```
+ghci> 1 == 2 == 3
+<interactive>:1:1: error:
+    • Non type-variable argument in a constraint ‘Num (a -> a)’
+      (Use UndecidableInstances to permit this)
+    • When checking the inferred type
+        it is a function of type Num (a -> a) => a -> a
+```
+
+### Custom operators
+
+Haskell allows you to define your own infix operators. You can choose any combination of symbols (except for reserved ones) and assign them a fixity. For example:
+
+```haskell
 (><) :: [a] -> [a] -> [a]
+xs >< ys = reverse xs ++ reverse ys
 ```
 
-By default, its asociativity is left, as you can observe:
-
 ```
-Prelude> "abc" >< "xyz" >< "klm"
+ghci> "abc" >< "xyz" >< "klm"
 "xyzabcmlk"
-Prelude> ("abc" >< "xyz") >< "klm"
+
+ghci> ("abc" >< "xyz") >< "klm"
 "xyzabcmlk"
-Prelude> "abc" >< ("xyz" >< "klm")
+
+ghci> "abc" >< ("xyz" >< "klm")
 "cbaklmxyz"
-```
 
-By default, its precedence level is 9. We can observe that by constructing expression with `(++)` which has level 5 and the right associativity.
-
-```
-Prelude> "abc" >< "xyz" ++ "klm"
+ghci> "abc" >< "xyz" ++ "klm"
 "cbazyxklm"
-Prelude> "klm" ++ "abc" >< "xyz"
+
+ghci> "klm" ++ "abc" >< "xyz"
 "klmcbazyx"
 ```
 
-You can easily change that and if the new precedence is lower, than `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have the same associativity, otherwise you get an error).
+We can easily change fixity and if the new precedence is lower, then `(++)` will be done first. If the precedence is the same, then it is applied in "natural" order (thus, it must have the same associativity, otherwise you get an error).
 
 ```haskell
 infixl 5 ><
@@ -520,296 +760,125 @@ x `foo` y = 2*x + y
 ```
 
 ```
-*Main> :info (><)
+ghci> :info (><)
 (><) :: [a] -> [a] -> [a]       -- Defined at test01.hs:3:1
 infixl 5 ><
-*Main> "abc" >< "xyz" ++ "klm"
+
+ghci> "abc" >< "xyz" ++ "klm"
 
 <interactive>:6:1: error:
     Precedence parsing error
         cannot mix `><' [infixl 5] and `++' [infixr 5] in the same infix expression
-*Main> ("abc" >< "xyz") ++ "klm"
+
+ghci> ("abc" >< "xyz") ++ "klm"
 "cbazyxklm"
-*Main> :info (>-<)
+
+ghci> :info (>-<)
 (>-<) :: [a] -> [a] -> [a]      -- Defined at test01.hs:7:1
 infixl 2 >-<
-*Main> "abc" >-< "xyz" ++ "klm"
+
+ghci> "abc" >-< "xyz" ++ "klm"
 "cbamlkzyx"
-*Main>
 
-<interactive>:12:1: error: lexical error at character '\ESC'
-*Main> "klm" ++ "abc" >-< "xyz"
+ghci> "klm" ++ "abc" >-< "xyz"
 "cbamlkzyx"
 ```
 
-For operators you can use *symbol characters* as being any of `!#$%&*+./<=>?@\^|-~:` or "any *non-ascii* Unicode symbol or punctuation". But, an operator symbol starting with a colon `:` is a constructor.
-
-### Infix and operator-like data constructors
-
-Data constructors can be treated just as functions. You can pass them to a function as a parameter, return them from a function as a result and also use them in infix:
-
-```
-Prelude> data MyTuple a b = MyTupleConstr a b deriving Show
-Prelude> :type MyTupleConstr
-MyTupleConstr :: a -> b -> MyTuple a b
-Prelude> MyTupleConstr 5 "Hi"
-MyTupleConstr 5 "Hi"
-Prelude> 5 `MyTupleConstr` "Hi"
-MyTupleConstr 5 "Hi"
-```
-
-As we said, for constructors you may create operator starting with a colon (and optionally specify also `infix`, `infixl`, or `infixr`).
-
-```
-Prelude> data MyTuple2 a b = a :@ b deriving Show
-Prelude> :type (:@)
-(:@) :: a -> b -> MyTuple2 a b
-Prelude> 5 :@ "Hi"
-5 :@ "Hi"
-Prelude> (:@) 5 "Hi"
-5 :@ "Hi"
-```
-
-You can try that using operator which doesn't start with a colon is not possible. But you can always make a synonym and then your code more readable:
-
-```
-Prelude> data MyTuple3 a b = a @@ b deriving Show
-
-<interactive>:15:17: error: Not a data constructor `a'
-Prelude> (@@) = (:@)
-Prelude> :type (@@)
-(@@) :: a -> b -> MyTuple2 a b
-Prelude> 5 @@ "Hi"
-5 :@ "Hi"
-```
-
-Another fine feature is, that operators `:@` and `@@` can be specified with different associativity and precedence!
-
-GHC has an extension of [Generalized Algebraic Data Types (GADTs)](https://en.wikibooks.org/wiki/Haskell/GADT), where the idea of unifying function and data types is pushed even further. However, as they are a more advanced topic, we leave them to your interest.
-
-### Anonymous functions
-
-An anonymous function is a function without a name. It is a Lambda abstraction and might look like this: `\x -> x + 1`. Sometimes, it is more convenient to use a lambda expression rather than giving a function a name. You should use anonymous functions only for very simple functions because it decreases readability of the code.
+For operators you can use *symbol characters* as being any of `!#$%&*+./<=>?@\^|-~:` or "any *non-ascii* Unicode symbol or punctuation". But, an operator symbol starting with a colon `:` is a constructor. That means that it can only be used in data type definitions and pattern matching, but not in expressions. For example:
 
 ```haskell
-myFunc1 x y z = x * y + z               -- <= just syntactic sugar!
-myFunc2 = (\x y z -> x * y + z)         -- <= still syntactic sugar!
-myFunc3 = (\x -> \y -> \z -> x * y + z) -- <= desugarized function
-mapFunc1 = map myFunc1
-mapAFunc1 = map (\x y z -> x * y + z)
+data MyList a = Nil | Cons a (MyList a)
+
+infixr 5 `Cons`
+
+data MyTuple2 a b = :@ a b
+
+infix 6 :@
 ```
 
-Anonymous functions are one of the corner-stones of functional programming and you will meet them in all languages that claim to be at least a little bit "functional".
 
-## Higher-order functions
+## Folds
 
-Higher order function is a function that takes a function as an argument and/or returns a function as a result. We already saw some of them: `(.)`, `curry`, `uncurry`, `map`, etc. Higher-order functions are a very important concept in functional programming. Learning them and using them properly leads to readable, declarative, concise and safe code. They are used especially in manipulating lists, where they are preferred over traditional recursion today.
+You may have heard of **Map/Reduce** — a powerful programming model for processing large data sets. It consists of two main steps. We already know `map`. The *reduce* part exists in Haskell too — but it is traditionally called a **fold**. A fold processes a container (usually a list) and accumulates a result.
 
-### Map and filter
+Intuitively, it takes:
 
-Two widely used functions well-known in the most of functional (but others as well) programming languages are `map` and `filter`. In the `Prelude` module, they are defined for lists, but they work in the same way for other data structures (`Data.Sequence`, `Data.Set`, etc., see the previous lecture). When you need to *transform* a list by applying a function to its every element, then you can use `map`. If you have a list and you need to make a sublist based on some property of its elements, use `filter`. The best for understanding is to look at its possible implementation:
+1) an initial value (the "zero" or "identity" for the operation),
+2) a binary function that combines an element of the container with the accumulated result,
+3) a container of elements (typically a list).
+
+Then, a fold replaces the (list) structure with repeated application of the binary function, starting with the initial value.
+
+### Right fold (`foldr`)
 
 ```haskell
-myMap :: (a -> b) -> [a] -> [b]
-myMap _ []     = []
-myMap f (x:xs) = f x : myMap xs
-
-myFilter :: (a -> Bool) -> [a] -> [a]
-myFilter _ []     = []
-myFilter p (x:xs)
-      | p x       = x : myFilter p xs
-      | otherwise = myFilter p xs
+foldr :: (a -> b -> b) -> b -> [a] -> b
 ```
 
-That's it. Let us have some examples:
+The `foldr` function takes a binary function, an initial value, and a list. It processes the list from the right, applying the function to each element and the accumulated result.
 
-```
-Prelude> :type map
-map :: (a -> b) -> [a] -> [b]
-Prelude> map show [1..5]
-["1","2","3","4","5"]
-Prelude> map (5*) [1..5]
-[5,10,15,20,25]
-Prelude> map (length . show . abs) [135, (-15), 0, 153151]
-[3,2,1,6]
-Prelude> :type filter
-filter :: (a -> Bool) -> [a] -> [a]
-Prelude> filter (\x -> x `mod` 7 == 0) [1..50]
-[7,14,21,28,35,42,49]
-```
-
-Soon we will get into a generalized function called `fmap` while discussing the term *functor*.
-
-### Folds and scans
-
-Maybe you've heard about *Map/Reduce*... We know `map`, but there is no `reduce`! Actually, there is, but it is called [fold](https://wiki.haskell.org/Fold) (it is practically a synonym in functional programming). Folds are higher-order functions that process a data structure in some order and build a return value. It (as everything in Haskell) has foundations in math - concretely in [Catamorphism](https://wiki.haskell.org/Catamorphisms) of the Category Theory.
-
-So `map` takes a list a produces another list of the same length, while `fold` takes a list and produces a single value.
-
-To get into folds in practice, let's try to implement `sum` and `product` functions (if you want to practice on your own, try it with `and` and `or`).
+Think of it as:
 
 ```haskell
-mySum :: Num a => [a] -> a
-mySum []     = 0
-mySum (x:xs) = x + mySum xs
-
-myProduct :: Num a => [a] -> a
-myProduct []     = 1
-myProduct (x:xs) = x * myProduct xs
+foldr f z [x1, x2, x3] = f x1 (f x2 (f x3 z)) = x1 `f` (x2 `f` (x3 `f` z))
 ```
 
-Obviously, there are some similarities:
-
-1. initial value for an empty list (`0` for `sum` and `1` in the case of `product`),
-2. use a function and apply it to an element and recursive call to the rest of the list.
-
-Let's make a generalized higher-order function that also takes an initial value and a function for processing:
+### Left fold (`foldl`)
 
 ```haskell
-process :: (a -> a -> a) -> a -> [a] -> a
-process _ initValue    []  = initValue
-process f initValue (x:xs) = f x (process f initValue xs)
-
-mySum = process (+) 0
-myProduct = process (*) 1
+foldl :: (b -> a -> b) -> b -> [a] -> b
 ```
 
-But here we are getting into a problem. Both `(+)` and `(*)` use operands and result of the same type - if we want to convert a number to string and join it in one go with `process`, it is not possible!
+The `foldl` function is similar to `foldr`, but it processes the list from the left. It applies the function to the accumulated result and each element in order.
 
-```
-*Main> process (\x str -> show x ++ str) "" [1,2,3,4]
-
-<interactive>:18:39: error:
-    • No instance for (Num [Char]) arising from the literal ‘1’
-    • In the expression: 1
-      In the third argument of ‘process’, namely ‘[1, 2, 3, 4]’
-      In the expression:
-        process (\ x str -> show x ++ str) "" [1, 2, 3, 4]
-```
-
-The type of the initial value must be the same as the type which is returned by given function. Now we get this:
-
+Think of it as:
 
 ```haskell
-process :: (a -> b -> b) -> b -> [a] -> b
-process _ initValue    []  = initValue
-process f initValue (x:xs) = f x (process f initValue xs)
-
-mySum = process (+) 0
-myProduct = process (*) 1
-
-myToStrJoin :: (Show a) => [a] -> String
-myToStrJoin = process (\x str -> show x ++ str) ""
+foldl f z [x1, x2, x3] = f (f (f z x1) x2) x3 = ((z `f` x1) `f` x2) `f` x3
 ```
 
-Now problem is that both `(+)` and `(*)` are commutative, but `(\x str -> show x ++ str)` is not, even type of `x` and `str` can be different. What if we need to apply the function in a different order? Now we have to create two variants.
+### Own fold
 
+We can easily implement our own fold function using recursion. For example, here is a simple implementation of `foldr`:
 
 ```haskell
-processr :: (a -> b -> b) -> b -> [a] -> b   -- "accumulates" in the RIGHT operand
-processr _ initValue    []  = initValue
-processr f initValue (x:xs) = f x (processr f initValue xs)
+myFoldr :: (a -> b -> b) -> b -> [a] -> b
+myFoldr _ z []     = z
+myFoldr f z (x:xs) = f x (myFoldr f z xs)
 
-processl :: (b -> a -> b) -> b -> [a] -> b   -- "accumulates" in the LEFT operand
-processl _ initValue    []  = initValue
-processl f initValue (x:xs) = f (processl f initValue xs) x
-
-mySum = processl (+) 0
-myProduct = processl (*) 1
-
-myToStrJoinR :: (Show a) => [a] -> String
-myToStrJoinR = processr (\x str -> show x ++ str) ""
-myToStrJoinL :: (Show a) => [a] -> String
-myToStrJoinL = processl (\str x -> show x ++ str) ""
+myFoldl :: (b -> a -> b) -> b -> [a] -> b
+myFoldl _ z []     = z
+myFoldl f z (x:xs) = myFoldl f (f z x) xs
 ```
 
-This is something so generally useful, that it is prepared for you and not just for lists but for every instance of typeclass `Foldable` - two basic folds `foldl`/`foldr` and related `scanl`/`scanr`, which capture intermediate values in a list:
+### Scans
 
-```
-Prelude> :type foldl
-foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
-Prelude> :type foldr
-foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
-Prelude> foldl (-) 0 [1..10]
--55
-Prelude> ((((((((((0-1)-2)-3)-4)-5)-6)-7)-8)-9)-10)
--55
-Prelude> scanl (-) 0 [1..10]
-[0,-1,-3,-6,-10,-15,-21,-28,-36,-45,-55]
-Prelude> foldr (-) 0 [1..10]
--5
-Prelude> (1-(2-(3-(4-(5-(6-(7-(8-(9-(10-0))))))))))
--5
-Prelude> scanr (-) 0 [1..10]
-[-5,6,-4,7,-3,8,-2,9,-1,10,0]
+In addition to folds, Haskell also provides **scans**, which are similar but return a list of all intermediate results instead of just the final accumulated value.
+
+```haskell
+scanr :: (a -> b -> b) -> b -> [a] -> [b]
+scanl :: (b -> a -> b) -> b -> [a] -> [b]
 ```
 
-There are some special variants:
-
 ```
-Prelude> foldr1 (+) [1..10]
-Prelude> foldl1 (*) [1..10]
-Prelude> foldr1 (+) []
-Prelude> foldl1 (*) []
+ghci> scanl (-) 0 [1..5]
+[0,-1,-3,-6,-10,-15]
 
-Prelude> foldl' (*) 0 [1..10]  -- strict evaluation before reduction
-Prelude> foldl'1 (*) [1..10]
-
-Prelude> minimum [1,2,63,12,5,201,2]
-Prelude> maximum [1,2,63,12,5,201,2]
+ghci> scanr (-) 0 [1..5]
+[-3,4,-2,3,-1,5,0]
 ```
 
-As an exercise, try to implement `foldl` by using `foldr` (spoiler: [solution](https://wiki.haskell.org/Foldl_as_foldr)).
+### Strict folds
 
-## FP in other languages
+The standard `foldl` is not strict, which means that it can lead to building up large thunks (deferred computations) that can cause memory issues. To avoid this, Haskell provides a strict version of `foldl` called `foldl'` in the `Data.List` module:
 
-Functional programming concepts that you learn in a pure functional language may be more or less applicable in other languages, as well, according to the concepts supported and how well they are implemented. Also, some languages provide serious functional constructs, but they are quite cumbersome syntactically, which repels their common usage (yes, we point to you, JavaScript ;-)
-
-### C/C++
-
-C++ is a general purpose object-oriented programming language based on C, which is an imperative procedural language. In both, it is possible to create functions (and procedures). There is no control if a function is pure or not (i.e. making side effects). And in C/C++ you need to deal with mutability, pointers and working with memory on low level (de/allocation). Typing is strict and you can make higher-order functions with "function pointer" types.
-
-```cpp
-int calculate(int(*binOperation)(const int, const int), const int operandA, const int operandB){
-    return binOperation(operandA, operandB);
-}
+```haskell
+foldl' :: (b -> a -> b) -> b -> [a] -> b
 ```
-
-If you are a normal person and not a bighead, you will most probably use `typedef` to name the type of such functions so the code is more readable and understandable. In newer versions of C++, there are also anonymous functions, combinators (`for_each`, `transform`, `filter`, ...), functors. Then you can of course use simpler functional concepts such as closures or recursion.
-
-```cpp
-typedef int(*binOperation)(const int, const int);  /* I am not a bighead */
-
-int calculate(binOperation bo, const int operandA, const int operandB){
-    return bo(operandA, operandB);
-}
-```
-
-* [libf - C++ as a Pure Functional Programming Language](https://github.com/GJDuck/libf)
-* [Functional in C++17 and C++20](http://www.modernescpp.com/index.php/functional-in-c-17-and-c-20)
-
-### Java
-
-* [Flying Bytes - An Introduction to Functional Programming in Java 8](https://flyingbytes.github.io/programming/java8/functional/part0/2017/01/16/Java8-Part0.html)
-* [Hackernoon - Finally Functional Programming in Java](https://hackernoon.com/finally-functional-programming-in-java-ad4d388fb92e)
-* [JavaCodeGeeks - Java 9 Functional Programming Tutorial](https://examples.javacodegeeks.com/core-java/java-9-functional-programming-tutorial/)
-
-### Python
-
-* [Functional Programming in Python (free O'Reilly)](http://www.oreilly.com/programming/free/functional-programming-python.csp)
-* [Python 3 - Functional Programming HOWTO](https://docs.python.org/3/howto/functional.html)
-* [Python 3 - Typing](https://docs.python.org/3/library/typing.html)
-
-### Smalltalk and Ruby
-
-* [Smalltalk, A Functional Programming Language](http://monospacedmonologues.com/post/138978728947/smalltalk-a-functional-programming-language)
-* [Functional Programming in Ruby for people who don’t know what functional programming is](https://medium.com/craft-academy/functional-programming-in-ruby-for-people-who-dont-know-what-functional-programming-is-f0c4ab7dc68c)
-* [Functional Programming in Ruby](http://joelmccracken.github.io/functional-programming-in-ruby/#/)
-* [Embracing Functional Programming in Ruby](https://kellysutton.com/2017/09/13/embracing-functional-programming-in-ruby.html)
 
 ## Task assignment
 
-The homework to practice working with new types, list comprehensions, containers, and errors is in repository [MI-AFP/hw04](https://github.com/MI-AFP/hw04).
+For the assignment, navigate to the `hw04` project and follow the instructions in the `README.md` file there. It will test your skills in working with containers and more complex functions.
 
 ## Further reading
 

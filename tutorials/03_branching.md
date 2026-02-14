@@ -304,13 +304,13 @@ It is important to distinguish between:
 * `otherwise` – a `Bool` expression equal to `True`
 
 ```
-Prelude> :t otherwise
-Prelude> otherwise == True
+ghci> :t otherwise
+ghci> otherwise == True
 True
-Prelude> not otherwise
+ghci> not otherwise
 False
 otherwise :: Bool
-Prelude> :t _
+ghci> :t _
 
 <interactive>:1:1: error:
     • Found hole: _ :: t
@@ -621,7 +621,7 @@ Only the arguments that are actually used are evaluated. This is a direct conseq
 
 Some operations cannot proceed without actual values. For example, arithmetic requires its arguments to be evaluated:
 
-Prelude> 3 + undefined
+ghci> 3 + undefined
 *** Exception: Prelude.undefined
 
 This does not contradict laziness — it simply means the *value is now required*. Laziness delays evaluation, but it does not eliminate it.
@@ -914,7 +914,7 @@ T.unpack :: Text -> String
 Example:
 
 ```
-Prelude> import qualified Data.Text as T
+ghci> import qualified Data.Text as T
 
 Prelude T> txt = T.pack "my effective text"
 
@@ -961,14 +961,14 @@ It is commonly used for:
 Example:
 
 ```
-Prelude> import qualified Data.ByteString as B
+ghci> import qualified Data.ByteString as B
 
-Prelude> bstr = B.pack [97, 98, 99]
+ghci> bstr = B.pack [97, 98, 99]
 
-Prelude> bstr
+ghci> bstr
 "abc"
 
-Prelude> B.index bstr 2
+ghci> B.index bstr 2
 99
 ```
 
@@ -982,10 +982,10 @@ For ASCII-based text, there is a convenient variant [Data.ByteString.Char8](http
 import qualified Data.ByteString.Char8 as C
 ```
 ```
-Prelude> C.pack "abc"
+ghci> C.pack "abc"
 "abc"
 
-Prelude> C.index (C.pack "abc") 2
+ghci> C.index (C.pack "abc") 2
 'c'
 ```
 
@@ -1000,7 +1000,7 @@ import qualified Data.Text.Encoding as E
 ```
 
 ```
-Prelude> E.encodeUtf8 (T.pack "život, жизнь, lífið")
+ghci> E.encodeUtf8 (T.pack "život, жизнь, lífið")
 ```
 
 Encoding makes it explicit:
@@ -1029,16 +1029,16 @@ or in GHCi:
 Now *string literals become polymorphic*:
 
 ```
-Prelude> :type "abc"
+ghci> :type "abc"
 "abc" :: IsString p => p
 ```
 
 This allows code like the following, without explicit `pack`:
 
 ```
-Prelude> import qualified Data.Text as T
+ghci> import qualified Data.Text as T
 
-Prelude> T.length "abc"
+ghci> T.length "abc"
 3
 ```
 
@@ -1054,7 +1054,7 @@ You can always convert between them when needed and sometimes your choice will d
 
 ## Task assignment
 
-For the second assignment, navigate to the `hw03` project and follow the instructions in the `README.md` file there. It will test your skills in branching, local definitions, and working with modules.
+For the assignment, navigate to the `hw03` project and follow the instructions in the `README.md` file there. It will test your skills in branching, local definitions, and working with modules.
 
 ## Further reading
 

@@ -200,7 +200,7 @@ We can read this as: the expression `"Hello"` is of type `String` (`::` means "*
 
 This is the first math connection worth making explicit:
 * In mathematics, we say that an object has a certain type or belongs to a certain set, e.g., `5 ∈ ℤ` (alt. `5 : ℤ`) means that the number `5` is an integer.
-* In Haskell, we say that an expression has a certain type, e.g., `5 :: Int` means that the expression `5` is of type `Int`.
+* In Haskell, we say that an expression has a certain type, e.g., `5::Int` means that the expression `5` is of type `Int`.
 
 Types are not decoration — they are part of the meaning of the program. The type system helps ensure correctness, guides program structure, and enables powerful abstractions. **Type inference** means that you often do not need to write types explicitly; GHC can figure them out for you. It does so by analyzing how expressions are constructed and combined. It always tries to find the most general type that fits the expression.
 
