@@ -1,10 +1,28 @@
-# IO, Exceptions, and More Typeclasses
+# IO in Real Programs
 
-In this tutorial, we will take a brief look at IO including exceptions and then at few more advanced typeclasses that you might want to use in some projects. They are not described in high detail, but just in an introductory manner, so when you encouter some problem - you should know what you can use and learn specific details for your case.
+In the previous lecture, we explored `Functor`, `Applicative`, and `Monad`. This time, we finally use them for what they are most famous for: *real programs*.
+
+Until now, almost everything we wrote was pure. Functions always returned the same result for the same input. That's beautiful — but real applications must:
+
+* Read files
+* Talk to the network
+* Accept command-line arguments
+* Print results
+* Handle failures
+
+All of this happens in `IO`. This lecture is about writing practical programs, not just understanding typeclasses in isolation. We will gradually build pieces of a small CLI application and use that as motivation for:
+
+* IO
+* Exception handling
+* JSON parsing (Aeson)
+* CLI arguments and environment variables
+* Application context (ReaderT pattern)
+* Traversable in practice
+* Lens with JSON
 
 ## Working with IO
 
-When you need to incorporate input and output (CLI, files, sockets, etc.), you bring impureness into your program. Obviously, IO brings side effects (it interacts with the environment and changes the global state). It can be a bit complicated and so we won't go deep into theory this time and instead, we will just show how to use it. Theoretical part will be covered in the future.
+We can easily check what is actually `IO` type:
 
 ```haskell
 Prelude> :info IO
@@ -18,859 +36,1198 @@ instance Applicative IO -- Defined in ‘GHC.Base’
 instance Monoid a => Monoid (IO a) -- Defined in ‘GHC.Base’
 ```
 
-It is instance of `Monad`, but also `Functor`, `Aplicative`, and `Monoid` (iff `a` is also `Monoid`):
+The important takeaway:
+
+> `IO` is just another type constructor that happens to represent actions interacting with the outside world. It is not a magical thing, it is not a special language construct, it is just a type.
+
+`IO` is not (about):
+
+* a special language construct,
+* *impure Haskell*,
+* *imperative style in Haskell*,
+* *magic*.
+
+It is a type that describes a **computation which, when executed by the runtime, may perform side effects**.
+
+### `main` = the entry point
+
+Every executable Haskell program must define:
 
 ```haskell
-import System.Random
-import Control.Applicative
-
-main0 :: IO ()
-main0 = mempty
-
-main1 :: IO ()
-main1 = putStrLn "a" `mappend` putStrLn "b"
-
-main2 :: IO ()
-main2 = mconcat (map print [1..5])
-
-main3 :: IO ()
-main3 = do
-     rname <- reverse <$> getLine  -- fmap reverse getLine
-     print rname
-
-main4 :: IO ()
-main4 = print 1 *> print 2 *> print 3
-
-main5 :: IO ()
-main5 = print 1 <* print 2 <* print 3
-
-main6 :: IO ()
-main6 = do
-     res <- (+) <$> randomInt <*> randomInt
-     print res
-       where randomInt = randomRIO (1, 10) :: IO Integer
-
-main7 :: IO ()
-main7 = do
-    res <- liftA2 (\x y -> x + read y) randomInt getLine
-    print res
-      where randomInt = randomRIO (1, 10) :: IO Integer
+main :: IO ()
 ```
 
-A lot of confusion comes from ideas such as "Monad is IO", "To do something impure I need a monad", "Monad brings imperative style to FP", or "Monad is something hard and weird". No, `Monad` is just a type class with defined operations and laws, just as `Monoid` (so pretty simple, right?!). IO actions manipulate and output, this is their essence. And BY THE WAY, they are (very conveniently) an instance of `Monad`, `Applicative`, and `Functor`. Those  allow you to do some pure composition and other tricks with `IO` type and actions. A great and detailed explanation can be found on [HaskellWiki - IO inside](https://wiki.haskell.org/IO_inside).
+This means:
 
-### The main and gets + puts
+* the program performs some `IO` actions, and
+* it produces no meaningful result (the `()` type is a type with a single value, also called *unit*).
 
-If you know C/C++, Python, or other programming languages, you should be familiar with "main". As in other languages, `main` is defined to be the entry point of a Haskell program. For Stack projects, it is located in a file inside `app` directory and can be defined in `package.yaml` in `executables` section (it is possible to have multiple entrypoints per program). The type of `main` is `IO ()` -- it can do something (some actions) with `IO` and nothing `()` is returned. You may wonder why it is not `IO Int` (with a return code). It is because giving a return code is also an IO action and you can do it from `main` with functions from `System.Exit`.
-
-Now, let's take a look at basic IO examples:
+If you need to exit with a non-zero code, you can use `System.Exit`:
 
 ```haskell
-main1 :: IO ()
-main1 = putStr "Hello, Haskeller!"     -- putStr :: String -> IO ()
+import System.Exit
 
-main2 :: IO ()
-main2 = putStrLn "Hello, Haskeller!"   -- putStrLn :: String -> IO ()
+main :: IO ()
+main = do
+  -- ...
+  die "Something went wrong"
 
-main3 :: IO ()
-main3 = do
-          putStr "Haskell "
-          putChar 'F'                   -- putChar :: Char -> IO ()
-          putChar 'T'
-          putChar 'W'
-          putStrLn "! Don't you think?!"
+-- or
 
--- pure function
-sayHello :: String -> String
-sayHello name = "Hello, " ++ name ++ "!"
-
-main4 :: IO ()
-main4 = do
-          putStrLn "Enter your name:"
-          name <- getLine                -- getLine :: IO String, see getChar & getContents
-          putStrLn . sayHello $ name
-
--- custom IO action
-promptInt :: IO Int
-promptInt = do
-              putStr "Enter single integer: "
-              inpt <- getLine       -- unwraps from IO (inpt :: String)
-              return (read inpt)    -- return wraps with IO, read :: String -> Int
-
-compute x y = 50 * x + y
-
-main5 :: IO ()
-main5 = do
-          intA <- promptInt
-          intB <- promptInt
-          putStrLn ("Result: ++ show . compute $ intA intB)
-
-main6 :: IO ()
-main6 = print 1254                  -- print = putStrLn . show
+main :: IO ()
+main = do
+  -- ...
+  exitWith (ExitFailure 1)
 ```
 
-### What does `do` do?
+### Basic `IO` actions
 
-It doesn't look so weird if you recall how imperative programming works... But we are in the functional world now, so what is going on? Haskell provides [do notation](https://en.wikibooks.org/wiki/Haskell/do_notation), which is just a syntactic sugar for chaining actions and bindings (not just IO, in general!) in a simple manner instead of using `>>` (*then*) and `>>=` (*bind*) operators of the typeclass `Monad`. We cover this topic in detail in the next lecture, right now you can remember that although `do` looks imperative, it is actually still pure thanks to a smart "trick".
+The `IO` type is a *monad*, which means we can use `do` notation to sequence actions.
 
-When you use the binding operator `<-`, it means that the result of a bound action can be used in following actions. In the example with `main4`, IO action `getLine` is of type `IO String` and you want to use the wrapped `String` - you *bind* the result to name `name` and then use it in combination with pure function `sayHello` for the following action that will do the output. The `do` block consists of actions and bindings and binding cannot be the last one!
-
-You might have noticed the `return` in custom `promptInt` action. This is a confusing thing for beginners, as `return` here has **nothing to do** with imperative languages return. The confusing thing is that it *looks* very much like it. However, conceptually it is not a control-flow expression, but just a function of the typeclass `Monad` which is used for wrapping back something, in this case `return :: String -> IO String`. This is one of the reasons why PureScript got rid of `return` and uses `pure` instead. Again, we will look at this in detail in the next lecture.
-
-### Be `interact`ive
-
-A very interesting construct for building a simple CLI is `interact :: (String -> String) -> IO ()`. The interact function takes a function of type `String -> String` as its argument. The **entire** input from the standard input device is passed to this function as its argument, and the resulting string is output on the standard output device. Btw. this is a nice example of a higher-order function at work, right?
-
-```haskell
-import Data.Char
-
-main1 :: IO ()
-main1 = interact (map toUpper)
-
-main2 :: IO ()
-main2 = interact (show . length)
-
-main3 :: IO ()
-main3 = interact reverse
-```
-
-As is emphasized, it works with an entire input. If you've tried the examples above, you could observe a difference made by lazy evaluation in the first case. If you need to interact by lines or by words, you can create helper functions for that easily.
-
-```haskell
-eachLine :: (String -> String) -> (String -> String)
-eachLine f = unlines . f . lines
-
-eachWord :: (String -> String) -> (String -> String)
-eachWord f = unwords . f . words
-
-main5 :: IO ()
-main5 = interact (eachLine reverse)
-
-main6 :: IO ()
-main6 = interact (eachWord reverse)
-
-chatBot "Hello" = "Hi, how are you?"
-chatBot "Fine" = "Lucky you... bye!"
-chatBot "Bad" = "Me too!"
-chatBot _ = "Sorry, I'm too dumb to understand this..."
-
-main7 :: IO ()
-main7 = interact (eachLine chatBot)
-```
-
-### IO with files
-
-Working with files is very similar to working with console IO. As you may already know, most of IO for consoles is built by using IO for files with system "file" stdin and stdout. Such thing is called a `Handle` in Haskell and it is well described in [System.IO](http://hackage.haskell.org/package/base/docs/System-IO.html#t:Handle).
-
-```haskell
-main1 :: IO ()
-main1 = withFile "test.txt" ReadMode $ \handle -> do
-           fileSize <- hFileSize handle
-           print fileSize
-           xs <- getlines handle
-           sequence_ $ map (putStrLn . reverse) xs
-
-main2 :: IO ()
-main2 = do
-          handle <- openFile  "test.txt" ReadMode    -- :: IO Handle
-          fileSize <- hFileSize handle
-          print fileSize
-          hClose handle
-```
-
-In a similar manner, you can work with binary files (you would use `ByteString`s) and temporary files. To work with sockets (network communication), you can use a library like [network](hackage.haskell.org/package/network/) or specifically for HTTP [wreq](https://hackage.haskell.org/package/wreq) and [req](https://hackage.haskell.org/package/req).
-
-For some well-known file formats there are libraries ready, so you don't have to work with them over and over again just with functions from `Prelude`:
-
-* JSON: [aeson](https://hackage.haskell.org/package/aeson)
-* YAML: [yaml](https://hackage.haskell.org/package/yaml)
-* XML: [xml](https://hackage.haskell.org/package/xml), [hxt](https://hackage.haskell.org/package/hxt), or [xeno](https://hackage.haskell.org/package/xeno)
-* CSV: [cassava](https://hackage.haskell.org/package/cassava) or [csv](https://hackage.haskell.org/package/csv/docs/Text-CSV.html)
-* INI: [ini](https://hackage.haskell.org/package/ini)
-
-... and so on. Also, you probably know the fabulous [pandoc](https://pandoc.org), which is written in Haskell -- and you can use it as a [library](https://hackage.haskell.org/package/pandoc)!
-
-Hmmm, who said that Haskell is just for math and mad academics? ;-)
-
-### Arguments and env variables
-
-Another way of interacting with a program is via its command-line arguments and environment variables. Again, there is a little bit clumsy but simple way in [System.Environment](https://hackage.haskell.org/package/base/docs/System-Environment.html) and then some fancy libraries that can help you with more complex cases...
+To **print something to the console**, we can use `putStrLn` or `print` (there are also other functions for printing such as `putStr` or `putChar`, but these are the most common ones):
 
 ```haskell
 main :: IO ()
 main = do
-         progName <- getProgName    -- IO String
-         print progName
-         path <- getExecutablePath  -- IO String
-         print path
-         args <- getArgs            -- :: IO [String]
-         print args
-         user <- lookupEnv "USER"   -- :: IO (Maybe String), vs. getEnv :: IO String
-         print user
-         env <- getEnvironment      -- :: IO [(String, String)]
-         print env
+  putStrLn "Hello, world!"
+  print (1 + 2)
 ```
 
-The most used library for [command line option parser](https://wiki.haskell.org/Command_line_option_parsers) is [cmdargs](http://hackage.haskell.org/package/cmdargs):
+Types:
 
 ```haskell
-{-# LANGUAGE DeriveDataTypeable #-}
-module Sample where
-import System.Console.CmdArgs
+putStrLn :: String -> IO ()
+print :: Show a => a -> IO ()
+```
 
-data Sample = Hello {whom :: String}
-            | Goodbye
-              deriving (Show, Data, Typeable)
+Notice that `putStrLn` takes a `String` and returns an `IO ()`, while `print` takes any value that is an instance of the `Show` typeclass and also returns an `IO ()`. This means that both functions perform some side effect (printing to the console) and do not produce any meaningful result.
 
-hello = Hello{whom = def}
-goodbye = Goodbye
+To **read input from the console**, we can use `getLine`:
 
+```haskell
+main :: IO ()
 main = do
-         args <- cmdArgs (modes [hello, goodbye])
-         print args
+  putStrLn "What is your name?"
+  name <- getLine
+  putStrLn ("Hello, " ++ name ++ "!")
 ```
 
-For a more complex example, visit their documentation -- for example, `hlint` or `diffy` use this one.
-
-## Handling errors
-
-As we saw, a very elegant way way how to handle errors is using `Maybe` or `Either` types. This is a preferred way with obvious advantages, however, in practice, it may still come to a more explosive situation.
-
-### error
-
-`error` is a special function which stops execution with given message:
-
-```
-Prelude> error "Stop now"
-*** Exception: Stop now
-CallStack (from HasCallStack):
-  error, called at <interactive>:1:1 in interactive:Ghci1
-```
-
-There is another quite similar one - `errorWithoutStackTrace`:
-
-```
-Prelude> errorWithoutStackTrace "Stop now without stack trace"
-*** Exception: Stop now without stack trace
-```
-
-It is obviously even worse than just `error` because you somewhere deep in your code say something about rendering the error...
-
-### undefined
-
-Special case of error is that something is `undefined` and it does not accept any message:
-
-```
-Prelude> undefined
-*** Exception: Prelude.undefined
-CallStack (from HasCallStack):
-  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
-  undefined, called at <interactive>:5:1 in interactive:Ghci1
-```
-
-Semantically, it can be used where the value is not defined (for example when you want to divide by zero). Sometimes you can see it used as a basic placeholder with meaning "Not implemented yet". For such things, you can use custom `error` or some specialized package like [Development.Placeholders](hackage.haskell.org/package/placeholders/docs/Development-Placeholders.html), which are more suitable.
-
-### throw, try and catch
-
-We have `throw`, `try` and `catch`, but those are functions - not keywords!
-
-```
-Prelude> import Control.Exception
-Prelude Control.Exception> :type try
-try :: Exception e => IO a -> IO (Either e a)
-Prelude Control.Exception> :type throw
-throw :: Exception e => e -> a
-Prelude Control.Exception> :type catch
-catch :: Exception e => IO a -> (e -> IO a) -> IO a
-```
-
-If you are interested you can read the documentation of [Control.Exception](https://hackage.haskell.org/package/base/docs/Control-Exception.html), however, exceptions are considered an anti-pattern in Haskell and you should always try to deal with potential errors in a more systematic way using types. We will slightly get back to these after getting the notion of Monads.
+Types:
 
 ```haskell
-import System.IO
-import Control.Exception
-
-myHandler exc = do
-  putStrLn "Oops, error occured while trying to read the file"
-  putStrLn $ "It failed with: " ++ show (exc :: SomeException)
-
-main = handle myHandler $ do
-        fp <- openFile "test.txt" ReadMode
-        fileSize <- hFileSize fp
-        print fileSize
-        hClose fp
+getLine :: IO String
 ```
 
-## Advanced Typeclasses
+Notice that `getLine` returns an `IO String`, which means it performs some side effect (reading from the console) and produces a `String` as a result. We can use the `<-` syntax in `do` notation to extract the `String` value from the `IO` action.
 
-### Foldable
-
-Recall the time when we were talking about folds... The `Foldable` type class provides a generalization of list folding (`foldr` and friends) and operations derived from it to arbitrary data structures. The class does not require the Functor superclass in order to allow containers like Set or StorableVector that have additional constraints on the element type. But many interesting Foldables are also Functors. A foldable container is a container with the added property that its items can be 'folded' to a summary value. Recall what `foldr` and `foldl` do...
-
-In other words, it is a type which supports "foldr". Once you support foldr, of course, it can be turned into a list, by using `toList = foldr (:) []`. This means that all foldables have a representation as a list, but the order of the items may or may not have any particular significance. However, if a Foldable is also a Functor, parametricity, and the Functor law guarantee that `toList` and `fmap` commute. Further, in the case of [Data.Sequence](https://hackage.haskell.org/package/containers/docs/Data-Sequence.html), there is a well-defined order and it is exposed as expected by `toList`. A particular kind of fold well-used by Haskell programmers is `mapM_`, which is a kind of fold over `(>>)`, and Foldable provides this along with the related `sequence_`.
+Here `<-` is syntactic sugar for `>>=`:
 
 ```haskell
-import Data.Foldable
-
-class Foldable (t :: * -> *) where
-  fold :: Monoid m => t m -> m
-  foldMap :: Monoid m => (a -> m) -> t a -> m
-  foldr :: (a -> b -> b) -> b -> t a -> b
-  foldr' :: (a -> b -> b) -> b -> t a -> b
-  foldl :: (b -> a -> b) -> b -> t a -> b
-  foldl' :: (b -> a -> b) -> b -> t a -> b
-  foldr1 :: (a -> a -> a) -> t a -> a
-  foldl1 :: (a -> a -> a) -> t a -> a
-  toList :: t a -> [a]
-  null :: t a -> Bool
-  length :: t a -> Int
-  elem :: Eq a => a -> t a -> Bool
-  maximum :: Ord a => t a -> a
-  minimum :: Ord a => t a -> a
-  sum :: Num a => t a -> a
-  product :: Num a => t a -> a
-  {-# MINIMAL foldMap | foldr #-}
+main :: IO ()
+main = putStrLn "What is your name?" >> getLine >>= \name ->
+       putStrLn ("Hello, " ++ name ++ "!")
 ```
 
-This class is very straight-forward, it has no specific laws, but it is very powerful as we've already known... It allows you to create new or use various containers with same generic functions like `null`, `length`, `elem`, `minimum`, `maximum`, and others seamlessly and without any problems. For more, see [Data.Foldable](https://hackage.haskell.org/package/base/docs/Data-Foldable.html).
-
-#### Specialized folds
-
-Aside functions defined in `Foldable` typeclass, there are some additional specialized folds that can be very useful and avoid reinventing the wheel in your code:
+To **interact via stdin and stdout** is the most basic form of `IO` and you can use function `interact` easily to create simple programs that read from stdin and write to stdout:
 
 ```haskell
-concat :: Foldable t => t [a] -> [a]
-concatMap :: Foldable t => (a -> [b]) -> t a -> [b]
-
-and :: Foldable t => t Bool -> Bool
-or :: Foldable t => t Bool -> Bool
-
-any :: Foldable t => (a -> Bool) -> t a -> Bool
-all :: Foldable t => (a -> Bool) -> t a -> Bool
-
-maximumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
-minimumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
-
-notElem :: (Foldable t, Eq a) => a -> t a -> Bool
-find :: Foldable t => (a -> Bool) -> t a -> Maybe a
+main :: IO ()
+main = interact (unlines . reverse . lines)
 ```
 
-#### Foldable and Applicative
-
-Then, there are some specialized functions that are useful when you have `Applicative` objects in a `Foldable` structure or want to apply them over a `Foldable` structure. *(Notice the underscores)*
+`interact` takes a function of type `(String -> String)` and returns an `IO ()` action that reads from standard input, applies the function to the input, and then writes the result to standard output. In this example, we are reversing the lines of input:
 
 ```haskell
-traverse_ :: (Foldable t, Applicative f) => (a -> f b) -> t a -> f ()
-
-for_ :: (Foldable t, Applicative f) => t a -> (a -> f b) -> f ()      -- flip . traverse_
-
-sequenceA_ :: (Foldable t, Applicative f) => t (f a) -> f ()
-
-asum :: (Foldable t, Alternative f) => t (f a) -> f a                 -- Alternative is described in this tutorial
+interact :: (String -> String) -> IO ()
 ```
 
-```
-Prelude Data.Foldable> traverse_ print [1..3]
-1
-2
-3
-Prelude Data.Foldable> :t traverse_ print [1..3]
-traverse_ print [1..3] :: IO ()
-Prelude Data.Foldable> for_ [1..3] print
-1
-2
-3
-Prelude Data.Foldable> :t for_ [1..3] print
-for_ [1..3] print :: IO ()
-Prelude Data.Foldable> sequenceA_ [print 1, print 2, print 3]
-1
-2
-3
-Prelude Data.Foldable Data.Traversable> sequenceA_ [getLine, getLine, getLine]
-ahoj
-hello
-ciao
-Prelude Data.Foldable> :t sequenceA_ [getLine, getLine, getLine]
-sequenceA_ [getLine, getLine, getLine] :: IO ()
-Prelude Data.Foldable> asum [print 1, print 2, print 3]
-1
-Prelude Data.Foldable> :t asum [print 1, print 2, print 3]
-asum [print 1, print 2, print 3] :: IO ()
-Prelude Data.Foldable> asum [Just "a", Nothing, Just "b"]
-Just "a"
-Prelude Data.Foldable> asum [Nothing, Just "b"]
-Just "b"
-```
+### `return` is not "return"
 
-#### Foldable and Monad
-
-Similarly, there are also same folds for `Monad`s, just naming is a bit different:
+This might be a bit confusing for people coming from other languages, but `return` in Haskell does not mean "exit the function and return a value". Instead, it is a function that takes a pure value and wraps it in the `IO` type:
 
 ```haskell
-mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m ()
-
-forM_ :: (Foldable t, Monad m) => t a -> (a -> m b) -> m ()  -- flip . mapM_
-
-sequence_ :: (Foldable t, Monad m) => t (m a) -> m ()
-
-msum :: (Foldable t, MonadPlus m) => t (m a) -> m a          -- An alternative is described in this tutorial
+return :: a -> IO a
 ```
 
-### Traversable
+`return`:
 
-A `Traversable` type is a kind of upgraded `Foldable` with use of `Functor`. Where Foldable gives you the ability to go through the structure processing the elements (*catamorphism*) but throwing away the "shape", `Traversable` allows you to do that whilst preserving the "shape" and, e.g., putting new values in. Traversable is what we need for `mapM` and `sequence`: note the apparently surprising fact that the versions ending with an underscore (e.g., `mapM_`) are in a different typeclass - in `Foldable`.
+- does not cause the function to exit,
+- does not have to be the last statement in a `do` block,
+- does not have to be used at all,
+- simply does not behave like `return` in other languages (C, Java, Python, ...).
+
+It simply wraps a pure value in the `IO` type, which allows us to use it in a `do` block where we are working with `IO` actions. For example:
 
 ```haskell
-class (Functor t, Foldable t) => Traversable (t :: * -> *) where
-  traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
-  sequenceA :: Applicative f => t (f a) -> f (t a)
-  mapM :: Monad m => (a -> m b) -> t a -> m (t b)
-  sequence :: Monad m => t (m a) -> m (t a)
-  {-# MINIMAL traverse | sequenceA #-}
+promptInt :: IO Int
+promptInt = do
+  putStrLn "Please enter an integer:"
+  input <- getLine
+  return (read input :: Int)
 ```
 
-`Traversable` has, unlike `Foldable`, a few laws (naturality, identity, composition, ...). For more, see [Data.Traversable](https://hackage.haskell.org/package/base/docs/Data-Traversable.html).
+`return` here takes the pure `Int` value produced by `read input` and wraps it in `IO Int`, which is the type of the `promptInt` function (if you know `pure` from `Applicative`, you can also use it instead of `return` since they are essentially the same thing).
 
-#### No more underscore
 
-Indeed, some functions from `Foldable` are in `Traversable` without trailing `_` and it means "preserving the structure":
+### Composition of IO actions
+
+Because `IO` is a monad, we can compose `IO` actions using `do` notation or using the monadic operators (`>>`, `>>=`, etc.). This allows us to build more complex interactions with the outside world. For example, we can read a line from the console, reverse it, and print it back:
 
 ```haskell
-for :: (Traversable t, Applicative f) => t a -> (a -> f b) -> f (t b)
-
-forM :: (Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)
-```
-
-```
-Prelude Data.Traversable> traverse print [1..3]
-1
-2
-3
-[(),(),()]
-Prelude Data.Traversable> for [1..3] print
-1
-2
-3
-[(),(),()]
-Prelude Data.Foldable Data.Traversable> sequenceA [print 1, print 2, print 3]
-1
-2
-3
-[(),(),()]
-Prelude Data.Foldable Data.Traversable> sequenceA [getLine, getLine, getLine]
-ahoj
-hello
-ciao
-["ahoj","hello","ciao"]
-```
-
-### State
-
-As you know, Haskell is great, there is no mutability, which results in reference transparency, everything has a mathematical foundations, and life is perfect. Or not? Using a mutable state is clearly over-used in imperative and object-oriented programming, at the same time, the concept of "state" may be inherently present in the modelled domain and so we need to deal with it.
-
-In the simplest case, the solution is to pass the state (or context) to the function, do something, and get the result with **new** (*new - next one, no mutability*) state that you can pass further. This creates a pattern, which is embodied in the [State Monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State). You can write your own or you can use [Control.Monad.State](https://hackage.haskell.org/package/mtl/docs/Control-Monad-State.html) and (little bit different) [Control.Monad.Trans.State](https://hackage.haskell.org/package/transformers/docs/Control-Monad-Trans-State.html)
-
-```haskell
-import Control.Monad
-
-newtype State s a = State { runState :: s -> (a, s) }
-
-instance Functor (State s) where
-  fmap = Control.Monad.liftM
-
-instance Applicative (State s) where
-  pure = return
-  (<*>) = Control.Monad.ap
-
-instance Monad (State s) where
-  return x  = State (\s -> (x, s))
-  p >>= k   = State $ \s0 ->                       -- Sequencing:
-                      let (x, s1) = runState p s0  -- Running p on s0.
-                      in runState (k x) s1         -- Running k on s1.
-```
-
-There are two interesting things. First, `State` is a record type with one field of type `s -> (a, s)`. Then `(>>=)` operator returns a `State` with a function that first runs `p` on given state `s0`, get intermediary result `(x, s)` and returns the result of running `k x` on `s1`
-
-#### Example: simple counter
-
-Let's look at a simple example:
-
-```haskell
-import Control.Monad.State
-
-type Counter = State Int Int
-
-tick :: Counter
-tick = state (\x -> (x + 1, x + 1))
-
-tick3 :: Counter
-tick3 = do
-          tick
-          tick
-          tick
-
+main :: IO ()
 main = do
-          print (evalState tick3 0)
-          print (evalState tick3 5)
+  reversed <- reverse <$> getLine
+  print reversed
 ```
 
-If still not clear, try to read about `Reader` and `Writer` monads and look [here](http://adit.io/posts/2013-06-10-three-useful-monads.html) or into the classic [LYAH](http://learnyouahaskell.com/for-a-few-monads-more#state).
-
-#### Random in Haskell
-
-When you are using `System.Random`, you work with `State`: `State` is the generator for pseudorandom numbers (some equation with "memory").
+Using what we know about `Functor` and `Applicative`, we can also write this without `do` notation:
 
 ```haskell
 import System.Random
 
+randomInt :: IO Int
+randomInt = randomRIO (1, 10)
+
+main :: IO ()
 main = do
-   gen <- newStdGen   -- state
-   let ns = randoms gen :: [Int]
-   print $ take 10 ns
+  result <- (+) <$> randomInt <*> randomInt
+  print result
 ```
 
-#### Parser
+This demonstrates:
 
-Another typical example where you use `State` is when you want to parse something. So for this purpose, we have Parser monadic combinator as follows:
+* We are composing IO actions.
+* The computation structure remains pure.
+* Only the execution happens in IO.
+
+### Sequencing without binding results
+
+Sometimes we want to perform an `IO` action but we don't care about its result. In that case, we can use the `>>` operator to sequence actions without binding their results:
 
 ```haskell
-newtype Parser a = Parser (parse :: String -> [(a,String)])
+main :: IO ()
+main = print 1 *> print 2 *> print 3
 ```
 
-A very nice example is [here](http://dev.stephendiehl.com/fun/002_parsers.html).
-
-For custom `Read` instance, you can do something simple, but it still works as a parser and uses `ReadS` (S ~ state):
+We simply use sequencing operators to perform multiple `IO` actions in a row, and we don't have to worry about the results of those actions if we don't need them.
 
 ```haskell
-import Data.Char
-
-data Time = Time Int Int Int
-
-timePart x
-  | x < 10    = '0' : show x
-  | otherwise = show x
-
-instance Show Time where
-  show (Time hours minutes seconds) = timePart hours ++ ":" ++ timePart minutes ++ ":" ++ timePart seconds
-
-instance Read Time where
-  readsPrec _ (h1:h2:':':m1:m2:':':s1:s2:remaining)
-    | all isDigit [h1,h2,m1,m2,s1,s2] = [(Time h m s, remaining)]
-    | otherwise = []
-    where
-      h = mkTimePart h1 h2
-      m = mkTimePart m1 m2
-      s = mkTimePart s1 s2
-      mkTimePart x1 x2 = 10 * digitToInt x1 + digitToInt x2
-  readsPrec _ _ = []
+(*>) :: Applicative f => f a -> f b -> f b
+(>>) :: Monad m => m a -> m b -> m b
 ```
 
-Notice that you have to return list of tuples of type `(a, String)` just like in `parse`. The `readsPrec` gets and `Int` and then `String` where the number serves for the operator precedence of the enclosing context (can be often omitted).
+Both mean:
 
-### Alternative and MonadPlus
+> Perform the first action, ignore its result, and then perform the second action.
 
-We are used use type `Maybe` when the result can be something or fail/nothing, and lists when there are many results of the same type and arbitrary size. Typeclasses `Alternative` and `MonadPlus` are here to provide a generic way of aggregating results together. `Maybe` and `[]` are its instances - read more: [Control.Applicative#Alternative](https://hackage.haskell.org/package/base/docs/Control-Applicative.html#t:Alternative) and [Control.Monad#MonadPlus](https://hackage.haskell.org/package/base/docs/Control-Monad.html#t:MonadPlus). You might find this very useful for [parsing](https://en.wikibooks.org/wiki/Haskell/Alternative_and_MonadPlus#Example:_parallel_parsing).
+### `do` notation is just syntax sugar
+
+While the `do` "block" may look like imperative code, it is actually just syntactic sugar for chaining monadic operations. The `do` notation allows us to write code that looks more sequential and easier to read, but under the hood, it is still just a series of function applications and monadic bindings. For example, the following `do` block:
 
 ```haskell
-class Applicative f => Alternative f where
-  empty :: f a
-  (<|>) :: f a -> f a -> f a
-
-class Monad m => MonadPlus m where
-  mzero :: m a
-  mplus :: m a -> m a -> m a
-```
-
-```
-Prelude Control.Applicative> (Just 5) <|> (Just 7)
-Just 5
-Prelude Control.Applicative> Nothing <|> (Just 7)
-Just 7
-Prelude Control.Applicative> [1..5] <|> [3..7]
-[1,2,3,4,5,3,4,5,6,7]
-Prelude Control.Applicative> getLine <|> getLine
-a
-"a"
-```
-
-#### `guard` (don't mix with guards!)
-
-An interesting function related to `Alternative` is `guard :: Alternative f => Bool -> f ()`. What does it do? It works like a guard in a sequence of actions!
-
-```haskell
-import Control.Monad
-
-getIntGt100 :: IO Int
-getIntGt100 = do
-                putStrLn "Enter number > 100:"
-                number <- (read :: String -> Int) <$> getLine
-                guard (number > 100)
-                return number
-
+main :: IO ()
 main = do
-         x <- getIntGt100
-         print "OK, it is bigger than 100"
+  x <- getLine
+  y <- getLine
+  putStrLn (x ++ " " ++ y)
 ```
+
+It is still pure functional composition of `IO` actions (which are having side effects), and it can be rewritten without `do` notation as:
+
+```haskell
+main :: IO ()
+main = getLine >>= \x -> getLine >>= \y -> putStrLn (x ++ " " ++ y)
+```
+
+This is equivalent to the `do` block version, but without the syntactic sugar. The `>>=` operator is the monadic bind operator, which sequences monadic actions and passes their results to the next action.
+
+So, `do` = combination of `>>=` and `>>` + lambda functions. No magic, just syntax sugar.
+
+### IO with files
+
+Having fun with console input and output is great, but real applications often need to read from and write to files. Haskell provides a rich set of functions for working with files in the `System.IO` module. For example, to read the contents of a file, we can use `readFile`:
+
+```haskell
+import System.IO
+
+main :: IO ()
+main = do
+  contents <- readFile "input.txt"
+  putStrLn contents
+```
+
+Type:
+
+```haskell
+readFile :: FilePath -> IO String
+```
+
+It is important to remember that Haskell is lazy. When we call `readFile`, it does not immediately read the entire file into memory. Instead, it returns an `IO String` that represents the action of reading the file. The actual reading happens when we try to use the contents (e.g., when we print it). This means that if the file is very large, we might run into memory issues if we try to read it all at once. In such cases, we can use functions like `hGetContents` along with `withFile` to read the file in a more controlled manner.
+
+To write to a file, we can use `writeFile`:
+
+```haskell
+import System.IO
+
+main :: IO ()
+main = do
+  writeFile "output.txt" "Hello, file!"
+```
+
+You can find more functions for working with files in the [`System.IO`](https://hackage-content.haskell.org/package/base/docs/System-IO.html) module, such as `appendFile`, `hPutStrLn`, and many others that allow you to work with file handles for more complex file operations.
+
+Typically, you want to use `withFile` to ensure that file handles are properly closed after their use, even if an error occurs:
+
+```haskell
+import System.IO
+
+main :: IO ()
+main = do
+  withFile "input.txt" ReadMode $ \handle -> do
+    contents <- hGetContents handle
+    putStrLn contents
+```
+
+When working with various file formats (e.g., JSON, CSV, etc.), you can use libraries like `aeson` for JSON parsing or `cassava` for CSV parsing. These libraries provide convenient functions for reading and writing structured data to and from files. As always, do not reinvent the wheel — check Hackage for existing libraries that can help you with your specific use case.
+
+### Command-line arguments and environment variables
+
+In addition to reading from and writing to files, real applications often need to interact with the command line and environment variables. Haskell provides functions for accessing command-line arguments and environment variables in the `System.Environment` module. For example, to access command-line arguments, we can use `getArgs`:
+
+```haskell
+import System.Environment
+
+main :: IO ()
+main = do
+  args <- getArgs
+  putStrLn ("Command-line arguments: " ++ show args)
+```
+
+Type:
+
+```haskell
+getArgs :: IO [String]
+```
+
+From other languages that have something like `argv`, you might expect `args` to contain the name of the program as the first element, but in Haskell, `getArgs` returns only the arguments passed to the program, not including the program name itself. If you need the program name, you can use `getProgName`:
+
+```haskell
+import System.Environment
+
+main :: IO ()
+main = do
+  progName <- getProgName
+  args <- getArgs
+  putStrLn ("Program name: " ++ progName)
+  putStrLn ("Command-line arguments: " ++ show args)
+```
+
+In real-world applications, you might want to use a specific library for parsing command-line arguments, such as `cmdargs`, `optparse-applicative`, or `parseargs`. These libraries provide more powerful and flexible ways to define and parse command-line options, flags, and arguments. There is even a dedicated wiki page [Command line option parsers](https://wiki.haskell.org/Command_line_option_parsers) but you can consult Hackage.
+
+Environment variables can be accessed using `getEnv`:
+
+```haskell
+import System.Environment
+
+main :: IO ()
+main = do
+  home <- getEnv "HOME"
+  putStrLn ("Home directory: " ++ home)
+```
+
+### IO with network
+
+For network programming as simple IO, you can use low-level networking libraries like `network` or higher-level libraries such as `http-conduit` or `wreq` for making HTTP requests. These libraries provide functions for creating sockets, sending and receiving data over the network, and handling various network protocols.
+
+Basic example using `network` and `Network.Socket`:
+
+```haskell
+import Network.Socket
+
+main :: IO ()
+main = do
+  -- Create a socket
+  sock <- socket AF_INET Stream defaultProtocol
+  -- Connect to a server (e.g., localhost on port 10666)
+  connect sock (SockAddrInet 10666 (tupleToHostAddress (127, 0, 0, 1)))
+  -- Send a message
+  send sock "Hello, server!"
+  -- Close the socket
+  close sock
+```
+
+Similarly, you can use it to create a simple server that listens for incoming connections and handles them (prints received messages, etc.):
+
+```haskell
+import Network.Socket
+
+main :: IO ()
+main = do
+  sock <- socket AF_INET Stream defaultProtocol
+  bind sock (SockAddrInet 10666 iNADDR_ANY)
+  listen sock 5
+  putStrLn "Server is listening on port 10666..."
+  forever $ do
+    (conn, _) <- accept sock
+    putStrLn "Client connected!"
+    msg <- recv conn 1024
+    putStrLn ("Received message: " ++ show msg)
+    close conn
+```
+
+We will go into HTTP servers (web applications) later in the course, but this is just to show that you can do network programming with `IO` as well.
+
+### Separate IO from pure code
+
+When writing real applications, it is a good practice to separate the pure logic of your program from the `IO` actions. This makes your code easier to test and reason about. You can write pure functions that take regular data types as input and produce regular data types as output, and then have a thin layer of `IO` code that interacts with the outside world and calls these pure functions.
+
+For example, this is bad practice:
+
+```haskell
+main :: IO ()
+main = do
+  putStrLn "Enter a number:"
+  input <- getLine
+  let number = read input :: Int
+  putStrLn ("The square of the number is: " ++ show (number * number))
+```
+
+Better solution is to separate the pure logic:
+
+```haskell
+square :: Int -> Int
+square x = x * x
+
+main :: IO ()
+main = do
+  putStrLn "Enter a number:"
+  input <- getLine
+  let number = read input :: Int
+  putStrLn ("The square of the number is: " ++ show (square number))
+```
+
+This code is easier to test because we can write unit tests for the `square` function without worrying about `IO`. The `main` function is now just a thin layer that handles the interaction with the user, while the core logic of squaring a number is contained in a pure function. This separation of concerns is a fundamental principle in functional programming and helps to keep your code clean and maintainable.
+
+> Keep IO at the edges of your program.
+
+## Error Handling in Haskell
+
+In pure functional programming, errors are usually handled explicitly using types:
+
+* `Maybe a` — something may be missing
+* `Either e a` — something may fail with an error value
+
+However, once we step into IO, things get more complicated:
+
+* Files may not exist
+* Network requests may fail
+* Permissions may be missing
+* JSON may be malformed
+
+These failures are represented using exceptions. Understanding when to use types and when to use exceptions is essential for writing good Haskell programs.
+
+### Errors in pure code
+
+Before we dive into `IO`, let's quickly review how we handle errors in pure code. The most common way to represent a failure is to use the `Maybe` type:
+
+```haskell
+safeDiv :: Int -> Int -> Maybe Int
+safeDiv _ 0 = Nothing
+safeDiv x y = Just (x `div` y)
+```
+
+The caller must check the result:
+
+```haskell
+main :: IO ()
+main = do
+  let result = safeDiv 10 0
+  case result of
+    Nothing -> putStrLn "Division by zero!"
+    Just value -> putStrLn ("Result: " ++ show value)
+```
+
+Or using `Either` for more informative errors:
+
+```haskell
+safeDiv :: Int -> Int -> Either String Int
+safeDiv _ 0 = Left "Division by zero!"
+safeDiv x y = Right (x `div` y)
+
+main :: IO ()
+main = do
+  let result = safeDiv 10 0
+  case result of
+    Left err -> putStrLn ("Error: " ++ err)
+    Right value -> putStrLn ("Result: " ++ show value)
+```
+
+### `error` and `undefined`
+
+You may encounter and use `error` and `undefined` in Haskell. These are special functions that cause the program to crash when evaluated:
+
+```haskell
+error :: String -> a
+undefined :: a
+```
+
+In both cases, the program will terminate with an error message. These functions are useful for stubbing out code during development or for indicating that a certain code path should never be reached. However, they should be used with caution in production code, as they can lead to unexpected crashes if not handled properly.
+
+Example you may know very well:
+
+```haskell
+head :: [a] -> a
+head [] = error "Empty list"
+head (x:_) = x
+
+main :: IO ()
+main = print (head [])
+
+-- This will crash with "Empty list" error:
+-- *** Exception: Prelude.head: empty list
+```
+
+These errors are not recoverable. They are not meant to be caught and handled; they indicate a bug in the program that should be fixed. In contrast, exceptions in `IO` can be caught and handled gracefully, allowing the program to continue running even when something goes wrong.
+
+You should avoid using `error` and `undefined` in production code. Instead, use proper error handling with `Maybe`, `Either`, or exceptions in `IO` to ensure that your program can handle failures gracefully.
+
+### Exceptions in `IO`
+
+In `IO`, we can use exceptions to represent failures that occur during side-effecting operations. For example, when reading a file, if the file does not exist, an exception will be thrown. We can catch and handle these exceptions using the [`Control.Exception`](https://hackage.haskell.org/package/base/docs/Control-Exception.html) module.
+
+#### `try` = convert exceptions to `Either`
+
+The `try` function allows us to catch exceptions and convert them into an `Either` type:
+
+```haskell
+try
+  :: Exception e
+  => IO a             -- action that may throw an exception (of type `e`)
+  -> IO (Either e a)  -- produces either an exception (Left) or a successful result (Right)
+```
+
+```haskell
+import Control.Exception
+import System.IO
+
+readConfig :: FilePath -> IO (Either IOException String)
+readConfig path = try (readFile path)
+
+main :: IO ()
+main = do
+  result <- readConfig "config.json"
+  case result of
+    Left err -> putStrLn ("Failed to read config: " ++ show err)
+    Right contents -> putStrLn ("Config contents: " ++ contents)
+```
+
+#### `catch` = handle exceptions directly
+
+The `catch` function allows us to handle exceptions directly in the `IO` monad:
+
+```haskell
+catch
+  :: Exception e
+  => IO a         -- main action that may throw an exception
+  -> (e -> IO a)  -- handler function (takes an exception and returns an IO action)
+  -> IO a         -- either the result of the main action or the handler
+```
+
+
+```haskell
+import Control.Exception
+import System.IO
+
+main :: IO ()
+main = do
+readFile "config.json"
+    >>= putStrLn
+    `catch` handler
+  where
+    handler :: IOException -> IO ()
+    handler e =
+      putStrLn ("Error reading file: " ++ show e)
+```
+
+#### `handle` = handle exceptions in a more composable way
+
+The `handle` function is similar to `catch`, but it allows us to write exception handling in a more composable way:
+
+```haskell
+handle
+  :: Exception e
+  => (e -> IO a)  -- handler function (takes an exception and returns an IO action)
+  -> IO a         -- main action that may throw an exception
+  -> IO a         -- either the result of the main action or the handler
+```
+
+```haskell
+import Control.Exception
+import System.IO
+
+main :: IO ()
+main = handle handler (readFile "config.json" >>= putStrLn)
+  where
+    handler :: IOException -> IO ()
+    handler e = putStrLn ("Error reading file: " ++ show e)
+```
+
+Basically, the two are equivalent, but `handle` allows us to write the exception handling logic separately from the main action, which can make the code cleaner and easier to read:
+
+```haskell
+handle handler action = action `catch` handler
+```
+
+#### `bracket` = safe resource management
+
+A very important pattern for working with resources (like file handles, network connections, etc.) is to use the `bracket` function, which ensures that resources are properly released even if an exception occurs:
+
+```haskell
+bracket
+  :: IO a         -- action to acquire the resource `a`
+  -> (a -> IO b)  -- action to release the resource `a`
+  -> (a -> IO c)  -- action that uses the resource `a` and produces a result of type `c`
+  -> IO c         -- the result of the action that uses the resource
+```
+
+Typical resource is a file handle:
+
+```haskell
+import Control.Exception
+import System.IO
+
+main :: IO ()
+main =
+  bracket (openFile "input.txt" ReadMode) hClose $ \handle -> do
+    contents <- hGetContents handle
+    putStrLn contents
+```
+
+1. We acquire the resource by opening a file handle (`openFile "input.txt" ReadMode`).
+2. We release the resource by closing the handle (`hClose`).
+3. We use the resource in the action that is passed to `bracket` (`\handle -> do ...`).
+
+The `bracket` function ensures that the file handle is properly closed even if an exception occurs while reading the file. This is crucial for preventing resource leaks and ensuring that your program behaves correctly in the face of errors.
+
+#### `throw` and `throwIO` = throwing exceptions
+
+To throw an exception in Haskell, we can use the `throw` function:
+
+```haskell
+throw :: Exception e => e -> a
+```
+
+However, `throw` can be used in pure code, which means that it can lead to unexpected exceptions if not used carefully. In `IO`, it is generally better to use `throwIO`, which ensures that the exception is thrown in the `IO` monad and can be caught using the standard exception handling functions:
+
+```haskell
+throwIO :: Exception e => e -> IO a
+```
+
+Using `throwIO` ensures that the exception is properly handled in the context of `IO` and allows us to write more robust error handling logic.
+
+Example:
+
+```haskell
+import Control.Exception
+
+main :: IO ()
+main = do
+  putStrLn "Enter a number:"
+  input <- getLine
+  let number = read input :: Int
+  if number < 0
+    then throwIO (userError "Negative number is not allowed")
+    else putStrLn ("The square of the number is: " ++ show (number * number))
+
+-- `userError` is a helper function that creates an `IOException` with a custom error message
+-- it comes from Prelude: userError :: String -> IOError
+```
+
+#### Typing exceptions
+
+Haskell exceptions are typed. This means that you can have different types of exceptions for different kinds of errors, and you can catch them separately. For example, you might have a `FileNotFoundException` for when a file is missing, and a `ParseException` for when JSON parsing fails. This allows you to write more specific error handling logic based on the type of exception that was thrown.
+
+You can define your own exception types by creating a new data type and making it an instance of the `Exception` typeclass. This allows you to throw and catch your custom exceptions in a type-safe way:
+
+```haskell
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+
+import Control.Exception
+import Data.Typeable
+
+data ConfigError = InvalidFormat
+  deriving (Show, Typeable, Exception)
+```
+
+Now you can throw a `ConfigError` when something goes wrong with your configuration:
+
+```haskell
+import Control.Exception
+
+verifyConfig :: IO ()
+verifyConfig = do
+  putStrLn "Enter config value:"
+  input <- getLine
+  if not (isValidConfig input)
+    then throwIO InvalidFormat
+    else putStrLn "Config is valid!"
+```
+
+This could be eventually caught and handled in a way that is specific to `ConfigError`:
+
+```haskell
+import Control.Exception
+
+main :: IO ()
+main = handle handler verifyConfig
+  where
+    handler :: ConfigError -> IO ()
+    handler InvalidFormat = putStrLn "The configuration format is invalid. Please check your input."
+    handler _ = putStrLn "Oopsie! An unknown error occurred."
+```
+
+#### When to use what?
+
+This is the most important conceptual part of this section. When should you use `Either` / `Maybe` and when should you use exceptions?
+
+1) Use `Either` / `Maybe` when:
+
+  * The failure is part of your domain logic
+  * It is expected and recoverable
+  * You want explicit error handling
+  * Examples: invalid user input, validation failure, parsing error
+
+2) Use exceptions when:
+
+  * The failure is due to an external factor (e.g., file not found, network error)
+  * It is unexpected and not part of your domain logic
+  * You want to separate error handling from the main logic
+  * Examples: file I/O errors, database connection failures, network timeouts, resource leaks
+
+For creating custom exceptions, it makes sense to do so when you have specific error conditions that you want to represent in a type-safe way. This allows you to catch and handle those exceptions separately from other types of errors, and it can make your error handling logic more robust and easier to maintain.
+
+#### Combining `IO` and pure error handling
+
+Very common pattern is to combine `IO` with pure error handling using `Either`. For example, you might have a function that reads a file and parses its contents, and you want to represent parsing errors using `Either` while still performing the file I/O in `IO`:
+
+```haskell
+loadTasks :: FilePath -> IO (Either String [Task])
+```
+
+Inside this function, you would perform the file reading in `IO`, and then use `Either` to represent any parsing errors that might occur. This allows you to keep your error handling logic separate from your I/O logic, and it makes it easier to test the pure parsing function independently of the file I/O.
+
+```haskell
+loadFileSafe :: FilePath -> IO (Either String String)
+loadFileSafe path = do
+  result <- try (readFile path)
+  case result of
+    Left (e :: IOException) ->
+      return (Left (show e))
+    Right content ->
+      return (Right content)
+```
+
+We convert the `IOException` into a `String` and return it as a `Left` value in the `Either`, while the successful file contents are returned as a `Right` value. This way, the caller of `loadFileSafe` can handle both the success and failure cases in a clean and type-safe manner.
+
+#### Final note: fail fast vs recover gracefully
+
+Two common philosophies for error handling:
+
+1) **Fail fast**: throw exceptions **immediately when something goes wrong**, and let the program crash. This is often used during development to quickly identify and fix bugs.
+2) **Recover gracefully**: catch exceptions and handle them in a way that **allows the program to continue running**. This is important for production code to ensure a good user experience and to prevent crashes.
+
+### Example: Aeson and JSON parsing
+
+JSON is everywhere: config files, APIs, logs, data exchange. In Haskell, the standard library for JSON is **Aeson**. While you might want to use other file formats, this is a very common one and it is a good example of how to use typeclasses in practice. Other formats (YAML, CSV, XML, ...) have similar libraries with similar APIs, so learning Aeson will give you a good foundation for working with structured data in Haskell.
+
+Aeson works through typeclasses:
+
+* `FromJSON a` — decode JSON into a Haskell value
+* `ToJSON a` — encode a Haskell value into JSON
+
+This fits perfectly with what you already know about typeclasses: **we define instances**, and then generic functions like `decode` / `encode` work for our types.
+
+You typically combine Aeson with:
+
+* `ByteString` (not `String`) for `IO`
+* `Either` for errors (malformed JSON, wrong shape)
+* exception handling for file `IO` errors
+
+#### Setup
+
+Typically, you want to use these when working with Aeson:
+
+```haskell
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+import GHC.Generics (Generic)
+import Data.Aeson
+import qualified Data.ByteString.Lazy as BL
+```
+
+`OverloadedStrings` allows us to write string literals that can be interpreted as `ByteString`, which is what Aeson uses for JSON data. `DeriveGeneric` allows us to automatically derive instances of the `Generic` typeclass, which is required for Aeson's generic encoding and decoding.
+
+#### Parsing a Custom Type
+
+```haskell
+data Person = Person
+  { name :: String
+  , age :: Int
+  } deriving (Show, Generic)
+
+instance FromJSON Person
+instance ToJSON Person
+```
+
+With these (default) instances, we can now easily encode and decode `Person` values to and from JSON:
+
+```json
+{
+  "name": "Alice",
+  "age": 30
+}
+```
+
+```haskell
+main :: IO ()
+main =
+  withFile "person.json" ReadMode $ \handle -> do
+    contents <- BL.hGetContents handle
+    case eitherDecode contents of
+      Left err -> putStrLn ("Failed to parse JSON: " ++ err)
+      Right person -> putStrLn ("Parsed person: " ++ show (person :: Person))
+```
+
+#### Parsing lists and nested structures
+
+It is possible to easily parse more complex JSON structures, such as lists of people or nested objects. For example, if we have a JSON file that contains a list of people:
+
+```haskell
+data Task = Task
+  { title :: String
+  , done  :: Bool
+  } deriving (Show, Generic)
+
+instance FromJSON Task
+instance ToJSON Task
+
+data Project = Project
+  { projectName :: String
+  , tasks       :: [Task]
+  } deriving (Show, Generic)
+
+instance FromJSON Project
+instance ToJSON Project
+```
+
+```json
+{
+  "projectName": "AFP",
+  "tasks": [
+    { "title": "Finish IO lecture", "done": false },
+    { "title": "Add Aeson example", "done": true }
+  ]
+}
+```
+
+Then simply:
+
+```haskell
+eitherDecode jsonBytes :: Either String Project
+```
+
+#### Customizing JSON parsing
+
+By default, Aeson uses the field names of your data types as the keys in the JSON. However, you can customize this behavior using options. For example, if you want to use camelCase in your Haskell code but snake_case in your JSON, you can use the `defaultOptions` with a custom `fieldLabelModifier`:
+
+```haskell
+import Data.Aeson.Types (defaultOptions, fieldLabelModifier)
+
+data Person = Person
+  { _name :: String
+  , _age  :: Int
+  } deriving (Show, Generic)
+
+instance FromJSON Person where
+  parseJSON = genericParseJSON defaultOptions
+    { fieldLabelModifier = drop 1 }  -- drop leading '_'
+
+instance ToJSON Person where
+  toJSON = genericToJSON defaultOptions
+    { fieldLabelModifier = drop 1 }
+```
+
+So `_name` in Haskell will correspond to `name` in JSON, and `_age` will correspond to `age`. This allows you to have more control over the JSON structure while still keeping your Haskell code clean and idiomatic.
+
+#### Optional fields and default values
+
+Naturally, JSON often has optional fields. In Haskell, we can represent optional fields using `Maybe`:
+
+```haskell
+data Person = Person
+  { name :: String
+  , age  :: Int
+  , email :: Maybe String
+  } deriving (Show, Generic)
+
+instance FromJSON Person
+instance ToJSON Person
+```
+
+#### Full-manual parsing
+
+If you need more control over the parsing process (e.g., to handle different JSON formats, to provide better error messages, or to perform validation), you can write a custom `FromJSON` instance using the `parseJSON` function:
+
+```haskell
+instance FromJSON Person where
+  parseJSON = withObject "Person" $ \obj -> do
+    name <- obj .: "name"
+    age <- obj .: "age"
+    email <- obj .:? "email"  -- optional field
+    when (age < 0) $
+      fail "Age cannot be negative"
+    return (Person name age email)
+```
+
+#### Encoding to JSON
+
+Encoding a Haskell value to JSON is just as easy. You can use the `encode` function, which takes a value that is an instance of `ToJSON` and produces a `ByteString` containing the JSON representation:
+
+```haskell
+main :: IO ()
+main = do
+  let person = Person "Alice" 30 (Just "alice@acme.ltd")
+  BL.writeFile "person.json" (encode person)
+```
+
+Alternatively, there is `aeson-pretty` library that provides a `encodePretty` function for producing more human-readable JSON output.
+
+```haskell
+import Data.Aeson.Encode.Pretty (encodePretty)
+
+main :: IO ()
+main = do
+  let person = Person "Alice" 30 (Just "alice@acme.ltd")
+  BL.writeFile "person.json" (encodePretty person)
+```
+
+## Other useful typeclasses
+
+Now we look at several typeclasses that appear frequently in real programs: `Foldable`, `Traversable`, `State`, `Reader`, `Parser`, monad transformers, and `Lens`. We will not go into details of these typeclasses, but we will give you a brief overview and some resources for further reading. There are also more that you might find useful in your projects, so feel free to explore Hackage and find the ones that fit your needs (e.g., `MonadError`, `MonadWriter`, `MonadReader`, `MonadState`, `Arrow`, `Category`, `Profunctor`, `Contravariant`, `Bifunctor`, etc.).
+
+### Foldable
+
+A Foldable structure is something that can be collapsed into a summary value.
+
+Mathematically, a fold is:
+
+```math
+\text{foldr} :: (a \to b \to b) \to b \to t a \to b
+```
+
+> Given a way to combine one element with an accumulator, reduce the entire structure.
+
+We have seen `foldr` and `foldl` for lists, but the `Foldable` typeclass allows us to use folding operations on any data structure that implements it (e.g., `Maybe`, `Either`, `Tree`, etc.). This is very powerful because it allows us to write generic code that can work with any foldable structure. Many known functions like `sum`, `product`, `length`, `elem`, etc. are defined in terms of `Foldable`.
+
+There is also a hidden gem called `foldMap` that allows us to map each element to a monoid and then combine them using the monoid operation. This is a very powerful abstraction that allows us to do all sorts of things with foldable structures.
+
+```math
+\text{foldMap} :: (a \to m) \to t a \to m
+```
+
+where `m` is a monoid. This means that we can use `foldMap` to perform all sorts of operations on foldable structures, such as counting elements, finding the maximum, concatenating strings, etc., by simply providing the appropriate monoid.
+
+```haskell
+import Data.Monoid (Sum(..))
+
+countDone :: Foldable t => t Task -> Int
+countDone =
+  getSum . foldMap (\t -> if done t then Sum 1 else Sum 0)
+```
+
+This pattern typically appears in real code such as: logging, validation, counting, finding maximum/minimum or other aggregations, etc.
+
+### Traversable
+
+If `Foldable` is about collapsing a structure, then `Traversable` is about traversing a structure while applying an effect. It allows us to map each element to an effectful computation and then combine those computations in a way that preserves the structure.
+
+```math
+\text{traverse} :: (a \to f b) \to t a \to f (t b)
+```
+
+We can compare it with known `fmap` from `Functor`:
+
+```math
+\text{fmap} :: (a \to b) \to f a \to f b
+```
+
+Essentially, `traverse` is like `fmap`, but it works with effects (e.g., `IO`, `Either`, `Maybe`, etc.) and it preserves the structure of the data. This allows us to perform operations that have side effects while still working with our data in a pure way.
+
+Imagine you have a function to validate a single `Task`:
+
+```haskell
+validateTask :: Task -> Either String Task
+```
+
+Then, simply `traverse` helps to validate a list of tasks:
+
+```haskell
+validateTasks :: [Task] -> Either String [Task]
+validateTasks = traverse validateTask
+```
+
+If a single task is invalid, the entire validation will fail with an error message. If all tasks are valid, we get back a list of valid tasks. This pattern is very common in real code when you want to perform some effectful operation on each element of a data structure while preserving the overall structure.
+
+### State
+
+Sometimes computation carries evolving state. However, this is not about mutable state or side effects. It is about pure functional composition of computations that have some state that changes over time. The `State` monad allows us to model this kind of computation in a pure way.
+
+We can model such behavior as:
+
+```math
+s \to (a, s')
+```
+
+where `s` is the state, `a` is the result of the computation, and `s'` is the new state after the computation.
+
+You may know that from state machines, parsers, simulations, etc. The `State` monad provides a way to thread state through a sequence of computations without having to pass the state explicitly as an argument to each function. The `State` type is defined as follows:
+
+```haskell
+newtype State s a = State { runState :: s -> (a, s) }
+```
+
+Like this we can create a simple counter:
+
+```haskell
+import Control.Monad.State
+
+type Counter = State Int
+
+tick :: Counter ()
+tick = modify (+1)
+
+main :: IO ()
+main = do
+  let (result, finalState) = runState (tick >> tick >> tick)
+  putStrLn ("Final state: " ++ show finalState)  -- Final state: 3
+```
+
+Similarly, you could implement random number generation, parsers, simulations, or any other computation that involves evolving state over time.
+
+### Reader
+
+The `Reader` monad is another useful abstraction for computations that depend on some shared environment or configuration. It allows us to model computations that read from a shared environment without having to pass the environment explicitly as an argument to each function.
+
+```math
+r \to a
+```
+
+where `r` is the environment and `a` is the result of the computation. The `Reader` type is defined as follows:
+
+```haskell
+newtype Reader r a = Reader { runReader :: r -> a }
+```
+
+Typical example from real-world applications is configuration management. You can have a `Config` type that contains all the configuration values for your application, and then use the `Reader` monad to access those values throughout your code without having to pass the `Config` around explicitly.
+
+```haskell
+import Control.Monad.Reader
+
+data Config = Config
+  { dbHost :: String
+  , dbPort :: Int
+  } deriving (Show)
+
+type App = Reader Config
+
+getDbHost :: App String
+getDbHost = asks dbHost
+
+main :: IO ()
+main = do
+  let config = Config "localhost" 5432
+  let dbHost = runReader getDbHost config
+  putStrLn ("Database host: " ++ dbHost)  -- Database host: localhost
+```
+
+Modern Haskell applications often use a combination of `State`, `Reader`, and other monads to manage state, configuration, and effects in a clean and composable way. This is often done using **monad transformers** (such as `ReaderT`, `StateT`), which allow us to combine multiple monads into a single monad that has the capabilities of all of them.
+
+### Parser
+
+Parsing is a common task in many applications, whether it's parsing command-line arguments, configuration files, or structured data formats like JSON or XML. The `Parser` typeclass (or more commonly, parser combinator libraries) provides a way to model parsers as composable functions that can be combined to build complex parsers from simpler ones.
+
+```haskell
+newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
+```
+
+Parser combinator libraries (e.g., `parsec`, `megaparsec`, `attoparsec`) allow us to define parsers in a declarative way, using combinators to combine smaller parsers into larger ones. This makes it easy to write parsers that are both powerful and easy to read.
 
 ### Monad Transformers
 
-We have seen how monads can help handling IO actions, Maybe, lists, and state. With monads providing a common way to use such useful general-purpose tools, a natural thing we might want to do is using the capabilities of several monads at once. For instance, a function could use both I/O and Maybe exception handling. While a type like `IO (Maybe a)` would work just fine, it would force us to do pattern matching within `IO` do-blocks to extract values, something that the `Maybe` monad was meant to spare us from. Sounds like a dead end, right?!
-
-Luckily, we have monad transformers that can be used to combine monads in this way, save us time, and make the code easier to read.
-
-#### MaybeT
-
-Consider following simple program:
+Monad transformers are a powerful tool for combining **multiple monads into a single monad** that has the capabilities of all of them. For example, you might want to combine `Reader` for configuration, and `IO` for side effects. This is where `ReaderT` comes in:
 
 ```haskell
-getPassphrase :: IO (Maybe String)
-getPassphrase = do s <- getLine
-                   if isValid s then return $ Just s
-                                else return Nothing
-
--- The validation test could be anything we want it to be.
-isValid :: String -> Bool
-isValid s = length s >= 8
-            && any isAlpha s
-            && any isNumber s
-            && any isPunctuation s
-
-askPassphrase :: IO ()
-askPassphrase = do putStrLn "Insert your new passphrase:"
-                   maybe_value <- getPassphrase
-                   case maybe_value of
-                       Just value -> do putStrLn "Storing in database..."  -- do stuff
-                       Nothing -> putStrLn "Passphrase invalid."
+newtype App a = App
+  { runApp :: ReaderT Config IO a
+  }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader Config)
 ```
 
-Not nice even for a simple example. Now, we will get rid of the complexity with [MaybeT](https://hackage.haskell.org/package/transformers/docs/Control-Monad-Trans-Maybe.html).
+With this we can now write code that has access to both the configuration and the ability to perform `IO` actions, all within a single monad. This allows us to write clean and composable code that can handle complex interactions between different effects.
 
 ```haskell
--- newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+getDbHost :: App String
+getDbHost = asks dbHost
 
-getPassphrase :: MaybeT IO String
-getPassphrase = do s <- lift getLine
-                   guard (isValid s) -- Alternative provides guard.
-                   return s
-
-askPassphrase :: MaybeT IO ()
-askPassphrase = do lift $ putStrLn "Insert your new passphrase:"
-                   value <- getPassphrase
-                   lift $ putStrLn "Storing in database..."
+main :: IO ()
+main = do
+  let config = Config "localhost" 5432
+  runReaderT (runApp getDbHost) config
 ```
 
-For more about monad transformers visit [this](https://en.wikibooks.org/wiki/Haskell/Monad_transformers) and the [transformers](https://hackage.haskell.org/package/transformers) package. There is also a very nice chapter about them in http://haskellbook.com.
-
-### Category and Arrow
-
-Recall what was told about Category Theory in the last tutorial. In Haskell, we have also typeclasses `Category` and `Arrow` (Do you remember? Alias for *morphisms*.). We mention it here just as an interesting part of Haskell and let you explore it if you are interested...
-
-Arrows are a new abstract view of computation, defined by John Hughes. They serve much the same purpose as monads -- providing a common structure for libraries -- but are more general. In particular, they allow notions of computation that may be partially static (independent of the input) or may take multiple inputs. If your application works fine with monads, you might as well stick with them. But if you're using a structure that's very like a monad, but isn't one, maybe it's an arrow. (see [https://www.haskell.org/arrows])
+We can add more, for example, `Except` for error handling, `State` for state management, etc., and combine them all together using monad transformers to create a powerful and flexible application architecture.
 
 ```haskell
-class Category (cat :: k -> k -> *) where
-  id  :: forall (a :: k). cat a a
-  (.) :: forall (b :: k) (c :: k) (a :: k). cat b c -> cat a b -> cat a c
-  {-# MINIMAL id, (.) #-}
-
-class Category a => Arrow (a :: * -> * -> *) where
-  arr :: (b -> c) -> a b c
-  first :: a b c -> a (b, d) (c, d)
-  second :: a b c -> a (d, b) (d, c)
-  (***) :: a b c -> a b' c' -> a (b, b') (c, c')
-  (&&&) :: a b c -> a b c' -> a b (c, c')
-  {-# MINIMAL arr, (first | (***)) #-}
+newtype App a = App
+  { runApp :: ReaderT Config (ExceptT String IO) a
+  }
+  deriving (Functor, Applicative, Monad, MonadReader Config, MonadError String)
 ```
 
-A simple example (from [Haskell Wiki](https://wiki.haskell.org/Arrow_tutorial)):
+Typical example is to have some `AppContext` that contains configuration, state, and other shared resources, and then use monad transformers to access and manipulate that context throughout your application.
 
 ```haskell
-import Control.Category
-import Control.Arrow
+data AppContext = AppContext
+  { config :: Config
+  , appName :: String
+  } deriving (Show)
 
-newtype SimpleFunc a b = SimpleFunc { runF :: (a -> b) }
+type App = ReaderT AppContext IO  -- or more complex stack with State, Except, Logging etc.
 
-instance Arrow SimpleFunc where
-  arr f = SimpleFunc f
-  first  (SimpleFunc f) = SimpleFunc (mapFst f)
-                           where mapFst g (a,b) = (g a, b)
-  second (SimpleFunc f) = SimpleFunc (mapSnd f)
-                           where mapSnd g (a,b) = (a, g b)
-
-instance Category SimpleFunc where
-  (SimpleFunc f) . (SimpleFunc g) = SimpleFunc (f . g)
-  id = arr id
+logInfo :: String -> App ()
+logInfo msg = do
+  name <- asks appName
+  liftIO $ putStrLn ("[" ++ name ++ "] " ++ msg)
 ```
 
-```
-*Main> func1 x = x + 2
-*Main> func2 = show
-*Main> func3 = reverse
-*Main> arrow1 = SimpleFunc { run
-runF        runKleisli
-*Main> arrow1 = SimpleFunc { runF = func1 }
-*Main> :type arrow1
-arrow1 :: Num b => SimpleFunc b b
-*Main> arrow2 = SimpleFunc { runF = func2 }
-*Main> arrow3 = arr func3
-*Main> :type arrow3
-arrow3 :: Arrow a => a [a1] [a1]
-*Main> arrow4 = first arrow1
-*Main> runF arrow4 (2, 4)
-(4,4)
-*Main> runF arrow4 (2, "Hello")
-(4,"Hello")
-*Main> arrow5 = second arrow1
-*Main> runF arrow4 (2, 4)
-(4,4)
-*Main> runF arrow5 (2, 4)
-(2,6)
-*Main> arrow6 = arrow1 *** arrow3
-*Main> runF arrow6 (5, "Hello")
-(7,"olleH")
-*Main> arrow7 = arrow1 &&& arrow2
-*Main> runF arrow7 5
-(7,"5")
-*Main> arrow8 = arrow1 >>> arrow2
-*Main> runF arrow8 5
-"7"
-```
+### Lens
 
-A good explanation with nice visualization is in the chapter [Understanding Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows) at wikibooks.
+Working with deeply nested data structures can be cumbersome in Haskell, especially when you want to update a nested field. The `Lens` library provides a powerful way to access and modify nested data structures in a composable and elegant way. Luckily, we already know the `OverloadedRecordDot` extension that allows us to use dot notation for accessing fields, and `Lens` builds on top of that to provide a way to update fields as well.
 
-### Lens (and the taste of Template Haskell)
-
-The last thing we are going to get into this time is *Lens*. It is something that can make you a way more productive while working with records and especially nested records - which is something really common in non-trivial programs.
-
-At the same time, you should know that there is some controversy about Lens, as they bring quite heavy dependencies (including Template Haskell, see below). As with every dependency, it is neccesary to weigh the pros and cons, so do not use Lens just for everything, because they are so nice ;-).
-
-The combinators in [Control.Lens](https://hackage.haskell.org/package/lens) provide a highly generic toolbox for composing families of getters, folds, isomorphisms, traversals, setters and lenses and their indexed variants. A lens is a first-class reference to a subpart of some data type. For instance, we have `_1` which is the lens that "focuses on" the first element of a pair. Given a lens there are essentially three things you might want to do:
-
-1. View the subpart
-2. Modify the whole by changing the subpart
-3. Combine this lens with another lens to look even deeper
-
-If you are interested in `Control.Lens`, follow links in *Further reading* sections...
-
-#### Lens example
-
-First, let's try example without *lens*:
+Without lenses, updating a nested field can be verbose and error-prone:
 
 ```haskell
-data Point2D = Point2D { x, y :: Int } deriving Show
-data Line = Line { pA, pB :: Point2D } deriving Show
+data Config = Config
+  { database :: DatabaseConfig
+  } deriving (Show)
+
+data DatabaseConfig = DatabaseConfig
+  { host :: String
+  , port :: Int
+  } deriving (Show)
+
+updateHost :: Config -> String -> Config
+updateHost config newHost =
+  config { database = (database config) { host = newHost } }
 ```
 
-```
-Main*> :type x
-x :: Point2D -> Int
-Main*> :type pA
-pA :: Line -> Point2D
-Main*> line = Line { pA = Point2D { x = 0, y = 0 }, pB = Point2D { x = 5, y = 7 } }
-Main*> line
-Line {pA = Point2D {x = 0, y = 0}, pB = Point2D {x = 5, y = 7}}
-Main*> pA line
-Point2D {x = 0, y = 0}
-Main*> x . pA $ line
-0
-Main*> x . pB $ line
-5
-Main*> line { pA = ((pA line) { y = 2 }) }  -- change y of first point
-Line {pA = Point2D {x = 0, y = 2}, pB = Point2D {x = 5, y = 7}}
-```
-
-And now with *lens* - it will help us:
+With lenses, we can define a lens for the `host` field and then use it to update the value in a more concise and composable way:
 
 ```haskell
-{-# LANGUAGE TemplateHaskell, RankNTypes #-}
-
+{-# LANGUAGE TemplateHaskell #-}
 import Control.Lens
 
-data Point2D = Point2D { _x, _y :: Int } deriving Show
-data Line = Line { _pA, _pB :: Point2D } deriving Show
+makeLenses ''Config
+makeLenses ''DatabaseConfig
 
-makeLenses ''Point2D -- magic
-makeLenses ''Line    -- magic
+updateHost :: Config -> String -> Config
+updateHost config newHost =
+  config & database . host .~ newHost
 ```
 
-```
-*Main> :type x
-x :: Functor f => (Int -> f Int) -> Point2D -> f Point2D
-*Main> :type pA
-pA :: Functor f => (Point2D -> f Point2D) -> Line -> f Line
-*Main> view pA line       -- view~get
-Point2D {_x = 0, _y = 0}
-*Main> view (pA.x) line   -- view~get
-0
-*Main> set (pA.y) 2 line
-Line {_pA = Point2D {_x = 0, _y = 2}, _pB = Point2D {_x = 5, _y = 7}}
-*Main> set (pA.y) 2 line
-Line {_pA = Point2D {_x = 0, _y = 2}, _pB = Point2D {_x = 5, _y = 7}}
-*Main> over (pB.x) (+5) line
-Line {_pA = Point2D {_x = 0, _y = 0}, _pB = Point2D {_x = 10, _y = 7}}
-```
+There are various operators provided by the `Lens` library for working with lenses, such as `.~` for setting a value, `%~` for modifying a value, and `^.` for accessing a value. Lenses can be composed together to work with deeply nested structures, making it much easier to read and write code that manipulates complex data. Key functions (and operators) are:
 
-#### What is `makeLenses`
+* `view` (or `^.`) — to access a value through a lens
+* `set` (or `.~`) — to set a value through a lens
+* `over` (or `%~`) — to modify a value through a lens
 
-The function `makeLenses` indeed does some magic! From its type signature `makeLenses :: Language.Haskell.TH.Syntax.Name -> Language.Haskell.TH.Lib.DecsQ`, you can see it has something to do with [Template Haskell](https://wiki.haskell.org/Template_Haskell). It is GHC extension that allows metaprogramming. In this case, the function `makeLenses` builds lenses (and traversals) with a sensible default configuration. You need to provide the data type name where the record starts with an underscore and it will basically generate lenses for you.
+### Aeson Lens
 
-Template Haskell is very powerful and allows you to do interesting stuff, but it is pretty advanced and we will leave it up to you if you want to look at it... Also, Template Haskell is relevant just for GHC, other compilers do not support it. Last, but not least, Template-Haskell programmes compile (even) longer.
-
-#### Use lenses or not?
-
-Using lenses in Haskell for record types offers several advantages. Firstly, lenses provide a convenient and concise way to access and manipulate deeply nested fields within records. This helps in writing more readable and maintainable code, as it eliminates the need for manual pattern matching or accessor functions. Additionally, lenses support composition, enabling developers to chain multiple operations together seamlessly, which enhances code modularity and reusability. Moreover, lenses facilitate immutable updates by generating functions that produce new copies of records with modified fields, promoting a functional programming style and ensuring referential transparency. There are also additional libraries such as [optics](https://hackage.haskell.org/package/optics/docs/Optics.html) that go beyond lenses and have more advantages.
-
-However, there are some drawbacks to using lenses in Haskell. One of the main criticisms is the perceived complexity introduced by lenses, especially for beginners. The syntax for defining and using lenses may appear unfamiliar and daunting to those new to the language or functional programming paradigm. Furthermore, lenses can sometimes incur performance overhead compared to manual record manipulation, although this may not be significant in many cases. Lastly, while lenses excel at accessing and modifying individual fields, they may not be the best choice for more complex transformations or operations involving multiple records, where alternative approaches like monadic or applicative style may be more appropriate. Overall, while lenses offer powerful abstractions for working with records in Haskell, developers should carefully consider their use case and weigh the trade-offs involved.
-
-#### OverloadedDotRecord (since GHC 9.2)
-
-If you need to simply access fields of nested records, GHC 9.2.0 and newer allows you to use `OverloadedDotRecord` extension. With that, you simply use `.` as accessor to fields of records. It is also good to combine it with `DuplicateRecordFields` as shown in the following example.
+Aeson provides a way to work with JSON data using lenses. This allows us to access and modify JSON values in a composable way without having to parse the entire JSON structure into a Haskell data type. This can be very useful when working with dynamic or unknown JSON structures.
 
 ```haskell
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-
-data Person = Person
-            { firstName :: String
-            , lastName :: String
-            , idNumber :: String
-            } deriving (Show, Read)
-
-
-data Organization = Organization
-                  { name :: String
-                  , owner :: Person
-                  , idNumber :: String
-                  } deriving (Show, Read)
-
-
-marek = Person "Marek" "Suchánek" "123"
-acme = Organization "ACME" marek "456"
-
-acmeOwnerName = acme.owner.firstName ++ " " ++ acme.owner.lastName
+import Data.Aeson.Lens
+import Control.Lens
 ```
+
+Supposive we have a JSON value that represents a user:
+
+```json
+{
+  "user": {
+    "name": "Alice",
+    "age": 30,
+    "email": "alice@acme.ltd"
+  }
+}
+```
+
+With Aeson Lens, we can access the user's name like this:
+
+```haskell
+import Data.Aeson
+import Data.Aeson.Lens
+import Control.Lens
+
+main :: IO ()
+main = do
+  withFile "user.json" ReadMode $ \handle -> do
+    contents <- BL.hGetContents handle
+    let name = contents ^? key "user" . key "name" . _String
+    case name of
+      Just n -> putStrLn ("User's name: " ++ n)
+      Nothing -> putStrLn "Name not found in JSON"
+```
+
+For example:
+
+```haskell
+preview (key "user" . key "name" . _String) jsonValue
+```
+
+returns `Just "Alice"` if the JSON structure matches, or `Nothing` if it doesn't. This allows us to safely access nested fields in a JSON object without having to worry about parsing errors or missing fields. We can also use lenses to modify JSON values in a composable way, which can be very powerful when working with dynamic JSON data.
+
+Similarly:
+
+```haskell
+over (key "user" . key "age" . _Number) (+1) jsonValue
+```
+
+increments the user's age by 1, returning a new JSON value with the updated age. This allows us to manipulate JSON data in a functional way, without having to parse it into a Haskell data type and then convert it back to JSON.
 
 ## Task assignment
 
-The homework to practice typeclasses from this tutorial is in repository [MI-AFP/hw06](https://github.com/MI-AFP/hw06).
+For the assignment, navigate to the `hw06` project and follow the instructions in the `README.md` file there as usual.
 
 ## Further reading
 
-* [Haskell - Introduction to IO](https://wiki.haskell.org/Introduction_to_IO)
-* [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
-* [Haskell - Foldable](https://en.wikibooks.org/wiki/Haskell/Foldable)
-* [Haskell - Traversable](https://en.wikibooks.org/wiki/Haskell/Traversable)
-* [Haskell - State monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State)
-* [Haskell - Monad transformers](https://en.wikibooks.org/wiki/Haskell/Monad_transformers)
-* [Haskell - Arrow tutorial](https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial)
-* [Haskell - Lenses and functional references](https://en.wikibooks.org/wiki/Haskell/Lenses_and_functional_references)
-* [Haskell Wiki - Foldable and Traversable](https://wiki.haskell.org/Foldable_and_Traversable)
-* [Haskell Wiki - State monad](https://wiki.haskell.org/State_Monad)
+* [Haskell: Introduction to IO](https://wiki.haskell.org/Introduction_to_IO)
+* [Haskell: Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
+* [Haskell: Foldable](https://en.wikibooks.org/wiki/Haskell/Foldable)
+* [Haskell: Traversable](https://en.wikibooks.org/wiki/Haskell/Traversable)
+* [Haskell: State monad](https://en.wikibooks.org/wiki/Haskell/Understanding_monads/State)
+* [Haskell: Monad transformers](https://en.wikibooks.org/wiki/Haskell/Monad_transformers)
+* [Haskell: Arrow tutorial](https://en.wikibooks.org/wiki/Haskell/Arrow_tutorial)
+* [Haskell: Lenses and functional references](https://en.wikibooks.org/wiki/Haskell/Lenses_and_functional_references)
+* [Haskell Wiki: Foldable and Traversable](https://wiki.haskell.org/Foldable_and_Traversable)
+* [Haskell Wiki: State monad](https://wiki.haskell.org/State_Monad)
 * [Monadic parsing combinators](http://eprints.nottingham.ac.uk/223/1/pearl.pdf)
-* [LYAH - For a Few Monads More](http://learnyouahaskell.com/for-a-few-monads-more)
+* [LYAH: For a Few Monads More](http://learnyouahaskell.com/for-a-few-monads-more)
 * [Arrows](https://www.haskell.org/arrows/)
 * [Lens](http://lens.github.io/tutorial.html)
 * [Control.Lens.Tutorial](https://hackage.haskell.org/package/lens-tutorial/docs/Control-Lens-Tutorial.html)
-* [SchoolOfHaskell - Lens tutorial](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
+* [SchoolOfHaskell: Lens tutorial](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
 * [Lenses In Pictures](http://adit.io/posts/2013-07-22-lenses-in-pictures.html)
-* [Next Level MTL - George Wilson - BFPG 2016-06 (Lens, Monad transformers)](https://www.youtube.com/watch?v=GZPup5Iuaqw)
+* [Next Level MTL, George Wilson: BFPG 2016-06 (Lens, Monad transformers)](https://www.youtube.com/watch?v=GZPup5Iuaqw)
