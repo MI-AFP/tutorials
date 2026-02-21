@@ -11,7 +11,7 @@ In this tutorial, we build on that foundation and make the picture more concrete
 
 * how functions are written and typed,
 * how Haskell represents data, and
-* how syntax reflects the underlying functional and mathematical model.
+* how syntax reflects the underlying functional and mathematical model.
 
 Before diving into functions and data types themselves, it is useful to clarify some basic syntactic rules and naming conventions that appear throughout Haskell code. This part is not meant to be memorized — it is a reference that will become familiar as we encounter these constructs in practice.
 
@@ -144,7 +144,7 @@ z = (x + 7) :: Integer
 Haskell uses static typing:
 
 * every expression has exactly one type,
-* the type is determined at compile time, and
+* the type is determined at compile time, and
 * it cannot change during execution.
 
 Because of **type inference**, type signatures are not always required, but they are **strongly recommended for clarity and documentation**.
@@ -324,7 +324,7 @@ Haskell provides a small set of basic data types that are used throughout the st
 * `Double` = double-precision floating point
 * `Word` = unsigned integer
 * `Char` = Unicode character
-* `Bool` = logical value (`True¨ or `False`)
+* `Bool` = logical value (`True` or `False`)
 * `String` = type synonym for `[Char]` (list of characters)
 
 You have already encountered most of these in GHCi examples. More specialized data structures (maps, sets, sequences, text) live in libraries and will be introduced when needed.
@@ -393,7 +393,7 @@ data Pet = Pet
 
 There are several ways to address this:
 
-* use more specific field names (personName, petName),
+* use more specific field names (`personName`, `petName`),
 * use modules to separate namespaces,
 * or enable language extensions such as `DuplicateRecordFields`.
 
@@ -521,7 +521,7 @@ addFirstTwo (x, y, _) = x + y
 
 #### Tuples as product types
 
-Conceptually, tuples are **product types*. A tuple `(a, b)` contains both an `a` and a `b`.
+Conceptually, tuples are **product types**. A tuple `(a, b)` contains both an `a` and a `b`.
 
 You can model tuples explicitly using `data`:
 

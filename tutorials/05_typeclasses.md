@@ -204,9 +204,9 @@ This defines structural equality. Minimal requirement for custom instances: defi
 
 **Laws** (that are expected but not enforced by the compiler), for all `x`, `y`, `z`:
 
-* Reflexivity: `x == x`
-* Symmetry: `x == y  ⇒  y == x`
-* Transitivity: `(x == y && y == z) ⇒ x == z`
+* Reflexivity: `x == x`
+* Symmetry: `x == y  ⇒  y == x`
+* Transitivity: `(x == y && y == z) ⇒ x == z`
 
 Example of custom instance:
 
@@ -447,7 +447,7 @@ A typeclass defines:
 
 * a **set of types**
 * that provide certain **operations**
-* and obey certain *laws**
+* and obey certain **laws**
 
 In mathematical language:
 

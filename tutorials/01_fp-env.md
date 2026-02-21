@@ -114,7 +114,7 @@ Haskell does not require a specific editor or IDE. You can use any editor you ar
 
 Common choices include:
 
-* **Vim** with [Haskell plugins](https://wiki.haskell.org/Vim) for command-line enthusiasts
+* **Vim** with [Haskell plugins](https://wiki.haskell.org/Vim) for command-line enthusiasts
 * **Visual Studio Code** with [Haskell extension](https://marketplace.visualstudio.com/items?itemName=haskell.haskell) for a modern and user-friendly experience
 * **IntelliJ IDEA** with [Haskell LSP](https://plugins.jetbrains.com/plugin/24123-haskell-lsp) for those who prefer JetBrains IDEs
 * **Emacs** with [Haskell mods](https://wiki.haskell.org/Emacs) for Emacs lovers

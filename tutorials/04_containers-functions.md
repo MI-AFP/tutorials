@@ -203,8 +203,8 @@ You can think of it as a *better list* in situations where you need:
 
 Compared to lists:
 
-* lists are optimized for prepending (x : xs)
-* sequences are optimized for both ends (<| and |>)
+* lists are optimized for prepending (`x : xs`)
+* sequences are optimized for both ends (`<|` and `|>`)
 
 ```
 ghci> import Data.Sequence
@@ -544,6 +544,9 @@ This is not metaphorical. It is literally mathematical **function composition** 
 
 ```math
 f: A \to B
+```
+
+```math
 g: B \to C
 ```
 
