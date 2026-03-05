@@ -621,8 +621,10 @@ Only the arguments that are actually used are evaluated. This is a direct conseq
 
 Some operations cannot proceed without actual values. For example, arithmetic requires its arguments to be evaluated:
 
+```
 ghci> 3 + undefined
 *** Exception: Prelude.undefined
+```
 
 This does not contradict laziness — it simply means the *value is now required*. Laziness delays evaluation, but it does not eliminate it.
 
@@ -676,8 +678,9 @@ Crucially, list comprehensions are *lazy*: even if they describe infinite lists,
 
 A list comprehension has the form:
 
+```
 [ expression | generators, conditions, local bindings ]
-
+```
 
 This mirrors mathematical notation:
 
@@ -1048,7 +1051,7 @@ A practical rule of thumb:
 
 * `String` = teaching, small programs, quick scripts
 * `Text` = most real-world Unicode text processing
-* `ByteString` = binary data, I/O, networking
+* `ByteString` = binary data, I/O, networking
 
 You can always convert between them when needed and sometimes your choice will depend on library support.
 
