@@ -794,7 +794,7 @@ data MyList a = Nil | Cons a (MyList a)
 
 infixr 5 `Cons`
 
-data MyTuple2 a b = :@ a b
+data MyTuple2 a b = a :@ b
 
 infix 6 :@
 ```
