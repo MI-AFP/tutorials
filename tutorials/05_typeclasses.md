@@ -256,7 +256,7 @@ class Show a where
 
 This is for converting values to human-readable strings. The minimal requirement for custom instances: define `show`.
 
-Derived `Show` produces a string that looks is a valid Haskell code. Custom instances can produce any string representation you want. But then you should preferably implement both Show and Read, they should round-trip: `read (show x) == x`. General recommendation: do not abuse `show` for pretty-printing.
+Derived `Show` produces a string that looks as a valid Haskell code. Custom instances can produce any string representation you want. But then you should preferably implement both Show and Read, they should round-trip: `read (show x) == x`. General recommendation: do not abuse `show` for pretty-printing.
 
 ### Read — parsing from String
 
@@ -510,7 +510,7 @@ You already know some instances of `Monoid`:
 
 Apart from basic `Monoid` from algebra, there are also other variants. You might find interesting to learn more about:
 
-* [semigroupoids](https://hackage.haskell.org/package/semigroupoids/docs/Data-Groupoid.html) (Semigroupoid, Grupoid),
+* [semigroupoids](https://hackage.haskell.org/package/semigroupoids/docs/Data-Groupoid.html) (Semigroupoid, Groupoid),
 * [groups](https://hackage.haskell.org/package/groups/docs/Data-Group.html) (Group, Abelian),
 * etc.
 
@@ -553,7 +553,7 @@ ghci> fmap (+10) (Left 5)
 Left 5     -- no change!
 
 ghci> fmap (+10) (Right 5)
-Right 10   -- changed, because "Either c" is functor for whatever "c" - it doesn't care
+Right 15   -- changed, because "Either c" is functor for whatever "c" - it doesn't care
 ```
 
 Just as with Monoid, you can take a look at the documentation of [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html). Again, there is an operator alias, in this case `(<$>)` for `fmap` (denoting a sort of "wrapped" or "inside" apply). There are two more -- `<$` and `$>` (just flipped `<$`). Flipped version of `(<$>)` is `(<&>)`.
@@ -672,9 +672,9 @@ class Applicative m => Monad m where
   (>>)   :: m a -> m b -> m b         -- compose two actions, discarding the result
   return :: a -> m a                  -- inject a value into the monadic type.
 
--- (<**>):: f a -> f (a -> b) -> f b  -- from Controll.Applicative
--- (*>)  :: f a -> f b -> f b         -- from Controll.Applicative
--- pure  :: a -> f a                  -- from Controll.Applicative
+-- (<**>):: f a -> f (a -> b) -> f b  -- from Control.Applicative
+-- (*>)  :: f a -> f b -> f b         -- from Control.Applicative
+-- pure  :: a -> f a                  -- from Control.Applicative
 ```
 
 Function `return` works just as `pure` in `Applicative`. Why having two same functions? Historically; PureScript, for instance, has just `pure` both for the Applicative and Monad.
