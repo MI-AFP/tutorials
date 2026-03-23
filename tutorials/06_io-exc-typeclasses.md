@@ -415,7 +415,7 @@ This code is easier to test because we can write unit tests for the `square` fun
 In pure functional programming, errors are usually handled explicitly using types:
 
 * `Maybe a` — something may be missing
-* `Either e a` — something may fail with an error value
+* `Either e a` — something may fail with an error value
 
 However, once we step into IO, things get more complicated:
 

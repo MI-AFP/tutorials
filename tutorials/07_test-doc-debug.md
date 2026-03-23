@@ -1,12 +1,26 @@
 # Tests, Documentation, Debugging and Performance
 
+In this session, we will take a look at testing, documentation, debugging and performance of Haskell programs. We will cover the most popular testing frameworks and libraries for Haskell, we will see how to write documentation with Haddock, and we will also briefly mention some techniques for improving the performance of Haskell programs. This is a very important topic for every developer, so we will try to cover it in a comprehensive way. As always, there are many other tools and techniques that we will not cover, but we will try to give you a good overview of the most important ones.
+
 ## Testing
 
-Haskellers sometimes say that "When the programme compiles, it is correct!" There is a lot of truth to it, as you may have already experienced: the strong static type system does not allow you to make many errors, especially the most common (and insidious) "stupid" ones. At the same time, this saying is obviously exaggerated and there is still quite some space for a programme to be buggy. This is why traditional unit testing has its place in Haskell. Moreover, Haskell also offers an even more powerful types of testing such as property testing and mutation testing.
+Haskell's type system catches a lot of mistakes early, but it can't guarantee your program matches the intended behaviour in all cases. Tests are still valuable for:
+
+* specifying behaviour (especially edge cases),
+* protecting refactors,
+* validating assumptions that are not in types (IO behaviour, partial functions, invariants),
+* giving fast feedback while learning or exploring. 
+
+
+This chapter introduces three common testing approaches in Haskell, starting from *small and direct* and moving toward *higher-level and expressive*:
+
+* **HUnit** for straightforward unit tests,
+* **QuickCheck** for property-based testing,
+* **Hspec** as a readable test framework that can integrate both.
 
 ### HUnit
 
-[HUnit](https://hackage.haskell.org/package/HUnit) is a unit testing framework for Haskell, inspired by the JUnit tool for Java and similar ones. For developers familiar with unit testing, this framework is very simple to use. First, you define several test cases that you put in a test list (instead of test class as in Java). A single test case is composed optionally of some data preparation and assertions. The result of running tests consists of four numbers: cases, tried, errors and failures.
+[HUnit](https://hackage.haskell.org/package/HUnit) is the Haskell version of the xUnit family of test frameworks. It's small, direct, and good for *given input X, expect output Y* style tests.
 
 ```haskell
 import Test.HUnit
@@ -29,9 +43,28 @@ GHCi> runTestTT tests
 Cases: 2  Tried: 2  Errors: 0  Failures: 0
 ```
 
+HUnit gives you:
+
+* `assertEqual` for equality checks,
+* `assertBool` for predicate checks,
+* `TestCase` for defining a single test case,
+* `TestList` / `TestLabel` for structuring suites. 
+
+When to use HUnit:
+
+* you want simple, explicit unit tests,
+* you don't need fancy reporting or BDD-style structure,
+* you're testing concrete scenarios (parsers, pure functions, small modules).
+
 ### QuickCheck
 
-A different approach to testing is provided by [QuickCheck](https://hackage.haskell.org/package/QuickCheck). It is a library for random testing of program properties. You can specify some "laws" in your application and this library will check with a given number of randomly (but smartly) generated instances if there is not some counterexample violating the laws. Such laws or specifications are expressed in Haskell, using combinators defined in the QuickCheck library. QuickCheck provides combinators to define properties, to observe the distribution of test data, and to define test data generators. All from a simple example to complex tutorials of such definitions are explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
+[QuickCheck](https://hackage.haskell.org/package/QuickCheck) is built around the idea that instead of writing many example tests, you write properties your code should satisfy — and QuickCheck tries to falsify them using randomly generated inputs. All from a simple example to complex tutorials of such definitions are explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
+
+When to use QuickCheck:
+
+* you can express correctness as laws (associativity, identity, round-trip encode/decode),
+* you want broad coverage across many inputs,
+* you want counterexamples quickly (it prints failing cases).
 
 #### Basic properties
 
@@ -102,7 +135,7 @@ main = quickCheck prop_Mature
 
 ### Hspec
 
-[Hspec](https://hackage.haskell.org/package/hspec) is a testing framework for Haskell. It is inspired by the Ruby library RSpec. Some of Hspec's distinctive features are:
+[Hspec](https://hackage.haskell.org/package/hspec) is a popular testing framework inspired by RSpec. It gives you a clean structure (describe, it), human-friendly output, and it integrates with HUnit and QuickCheck so you can mix unit tests and properties in one place. Some of Hspec's distinctive features are:
 
 * a friendly DSL for defining tests,
 * integration with QuickCheck, SmallCheck, and HUnit,
@@ -259,632 +292,1136 @@ Finished in 0.2056 seconds
 3 examples, 0 failures
 ```
 
-### MuCheck
-
-Mutation Testing is a special type of software testing where certain statements in a source code are mutated (changed by mutation operators) and then we check if the test cases recognize the errors. In Haskell, there is [MuCheck](https://hackage.haskell.org/package/MuCheck).
-
-```haskell
--- https://github.com/vrthra/mucheck
-import Test.MuCheck.TestAdapter.AssertCheck
-
-qsort :: [Int] -> [Int]
-qsort [] = []
-qsort (x:xs) = qsort l ++ [x] ++ qsort r
-    where l = filter (< x) xs
-          r = filter (>= x) xs
-
-{-# ANN sortEmpty "Test" #-}
-sortEmpty = assertCheck $ qsort [] == []
-
-{-# ANN sortSorted "Test" #-}
-sortSorted = assertCheck $ qsort [1,2,3,4] == [1,2,3,4]
-
-{-# ANN sortRev "Test" #-}
-sortRev = assertCheck $ qsort [4,3,2,1] == [1,2,3,4]
-
-{-# ANN sortSame "Test" #-}
-sortSame = assertCheck $ qsort [1,1,1,1] == [1,1,1,1]
-
-{-# ANN sortNeg "Test" #-}
-sortNeg = assertCheck $ qsort [-1,-2,3] == [-2,-1,3]
-
-main = do
-         assertCheckResult sortEmpty
-         assertCheckResult sortSorted
-         assertCheckResult sortRev
-         assertCheckResult sortSame
-         assertCheckResult sortNeg
-```
-
-```
-% cabal run sample-test
-% cabal run mucheck -- -tix sample-test.tix Examples/AssertCheckTest.hs
-Total mutants: 19 (basis for %)
-        Covered: 13
-        Sampled: 13
-        Errors: 0  (0%)
-        Alive: 1/19
-        Killed: 12/19 (63%)
-```
-
-Sadly this interesting project with a [paper](https://www.researchgate.net/publication/266659188_MuCheck_An_extensible_tool_for_mutation_testing_of_haskell_programs) published is dead for some years. Hopefully, someone will take over its maintenance or at least fork it and contribute to it (:wink: term project). It also has some interesting integrations like [MuCheck-QuickCheck](https://hackage.haskell.org/package/MuCheck-QuickCheck), [MuCheck-HUnit](https://hackage.haskell.org/package/MuCheck-HUnit), or [MuCheck-Hspec](https://hackage.haskell.org/package/MuCheck-Hspec).
-
 ## Haddock (documentation)
 
-Haskell projects, like any other projects, should have good documentation of source code. In Haskell,  the tool for documentation is called [Haddock](https://www.haskell.org/haddock/) and works similarly to JavaDoc or JSDoc or other XYDoc by annotating the code using comments with special meaning:
+Good documentation in Haskell is not about repeating types — the type signature already says a lot. Instead, documentation should explain:
+
+* what the function means, not what it does mechanically,
+* important invariants or assumptions,
+* edge cases and failure modes,
+* performance characteristics when relevant,
+* how pieces fit together at the module level.
+
+Haskell uses [Haddock](https://www.haskell.org/haddock/), a documentation system that extracts specially formatted comments and generates HTML documentation.
+
+### Documenting modules
+
+Module documentation appears at the top of a file, before the module declaration. It should give an overview of the module's purpose, key types and functions, and any important design decisions or usage notes.
 
 ```haskell
 {-|
-Module      : W
-Description : Short description
-Copyright   : (c) Some Guy, 2013
-                  Someone Else, 2014
-License     : GPL-3
-Maintainer  : sample@email.com
+Module      : Data.Queue
+Description : A simple FIFO queue implementation.
+Copyright   : (c) 2026 Your Name
+License     : MIT
+Maintainer  : you@example.com
 Stability   : experimental
-Portability : POSIX
+Portability : portable
 
-Here is a longer description of this module, containing some
-commentary with @some markup@.
+This module provides a purely functional FIFO queue.
+
+The implementation is based on two lists and guarantees:
+
+* Amortized O(1) enqueue
+* Amortized O(1) dequeue
+
+Example:
+
+>>> let q = enqueue 1 empty
+>>> dequeue q
+Just (1, empty)
 -}
-module W where
-
--- | The 'square' function squares an integer.
--- It takes one argument, of type 'Int'.
-square :: Int -> Int
-square x = x * x
-
-class C a where
-   -- | This is the documentation for the 'f' method
-   f :: a -> Int
-   -- | This is the documentation for the 'g' method
-   g :: Int -> a
-
-data R a b =
-  R { -- | This is the documentation for the 'a' field
-      a :: a,
-      -- | This is the documentation for the 'b' field
-      b :: b
-    }
-
-data S a b =
-  S { a :: a  -- ^ This is the documentation for the 'a' field
-    , b :: b  -- ^ This is the documentation for the 'b' field
-    }
+module Data.Queue
+  ( Queue
+  , empty
+  , enqueue
+  , dequeue
+  ) where
+-- ...
 ```
 
-For more information about using Haddock and writing the documentation of source code in Haskell check http://haskell-haddock.readthedocs.io/en/latest/index.html or https://www.haskell.org/haddock/doc/html/ (the examples above are from this documentation).
+A good module doc should cover:
+
+* A short one-line summary.
+* A longer description (what problem it solves).
+* Performance guarantees (if relevant).
+* Small usage example.
+* Any important invariants.
+
+You can leverage the documentation also to explain design decisions, trade-offs, and how the module fits into the larger system. It can help you actually structure your code better and make it more maintainable.
+
+### Documenting functions
+
+Haddock comments use -- | for single-line documentation and {-| ... -} for multi-line blocks. For functions, you should document:
+
+```haskell
+-- | Computes the arithmetic mean of a non-empty list.
+--
+-- Throws an error if the list is empty.
+--
+-- >>> mean [1,2,3,4]
+-- 2.5
+mean :: (Fractional a) => [a] -> a
+mean xs = sum xs / fromIntegral (length xs)
+```
+
+Focus on:
+
+* Meaning – what concept does this represent?
+* Preconditions – does it assume non-empty list?
+* Failure behavior – does it throw? return `Nothing`?
+* Complexity – if not obvious.
+* Examples – short `>>>` examples are excellent for understanding.
+
+You should always document the *behaviour* and not *mechanics* (*implementation details*) of the function. The type signature already says a lot about mechanics, so documentation should focus on meaning, assumptions, edge cases, and examples.
+
+```haskell
+-- | Adds 1 to the input.
+increment x = x + 1
+
+-- versus:
+
+-- | Successor function for integers.
+--
+-- Equivalent to @(+1)@.
+increment :: Int -> Int
+increment x = x + 1
+```
+
+### Documenting types
+
+You can also document data types and their fields. This is especially important for complex types where the meaning of fields may not be obvious, or where there are important invariants to maintain.
+
+```haskell
+-- | Result of parsing an expression.
+data ParseResult
+  = ParseSuccess Expr
+    -- ^ Successfully parsed expression.
+  | ParseError String
+    -- ^ Human-readable error message.
+
+-- | User account information.
+data User = User
+  { userId   :: UserId     -- ^ Unique identifier.
+  , userName :: String     -- ^ Display name.
+  , userAge  :: Int        -- ^ Age in years (must be >= 0).
+  }
+```
+
+### Documenting typeclasses and instances
+
+Type classes describe behaviour contracts and should clearly explain:
+
+* What the class represents.
+* Any laws instances should satisfy.
+
+```haskell
+-- | Types that can be converted to JSON.
+--
+-- Instances should satisfy:
+--
+-- prop_roundtrip x = decode (encode x) == Just x
+class ToJSON a where
+  encode :: a -> String
+
+
+instance Show User where
+  -- | Displays the user in a human-readable form.
+  show user = userName user
+```
+
+### Generating documentation
 
 For building the documentation within a *stack project*, you can use `stack haddock` command, which generates `index.html` file.
 
 ### Publish your project
 
-If you think that other people might be interested in your project and want to use it standalone or as part of their project (as a dependency), you can publish your project on GitHub and also on Hackage:
+Publishing a Haskell project means more than just pushing code to GitHub. A well-prepared project is easier to use, easier to maintain, and more likely to be adopted.
 
-* [GitHub - create a repo](https://help.github.com/articles/create-a-repo/)
-* [Hackage - upload](https://hackage.haskell.org/upload)
+This section provides a short checklist of what should be done before publishing:
 
-Your project should be:
-* tested (write tests for your project so you can prove that it is working properly),
-* documented (try to describe everything in your code to "strangers" with low Haskell knowledge),
-* licensed (pick a suitable license - https://choosealicense.com can help you).
+1. **Clean and structure the project** = Make sure your project has a clear structure, without any unused modules or dead code. Follow common conventions for directory layout (e.g., `src/` for source code, `test/` for tests). Separate clearly internal API from public API.
+2. **Write proper documentation** = Use Haddock to document your modules, functions, types, and type classes. Focus on explaining the meaning, assumptions, edge cases, and examples. Make sure the generated documentation is clear and complete.
+3. **Provide good README** = Your README should explain what the project does, how to install it, how to use it, and where to find documentation. Include examples and links to the generated Haddock docs.
+4. **Select a LICENSE** = Choose an appropriate open-source license for your project and include it in the repository. This clarifies how others can use, modify, and distribute your code.
+5. **Ensure buildability** = Make sure your project builds correctly with `stack build` and that all tests pass with `stack test`. This is crucial for users who want to use or contribute to your project.
+6. **Add tests** = Include a comprehensive test suite to ensure your code works as expected and to give confidence to users and contributors. Ideally, use CI tools to run tests automatically on each commit or pull request.
+7. **Setup versioning and releases** = Use semantic versioning (or other widely used schema) and consider tagging releases in Git. This helps users understand the stability and compatibility of different versions of your project.
+8. **Prepare for contributions** = If you want others to contribute, provide clear guidelines for contributing (e.g., in a CONTRIBUTING.md file) and consider setting up issue templates and pull request templates.
+9. **Publish to Hackage** = If your project is a library, consider publishing it to Hackage so that others can easily install it with `cabal` or `stack`. Follow the guidelines for packaging and uploading to Hackage.
 
-Another advantage of publishing is that your project can get attention and community can help you improve it -- they create issues, forks and pull requests.
+## Debugging
 
-### Using CI
+Even in a strongly typed language, bugs happen: wrong assumptions, incorrect edge cases, unexpected IO behaviour, and logic errors that are perfectly type-correct. In Haskell, debugging also has one extra twist: laziness can delay evaluation, so “where the error originates” and “where it shows up” can differ.
 
-When you are developing a project and sharing it with a community, you want to show that it is working well and you also want to check if contributions to your code are not breaking it. For that, you can use CI tools (continuous integration) which allows you to run tests (or other scripts) automatically. There are many CI tools these days: Travis CI, Jenkins, Circle CI, Appveyor, Semaphore, GitLab CI, GitHub Actions, etc.
+A useful workflow is:
 
-All (well, almost all) CIs need some specification what they should do with your project. If you are using GitHub, then Travis CI is one of the good choices for you. Just create `.travis.yml` in your repository and register project in Travis CI.
+1. Get visibility (print/trace/log key values)
+2. Reproduce deterministically (small input, minimal program)
+3. Use the right tool:
 
-```yaml
-# https://docs.haskellstack.org/en/stable/travis_ci/
-sudo: false
-# Not Haskell with cabal but with stack tool
-language: c
-cache:
-  directories:
-    - ~/.stack
-addons:
-  apt:
-    packages:
-      - libgmp-dev
-before_install:
-  - mkdir -p ~/.local/bin
-  - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-install:
-  - stack --no-terminal --install-ghc test --only-dependencies
-script:
-  - stack --no-terminal test --haddock --no-haddock-deps
-```
+  * `Debug.Trace` for quick *debugging via printing*
+  * GHCi debugger for stepping + inspecting
+  * IDE (VS Code + HIE/HLS) for navigation, types, and quick feedback
 
-For Haskell, you can use `.travis.yml` above or read the [documentation](https://docs.travis-ci.com/user/languages/haskell/).
+### Tracing with `Debug.Trace`
 
-Another example shows a similar configuration but for GitLab CI (notice caching and use of system GHC from the used base image):
-
-```yaml
-image: haskell:9.4.8
-
-variables:
-  STACK_ROOT: "${CI_PROJECT_DIR}/.stack"
-
-cache:
-  paths:
-    - .stack
-    - .stack-work
-    - target
-
-stages:
-  - test
-
-test:
-  stage: test
-  script:
-    - stack test --system-ghc
-```
-
-For GitHub Actions in a more complex project (multiple Stack packages, components and Docker images), you can check [ds-wizard/engine-backend](https://github.com/ds-wizard/engine-backend/blob/develop/.github/workflows/build.yml). 
-
-## Performance and Debugging
-
-During this tutorial, we will also take a look how to improve the performance of a Haskell program and how to debug it. We will use very simple example - [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number).
+The simplest debugging tool is `trace` from [`Debug.Trace`](https://hackage-content.haskell.org/package/base/docs/Debug-Trace.html): it prints a message and then returns the value you provide (so you can insert it into pure code). There are many useful variants such as traceShow, traceId, traceStack, traceIO, traceM, etc.
 
 ```haskell
-import System.Environment
+import Debug.Trace
 
--- | Naive recursive algorithm for n-th Fibonacci number
+func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
+```
+
+Trace tips that save time:
+
+* Prefer `traceShowId` when you just want to peek at a value while keeping the expression readable:
+
+```haskell
+import Debug.Trace (traceShowId)
+
+foo xs = traceShowId (take 5 xs) ++ "..."
+```
+* Use `traceM`/`traceIO` when you're in monadic code (IO, StateT, etc.). The file already points out `traceIO` and `traceM` as standard options. 
+* Laziness gotcha: sometimes nothing prints because the value isn't demanded yet. If you expect a trace and don't see it, ensure the expression is actually evaluated (e.g., by printing it, using `evaluate`, or by restructuring so it's forced).
+* Keep traces out of releases: a common pattern is to guard them behind a CPP flag, or keep them local and remove them once fixed.
+
+### GHCi debugger
+
+When tracing isn't enough, GHCi's debugger can do real debugging: breakpoints, stepping, inspecting variables, and tracing. 
+
+A basic session looks like this (setting a breakpoint, calling the function, inspecting bindings, continuing): 
+
+Key commands to know:
+
+* `:break <line>` = set a breakpoint (or use `:break <module> <line>`)
+* `:continue` = continue until the next breakpoint
+* `:step` / `:steplocal` = step into evaluation (useful but can be confusing with laziness)
+* `:show breaks` = list breakpoints 
+* `:print <name>` / `:force <name>` = inspect or force evaluation of a binding
+* `:abandon` = abandon the current evaluation and return to the prompt
+
+If you're using Stack or Cabal, load modules through the tool so flags match your project:
+
+```
+stack ghci / cabal repl
+```
+
+Compile with debug-friendly settings when needed:
+
+* -O0 while debugging (optimizations can rearrange code and make stepping harder)
+* ensure you have symbols / not stripping (usually default in dev builds)
+
+### IDE (VS Code)
+
+For day-to-day development, the fastest *debugging* often happens before runtime:
+
+* hover to see inferred types,
+* jump-to-definition across modules,
+* rename symbols safely,
+* see warnings/errors inline,
+* get import/code actions.
+
+You need the Haskell Language Server (HLS) for using these features in VS Code (or other IDEs). It provides real-time feedback on types, errors, and warnings as you write code. This can catch many issues before you even run the program.
+
+Moreover, there are ongoing efforts on improving debugging in IDEs such as [haskell-debugger](https://github.com/well-typed/haskell-debugger).
+
+Another alternative was [debug](https://hackage.haskell.org/package/debug) package, but it is not maintained anymore and it is not compatible with GHC 9.10 and later.
+
+## Performance and Optimization
+
+Performance work in Haskell (and in general) should always start with two questions:
+
+1. **How slow is the program really?**
+2. **Is the problem caused by the implementation, or by the algorithm itself?**
+
+We will explore these questions using a simple example: computing Fibonacci numbers.  
+This example is not chosen because it is practical, but because it clearly demonstrates the difference between:
+
+* a poor algorithm,
+* a reasonable algorithm,
+* and low-level optimizations.
+
+### 1. Naive Fibonacci
+
+```haskell
 fibonacci :: Integer -> Integer
 fibonacci 0 = 0
 fibonacci 1 = 1
-fibonacci n = fibonacci (n-1) + fibonacci (n-2)
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+```
+
+This definition is elegant and closely follows the mathematical definition. However, it is very inefficient.
+
+Each call to `fibonacci n` recursively computes both `fibonacci (n-1)` and `fibonacci (n-2)`, which in turn recompute the same values again and again. As a result, the number of function calls grows exponentially.
+
+This leads to **exponential time complexity**, making even moderately large inputs very slow.
+
+### Measuring performance
+
+Before optimizing, we should always measure performance:
+
+* to verify that there is actually a problem,
+* to understand how severe it is, and
+* to establish a **baseline** for comparison.
+
+There are several ways to measure performance in Haskell, each useful at a different stage.
+
+#### Basic wall-clock time
+
+The simplest way to measure performance is using an external tool such as time:
+
+```
+/usr/bin/time -p runhaskell FibonacciNaive.hs 25
+```
+
+This (by default) reports:
+
+* `real` — total elapsed (wall-clock) time
+* `user` — time spent executing your program
+* `sys` — time spent in system calls
+
+This approach is:
+
+* quick and easy,
+* useful for a rough estimate,
+* but not very precise or reproducible.
+
+It is a good first check, but not suitable for detailed benchmarking. There are also other possible options of `time` command and you can observe more details e.g. with various flags. There are similar alternatives such as `hyperfine` that provide more features and better output formatting.
+
+#### In-Haskell time measurement
+
+You can also measure time directly inside your program using getCurrentTime:
+
+```haskell
+import Data.Time.Clock
 
 main :: IO ()
 main = do
-    args <- getArgs
-    print . fibonacci . read . head $ args
+  start <- getCurrentTime
+  print (fibonacci 25)
+  end <- getCurrentTime
+  print (diffUTCTime end start)
 ```
 
-### Measuring time and memory
+This approach:
 
-When you want to check the performance of a program and compare two programs or algorithms in terms of time or memory consumption, you need to measure it.
+* is simple and portable,
+* allows measuring specific parts of a program,
+* but is still affected by noise (GC, scheduling, etc.).
 
-#### Basic `time`
-
-The `time` command is one of the well-known Linux commands for programmers. It can be used to show how long a command takes to run. That makes it Very useful if you are a developer and you want to test the performance of your program or script. Especially to compare the time of programs written in other languages "from outside". For basic usage, you will get three numbers:
-
-- `real` = total time is taken to run the command (the same as if you use your normal stopwatch)
-- `user` = amount of time that was spent in user mode
-- `sys` = amount of time spent in kernel mode
-
-Then `user`+`sys` gives information how much actual CPU time your process used - in total on all cores. This number can be then higher than `real` if your program uses multiple threads.
-
-```console
-% /usr/bin/time -p runhaskell FibonacciNaive.hs 25
-75025
-real 0.33
-user 0.31
-sys 0.01
-```
-
-But `time` can do a bit more, you can tell how output should look like with additional "numbers" - number of page faults, average total memory use of the process in kilobytes, number of signals delivered to the process, number of socket messages received/sent by the process, exit status of the command, and many others.
-
-```
-% /usr/bin/time -f "Elapsed Time: %E\nExit Status: %X\nPage Faults: %F" runhaskell FibonacciNaive.hs 25
-75025
-Elapsed Time: 0:00.34
-Exit Status: 0
-Page Faults: 0
-```
+It is useful for quick experiments, but not for reliable comparisons.
 
 #### Benchmarking with Criterion
 
-If you are interested in such optimizations and improving your application or comparing various algorithms or their implementations, then you might find interesting to use a benchmarking library. In Haskell is the most used one called [Criterion](http://www.serpentine.com/criterion/). It provides a powerful but simple way to measure software performance. It provides both a framework for executing and analyzing benchmarks and a set of driver functions that makes it easy to build and run benchmarks and to analyze their results.
-
-For simple usage, you just need to work with the `defaultMain` from [Criterion.Main](https://hackage.haskell.org/package/criterion/docs/Criterion-Main.html) as they show in their example:
+For accurate and reproducible measurements in Haskell (incl. detailed reporting), we use the [criterion](https://hackage.haskell.org/package/criterion) library:
 
 ```haskell
 import Criterion.Main
 
--- | Naive recursive algorithm for n-th Fibonacci number
-fibonacci :: Integer -> Integer
-fibonacci 0 = 0
-fibonacci 1 = 1
-fibonacci n = fibonacci (n-1) + fibonacci (n-2)
-
 main :: IO ()
-main = defaultMain [
-  bgroup "fib" [ bench " 5" $ whnf fibonacci 5
-               , bench "10" $ whnf fibonacci 10
-               , bench "25" $ whnf fibonacci 25
-               ]
+main = defaultMain
+  [ bench ("fibonacci 15") $ whnf fibonacci 15
+  , bench ("fibonacci 20") $ whnf fibonacci 20
+  , bench ("fibonacci 25") $ whnf fibonacci 25
   ]
 ```
 
-It has very nice outputs with a form of interactive HTML pages with charts and comparisons and has many options to use.
+Criterion:
 
-```console
-% runhaskell FibonacciNaiveCriterion.hs
-benchmarking fib/ 5
-time                 7.319 μs   (6.980 μs .. 7.821 μs)
-                     0.966 R²   (0.934 R² .. 0.995 R²)
-mean                 7.248 μs   (6.966 μs .. 7.847 μs)
-std dev              1.321 μs   (805.8 ns .. 2.043 μs)
-variance introduced by outliers: 96% (severely inflated)
+* runs benchmarks many times,
+* uses statistical analysis,
+* reports mean time, variance, and confidence intervals.
 
-benchmarking fib/10
-time                 81.34 μs   (81.15 μs .. 81.54 μs)
-                     1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 81.58 μs   (81.38 μs .. 81.85 μs)
-std dev              811.3 ns   (577.5 ns .. 1.191 μs)
+This makes it much more reliable than manual timing. You can also generate reports and compare different implementations side by side:
 
-benchmarking fib/25
-time                 111.6 ms   (110.5 ms .. 112.2 ms)
-                     1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 112.1 ms   (111.7 ms .. 112.9 ms)
-std dev              853.6 μs   (534.0 μs .. 1.215 ms)
-variance introduced by outliers: 11% (moderately inflated)
-
-runhaskell FibonacciNaiveCriterion.hs  15.98s user 0.04s system 99% cpu 16.055 total
+```bash
+stack run -- --output report.html
 ```
 
-#### Measure allocations with Weigh
+There are also many options for configuring benchmarks, such as controlling the number of iterations, the time limit, and the output format. Criterion is the gold standard for benchmarking in Haskell and is widely used in the community.
 
-The package [weigh](https://hackage.haskell.org/package/weigh) provides a simple interface to measure the memory usage of a Haskell value or function.
+```bash
+stack run -- --help
+```
+
+> Important: benchmarking should be done on compiled code, not interpreted code (e.g. via `runhaskell`).
+
+#### Measuring allocations with Weigh
+
+Execution time is only one aspect of performance. Memory usage is equally important.
+
+The [weigh](https://hackage.haskell.org/package/weigh) library measures allocations:
 
 ```haskell
 import Weigh
 
--- | Naive recursive algorithm for n-th Fibonacci number
-fibonacci :: Integer -> Integer
-fibonacci 0 = 0
-fibonacci 1 = 1
-fibonacci n = fibonacci (n-1) + fibonacci (n-2)
-
 main :: IO ()
 main = mainWith $ do
-        func "fib  5" fibonacci 5
-        func "fib 10" fibonacci 10
-        func "fib 25" fibonacci 25
+  func "fibonacci 15" fibonacci 15
+  func "fibonacci 20" fibonacci 20
+  func "fibonacci 25" fibonacci 25
 ```
 
-It provides a nice output as plain text table, but it is also possible to change the format to markdown.
+It reports:
 
-```console
-% ./FibonacciNaiveWeigh
+* total bytes allocated,
+* number of garbage collections.
 
-Case     Allocated  GCs
-fib  5       1,968    0
-fib 10      24,304    0
-fib 25  33,509,936   63
+This is especially useful in Haskell, where performance is often affected by:
+
+* allocation of thunks,
+* laziness,
+* and data representation.
+
+### Profiling
+
+Benchmarking tells us *how slow a program is*. Profiling helps us understand *why it is slow*.
+
+In Haskell, profiling is especially useful for distinguishing between:
+
+* a bad algorithm,
+* bad evaluation behavior, and
+* excessive allocation or memory retention.
+
+
+To enable profiling with Stack, build your project with (will install own extra dependencies):
+
+```bash
+stack build --profile
 ```
 
-### Performance
+Then, we can run the program with profiling enabled (which generates a `.prof` file):
 
-Now we are able to measure something and compare algorithms, but how to improve the numbers we get if we really need it?
+```bash
+stack exec --profile fib -- +RTS -p
+```
 
-#### Basic ideas
+In the resulting `.prof` file, we can see which functions are taking the most time and allocating the most memory. This can help us identify bottlenecks and understand where to focus our optimization efforts. In our case, it should show us that the `fibonacci` function is taking most of the time and allocating a lot of memory due to the exponential growth of calls.
 
-When you are not satisfied with the performance of your application, then before any sophisticated optimization steps by using strictness, unboxed types, calling FFI, etc., you should consider if you prefer faster application over better readability. Then another important thing to think about is design if it is not slow by using "naive" algorithm, using an inappropriate data structure (List instead of Set or Map), etc.
+> Profiling (nor benchmarking) does not fix the problem — it helps us locate it.
 
-**Always** rethink your own code before using other optimization techniques!
+Various flags for GHC profiling:
+
+* `-prof` (enabled under the hood by [Stack `--profile`](https://docs.haskellstack.org/en/stable/commands/build_command/#-profile-flag)) builds the program with profiling support
+* `-fprof-auto` automatically inserts cost centres into top-level functions allows profiling to attribute time and memory to functions (also enabled by Stack `--profile`)
+* `+RTS -p` enables runtime profiling, produces a `.prof` report with time and allocation data
+
+Without cost centres, the profiling output is often too coarse to be useful.
+
+To further analyze memory usage, you can use `+RTS -hc` to generate a heap profile, which shows how memory is allocated across different parts of the program. Then, you can visualize the heap profile using tools like `hp2ps`:
+
+```bash
+stack exec --profile fib -- +RTS -hc
+hp2ps fib.hp
+ps2pdf fib.ps
+```
+
+Heap profiling helps detect:
+
+* space leaks,
+* unexpected memory growth,
+* large retained data structures.
+
+For our case, it can be empty due to laziness and thunks piling up from the exponential calls.
+
+More interesting profiling exercise can be done with a comparison of lazy vs strict `foldl`:
 
 ```haskell
-import System.Environment
+sumBad :: [Int] -> Int
+sumBad = foldl (+) 0
 
--- | Improved recursive algorithm for n-th Fibonacci number
-fibonacci :: Integer -> Integer
-fibonacci = fib 0 1
-  where
-    fib x _ 0 = x
-    fib x y n = fib y (x+y) (n-1)    -- just "one-way" recursion!
+sumGood :: [Int] -> Int
+sumGood = foldl' (+) 0
 
 main :: IO ()
 main = do
-    args <- getArgs
-    print . fibonacci . read . head $ args
+  print (sumBad [1..10000000])
+  print (sumGood [1..10000000])
 ```
 
-Just a very simple re-thinking can have some impact:
+### 2. The biggest optimization: a better algorithm
 
-```console
-% /usr/bin/time -p runhaskell FibonacciBetter.hs 25
-75025
-real 0.24
-user 0.22
-sys 0.02
+The main problem with the naive Fibonacci implementation is not laziness, boxing, or the choice of numeric type. The real problem is the **algorithm itself**.
+
+A much better approach is to compute the sequence iteratively using accumulators:
+
+```haskell
+fibonacciAcc :: Integer -> Integer
+fibonacciAcc n = go 0 1 n
+  where
+    go a _ 0 = a
+    go a b k = go b (a + b) (k - 1)
 ```
 
-```console
-% runhaskell FibonacciBetterCriterion.hs
-benchmarking fib/ 5
-time                 3.412 μs   (3.235 μs .. 3.591 μs)
-                     0.988 R²   (0.983 R² .. 0.998 R²)
-mean                 3.191 μs   (3.129 μs .. 3.277 μs)
-std dev              253.6 ns   (168.4 ns .. 360.9 ns)
-variance introduced by outliers: 82% (severely inflated)
+Alternatively, we can lazy list with `zipWith`:
 
-benchmarking fib/10
-time                 5.930 μs   (5.871 μs .. 6.013 μs)
-                     0.997 R²   (0.994 R² .. 0.998 R²)
-mean                 6.209 μs   (6.075 μs .. 6.464 μs)
-std dev              625.6 ns   (377.2 ns .. 1.088 μs)
-variance introduced by outliers: 87% (severely inflated)
+```haskell
+fibonacciList :: [Integer]
+fibonacciList = 0 : 1 : zipWith (+) fibonacciList (tail fibonacciList)
 
-benchmarking fib/25
-time                 14.53 μs   (14.31 μs .. 14.90 μs)
-                     0.990 R²   (0.972 R² .. 0.999 R²)
-mean                 14.78 μs   (14.40 μs .. 15.89 μs)
-std dev              1.953 μs   (712.6 ns .. 4.110 μs)
-variance introduced by outliers: 91% (severely inflated)
-
-runhaskell FibonacciBetterCriterion.hs  15.90s user 0.07s system 100% cpu 15.954 total
+fibonacciFromList :: Integer -> Integer
+fibonacciFromList n = fibonacciList !! fromIntegral n
 ```
 
-```console
-% ./FibonacciBetterWeigh
+Now we can benchmark and profile these implementations to see the dramatic improvement. The time complexity is now linear, and the memory usage is constant (for the accumulator version) or linear (for the list version, due to thunks).
 
-Case    Allocated  GCs
-fib  5        872    0
-fib 10      1,712    0
-fib 25     37,000    0
+> When a program is slow, the first question should often be: **Can we solve the problem in a better way?**
+
+Low-level optimizations can improve a good implementation, but they rarely compensate for a poor algorithm.
+
+### 3. Strict evaluation
+
+Even after choosing a much better algorithm, evaluation strategy still matters.
+
+The accumulator-based Fibonacci function above is structurally efficient, but because Haskell is lazy, the intermediate values may still be represented as unevaluated expressions (thunks). For large inputs, this can increase memory usage and sometimes reduce performance.
+
+We can force the accumulators to be evaluated eagerly:
+
+```haskell
+{-# LANGUAGE BangPatterns #-}
+
+fibonacciAccBang :: Integer -> Integer
+fibonacciAccBang n = go 0 1 n
+  where
+    go !a !_ 0 = a
+    go !a !b k = go b (a + b) (k - 1)
 ```
 
-#### Boxed vs. Unboxed types
+Here the `!` patterns make the arguments strict. Instead of building up deferred computations, the function evaluates the accumulator values as it goes.
 
-Now, we are going to briefly mention is the difference between boxed and unboxed types. Although it is a low-level concern and with regular Haskell programming, you can avoid these terms, it is good to know what is it about when you see it in other's code or in a documentation.
+This often improves performance by:
 
-To support laziness, parametric polymorphism, and other properties, by default Haskell data types are represented uniformly as a pointer to a closure on the heap. These are "boxed" values. An unboxed is represented directly by raw value (i.e., without any indirection). Using unboxed types can lead to time/space optimizations. Having always pointers to a heap-allocated object is fairly slow, so compilers attempt to replace these boxed values with unboxed raw values when possible. Unboxed values are a feature of some compilers that allow directly manipulating these low-level values. Since they behave differently than normal Haskell types, generally the type system is extended to type these unboxed values.
+* reducing thunk allocation,
+* lowering memory usage,
+* avoiding space leaks.
 
-In GHC, unboxed values have a hash mark as a suffix to their name. For instance, the unboxed representation of 42 is 42#. However, you can't pass them to polymorphic functions (like `show` for instance). To allow that, you need to use constructor `I#` that takes an unboxed integer and returns the `Int` (wraps). You can observe [kind](https://wiki.haskell.org/Kind) (*kind of type*, we will look again at kinds with typeclasses) of boxed and unboxed types:
+The important lesson is that strictness is usually a secondary optimization:
 
-* By default, kind of type is `*` (try in GHCi: `:kind Int`)
-* Kind of unboxed type is `#` (try in GHCi: `:kind Int#`)
+* first choose a better algorithm, then
+* improve evaluation behavior if needed.
+
+Strictness can make a good implementation better, but it does not change the fundamental complexity of the problem.
+
+### 4. Choosing the right types
+
+The next question is whether we are using the most appropriate data type.
+
+So far, we have used `Integer`... but what if we switch to `Int` or `Double`?
+
+* `Int` is a fixed-size integer type (usually 64 bits) that can overflow, but is more efficient for small numbers.
+* `Double` is a floating-point type that can represent very large numbers, but with limited precision.
+
+```haskell
+fibonacciInt :: Int -> Int
+fibonacciInt 0 = 0
+fibonacciInt 1 = 1
+fibonacciInt n = fibonacciInt (n - 1) + fibonacciInt (n - 2)
+
+fibonacciDouble :: Double -> Double
+fibonacciDouble 0 = 0
+fibonacciDouble 1 = 1
+fibonacciDouble n = fibonacciDouble (n - 1) + fibonacciDouble (n - 2)
+```
+
+Compared with `Integer`, `Int` is usually:
+
+* faster,
+* smaller, and
+* more efficient in memory.
+
+However, `Int` has a fixed size and can overflow. That means it is only appropriate when the range of values is known to be safe. `Double` is on the other hand, not suitable for counting Fibonacci numbers due to precision issues and complexity of floating-point arithmetic.
+
+Choosing the right type will usually not matter as much as choosing the right algorithm, but it can still provide a noticeable improvement once the algorithm is already good. This is of course different when it comes to **types of data structures**, where the choice of representation can have a significant impact on performance.
+
+### 5. Boxed vs unboxed values (advanced)
+
+Another source of overhead in Haskell is how values are represented in memory.
+
+By default, Haskell uses **boxed values**.
+
+* A boxed value is stored on the heap.
+* Variables contain a pointer to that value.
+* This allows laziness and uniform representation.
+
+For example, an `Int` is typically represented as a pointer to a heap object.
+
+This indirection introduces overhead:
+
+* extra memory allocation,
+* pointer dereferencing, and
+* more pressure on the garbage collector.
+
+#### Unboxed values
+
+In some situations, GHC can use **unboxed values**, which are:
+
+* stored directly (not on the heap),
+* not wrapped in a pointer,
+* represented as raw machine values.
+
+Unboxed values can be much more efficient because they avoid allocation, reduce indirection, can significantly improve performance in tight loops.
+
+However, they come with limitations:
+
+* they cannot be lazy,
+* they cannot be used polymorphically,
+* they make code less flexible and harder to read.
+
+#### When does this matter?
+
+In practice, you usually do **not** write unboxed code directly.
+
+Instead, GHC already helps you by:
+
+- optimizing strict code,
+- unboxing fields when possible,
+- specializing functions.
+
+This means that writing strict code (`!` patterns) with concrete types (`Int`, `Double`), often allows GHC to generate efficient, unboxed machine code automatically.
+
+> Unboxed values are a **fine-tuning tool**, not a primary optimization strategy.
+
+#### Example of explicit unboxing
+
+You can use so-called magic hash to work with unboxed types directly, but this is an advanced topic and usually not necessary for most Haskell programming and you should be careful when doing it:
 
 ```haskell
 {-# LANGUAGE MagicHash #-}
+
 module Main where
 
 import GHC.Exts
 
--- | Naive recursive algorithm for n-th Fibonacci number with
--- unboxed Int types
-fibonacci :: Int# -> Int#
-fibonacci 0# = 0#
-fibonacci 1# = 1#
-fibonacci n  = fibonacci (n -# 1#) +# fibonacci (n -# 2#)
+-- Unboxed naive Fibonacci
+fibonacci# :: Int# -> Int#
+fibonacci# 0# = 0#
+fibonacci# 1# = 1#
+fibonacci# n  =
+  fibonacci# (n -# 1#) +# fibonacci# (n -# 2#)
+
+-- Boxed wrapper (so we can use normal Int in main)
+fibonacciUnboxed :: Int -> Int
+fibonacciUnboxed (I# n) = I# (fibonacci# n)
 
 main :: IO ()
-main = print (I# (fibonacci 25#))
+main = print (fibonacciUnboxed 30)
 ```
 
-```console
-% /usr/bin/time -p runhaskell FibonacciUnboxed.hs
-75025
-real 0.30
-user 0.27
-sys 0.03
+Note that we are using `Int` and cannot use `Integer` here, because `Integer` is a boxed type and cannot be unboxed. This code is more efficient than the boxed version, but it is also more complex and less flexible. It is generally recommended to let GHC handle unboxing for you by writing clear, strict code with appropriate types.
+
+### 6. Compiler optimizations
+
+So far, all improvements were made by changing the source code. However, the compiler itself can significantly improve performance.
+
+#### Optimization levels
+
+GHC provides different optimization levels:
+
+```bash
+ghc -O0 Main.hs   # no optimization
+ghc -O1 Main.hs   # moderate optimization
+ghc -O2 Main.hs   # aggressive optimization
 ```
 
-For more information, visit [GHC.Exts]() and [GHC.Prim]().
+This can be used also with Stack:
 
-#### Strictness with types
-
-In the previous lessons, we touched the topic of enforcing strictness with `!` in patterns ([bang patterns](https://ocharles.org.uk/blog/posts/2014-12-05-bang-patterns.html)) and in function application with `$!` operator. Similarly, we can use `!` with type fields like this:
-
-```haskell
-data MyType = MyConstr Int !Int
-
-data MyRec = MyRecConstr { xA ::  Int
-                         , xB :: !Int
-                         }
+```bash
+stack build --ghc-options="-O2"
 ```
 
-For both cases it means that when data constructor is evaluated, it must fully evaluate ([weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) the second parameter, but the first one will stay unevaluated in a lazy way. All depends on language implementation in the used compiler.
+Or in `package.yaml`:
 
-#### Unpacking strict fields
-
-One of the most used optimization techniques when talking about unboxed types and strictness with [GHC] is [unpacking strict fields](https://wiki.haskell.org/Performance/Data_types#Unpacking_strict_fields). When a constructor field is marked strict, and it is a single-constructor type, then it is possible to ask GHC to unpack the contents of the field directly in its parent with `{-# UNPACK #-}` pragma:
-
-```haskell
-data T1 = T1 {-# UNPACK #-} !(Int, Float)  -- => T1 Int Float
-data T2 = T2 Double {-# UNPACK #-} !Int    -- => T2 Double Int#
+```yaml
+ghc-options:
+  - -O2
 ```
 
-We mention this just because of differences in performance of types we are going to describe now. You don't need to use strict or unboxed types within your work if you don't need to have time/space optimizations and if yes, consider reading [Haskell High Performance Programming](https://github.com/TechBookHunter/Free-Haskell-Books/blob/master/book/Haskell%20High%20Performance%20Programming.pdf).
+### 7. Parallelism and concurrency
 
-#### GHC optimization flags
+Another possible optimization is to use multiple CPU cores. This can help when:
 
-If you know optimization with GCC, then you won't be surprised how it works with GHC:
+* the computation is large enough,
+* the work can be split into independent parts, and
+* the overhead of coordination is small compared with the useful work.
 
-* `-O0` = turn off all optimization
-* `-O` or `-O1` = generate good-quality code without taking too long about it
-* `-O2` = apply every non-dangerous optimization, even if it means significantly longer compile times (in most cases, there is no significant difference between `-O1` and `-O2`)
+However, parallelism is not automatically beneficial. A poor parallel design can easily be slower than a sequential program.
 
-Then there are also `-f*`  platform-independent flags, that allows you to turn on and off individual optimizations. For more information, please visit [GHC documentation](http://downloads.haskell.org/~ghc/latest/docs/html/users_guide/using-optimisation.html).
+#### Not-so-good parallel Fibonacci
 
-#### Concurrency and Parallelism
-
-Haskell (of course) supports parallelism or concurrency in order to achieve faster and efficient computation. For parallelism and concurrency visit [wiki.haskell.org/Parallel](https://wiki.haskell.org/Parallel). You can both:
-
-* run parallel threads with [Control.Parallel](http://hackage.haskell.org/package/parallel/docs/Control-Parallel.html),
-* run simultaneous IO actions with forks.
-
-It is also possible to do distributed computations on clusters but it is far beyond the scope of this course.
+A first idea might be to evaluate both recursive calls in parallel:
 
 ```haskell
 import Control.Parallel
 
-parfib 0 = return 1
-parfib 1 = return 1
-parfib n = do
-              n1 <- parfib (n - 1)
-              n2 <- parfib (n - 2)
-              n3 <- (n1 `par` (n2 `seq` (return (n1 + n2 + 1))))
-              return n3
-
-main = do x <- parfib 30; print x
+fibonacciParBad :: Int -> Int
+fibonacciParBad 0 = 0
+fibonacciParBad 1 = 1
+fibonacciParBad n =
+  let x = fibonacciParBad (n - 1)
+      y = fibonacciParBad (n - 2)
+  in x `par` (y `pseq` (x + y))
 ```
 
-GHC supports running programs in parallel on an SMP (symmetric multiprocessor) or multi-core machine. Just compile your program using the `-threaded` switch and then run it with RTS option `-N <x>` (where `<x>` is the number of simultaneous threads). See [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/parallel.html) for more information.
+Here:
 
-#### FFI
+* `par` sparks the computation of `x` in parallel,
+* `pseq` forces the evaluation of `y` before returning the result.
 
-As with many other programming languages, Haskell supports [FFI (Foreign Function Interface)](https://wiki.haskell.org/Foreign_Function_Interface) that allows co-operating with programs written with other languages. We've already could see that in the example of Haste in DS Wizard where there were some JS bindings. But you can also use it to call some functions from C++ or Rust:
+This looks attractive: the two recursive branches are independent, so why not evaluate them in parallel?
 
-```cpp
-extern "C"{   // need to expose with extern, could use header file .h or .hpp for that
-    extern int fib(int n) {
-        if(n < 0) return -1;
-        int x = 0, y = 1, tmp;
-        while(n-- > 0) {
-            tmp = x;
-            x = y;
-            y = tmp + x;
-        }
-        return x;
-    }
+The problem is that this creates far too many tiny parallel tasks.
+
+For naive Fibonacci, the recursion tree grows exponentially. If we try to spark parallel work at every node, we quickly get:
+
+* huge scheduling overhead,
+* too many sparks,
+* contention between threads,
+* and often worse performance than the sequential version.
+
+In other words, this version parallelizes too eagerly.
+
+> Creating parallel work is not free. If each task is too small, the overhead dominates the useful computation.
+
+#### Better parallel Fibonacci with cutoff
+
+A simple improvement is to create parallel work only for sufficiently large subproblems:
+
+```haskell
+import Control.Parallel
+
+cutoff :: Int
+cutoff = 30
+
+fibonacciParCutoff :: Int -> Int
+fibonacciParCutoff 0 = 0
+fibonacciParCutoff 1 = 1
+fibonacciParCutoff n
+  | n <= cutoff = fibonacciParCutoffSeq n
+  | otherwise =
+      let x = fibonacciParCutoff (n - 1)
+          y = fibonacciParCutoff (n - 2)
+      in x `par` (y `pseq` (x + y))
+
+fibonacciParCutoffSeq :: Int -> Int
+fibonacciParCutoffSeq 0 = 0
+fibonacciParCutoffSeq 1 = 1
+fibonacciParCutoffSeq n =
+  fibonacciParCutoffSeq (n - 1) + fibonacciParCutoffSeq (n - 2)
+```
+
+This version is still naive Fibonacci, but it avoids creating sparks for very small tasks.
+
+That usually works better because:
+
+* large tasks are worth parallelizing,
+* small tasks are computed sequentially,
+* overhead is reduced.
+
+> Good parallel programs need a reasonable task granularity.
+
+#### Master-worker task parallelism
+
+The previous example still follows the recursive structure of naive Fibonacci.
+A more structured approach is to use a master-worker design.
+
+The idea is:
+
+* the master creates a fixed number of larger tasks,
+* the workers compute those tasks independently,
+* the master combines the results.
+
+For Fibonacci itself, this is somewhat artificial, because the algorithm is still bad.
+But it demonstrates an important design principle: parallel work should be coarse enough to justify the overhead.
+
+One way to do this is to split the top of the recursion tree into a few large subproblems, and let each worker solve one subtree.
+
+```haskell
+import Control.Concurrent.Async
+
+fibonacci :: Int -> Int
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+
+fibonacciParTop :: Int -> IO Int
+fibonacciParTop 0 = pure 0
+fibonacciParTop 1 = pure 1
+fibonacciParTop n = do
+  ax <- async (pure $ fibonacci (n - 1))
+  ay <- async (pure $ fibonacci (n - 2))
+  x <- wait ax
+  y <- wait ay
+  pure (x + y)
+```
+
+This version creates only two top-level tasks instead of parallelizing every recursive call. That is much more controlled:
+
+* only a small number of threads is created,
+* each task is large enough to matter, and
+* the structure is easier to reason about.
+
+This is a simple example of **task parallelism**: *different workers perform different independent tasks*.
+
+#### Data parallel viewpoint
+
+Another way to think about parallelism is data parallelism, where the same computation is applied to multiple independent pieces of data.
+
+Naive Fibonacci is not a natural data-parallel algorithm for a single input, but it becomes data-parallel if we want to compute many Fibonacci values:
+
+```haskell
+import Control.Concurrent.Async
+
+fibonacci :: Int -> Int
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+
+fibonacciManyPar :: [Int] -> IO [Int]
+fibonacciManyPar xs = mapConcurrently (pure . fibonacci) xs
+
+main :: IO ()
+main = do
+  results <- fibonacciManyPar [35, 36, 37, 38]
+  print results
+```
+
+Here:
+
+* the data is the list of inputs,
+* each worker computes one result, and
+* the same operation is applied independently to all items.
+
+This is often a much more realistic parallel pattern than recursive parallel Fibonacci.
+
+#### Concurrency vs parallelism
+
+It is also useful to distinguish two related ideas:
+
+1) Concurrency is about structuring a program so that multiple activities can make progress independently.
+2) Parallelism is about actually executing work simultaneously on multiple CPU cores.
+
+For pure numerical computations like Fibonacci, we are mainly interested in parallelism.
+
+Libraries such as async are often used for both purposes:
+
+* concurrency for organizing tasks,
+* parallelism when those tasks run on multiple cores.
+
+#### Running parallel programs
+
+To run a parallel Haskell program, you need to enable the threaded runtime and specify the number of cores to use:
+
+```bash
+stack exec -- fib-par -- +RTS -N
+stack exec -- fib-par -- +RTS -N4
+```
+
+Here, `-N` uses all available cores, while `-N4` limits it to 4 cores. Without this option, the program may still use concurrency abstractions, but it will not execute pure computations in parallel across multiple cores.
+
+### 8. Foreign Function Interface (FFI)
+
+Another way to improve performance, or to reuse existing code, is to call functions written in another language.
+
+Haskell supports this through the **Foreign Function Interface (FFI)**.
+
+The FFI allows a Haskell program to:
+
+- call functions implemented in C,
+- pass data between Haskell and foreign code,
+- and combine high-level Haskell code with low-level libraries.
+
+This is useful when:
+
+- a performance-critical function already exists in another language,
+- we want to use a mature external library,
+- or we need to integrate with low-level system APIs.
+
+However, FFI should be treated as a tool, not as the default solution.
+
+> Rewriting a poor algorithm in another language does not make it a good algorithm.
+
+To keep the example consistent with the rest of this chapter, we will use the naive Fibonacci function again.
+
+#### C implementation
+
+First, let us implement naive Fibonacci in C:
+
+```c
+#include <stdint.h>
+
+int64_t fibonacci(int64_t n) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 ```
+
+This can be saved in a file such as `fibonacci.c`.
+
+This implementation has the same algorithmic complexity as the naive Haskell version: it is still exponential. The difference is only the language and runtime representation.
+
+#### Haskell FFI binding
+
+Now we declare (bind) the C function in Haskell:
 
 ```haskell
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-import Foreign.C
-import System.Environment
-
-foreign import ccall "fib" cfib :: CInt -> CInt
-
-main :: IO ()
-main = do
-    args <- getArgs
-    print . cfib . read . head $ args
-```
-
-```console
-% gcc -c -o fib.o fib.cpp
-% ghc --make -o ffi_fib FibonacciFFI.hs fib.o
-Linking ffi_fib ...
-% /usr/bin/time -p ./ffi_fib 25
-75025
-real 0.00
-user 0.00
-sys 0.00
-```
-
-Similarly, there is `foreign export` to expose some Haskell functions to other FFIs. Nice example is here: [jarrett/cpphs](https://github.com/jarrett/cpphs).
-
-### Debugging
-
-Even if you are a good Haskell programmer, things can go wrong and especially in big projects it is a nontrivial challenge to find out where you did some mistake. Going thru the code in multiple functions, inner functions, various modules, etc. can be painful. Luckilly, there are some ways how to debug Haskell program and some are pretty easy and similar to well-known.
-
-#### Tracing with `Debug.Trace`
-
-You should already know how to use GHC and GHCi to compile, link and examine Haskell programs. The simplest tool to use for debugging is the `trace` from [Debug.Trace](https://hackage.haskell.org/package/base.0/docs/Debug-Trace.html) which outputs the trace message given as its first argument, before returning the second argument as its result. There are many more *traces* defined for different cases: `traceShow`, `traceId`, `traceStack`, `traceIO`, `traceM`, etc. So you can use it for custom debugging output anywhere in the code.
-
-For example:
-
-```haskell
-func a b = trace ("func " ++ show a ++ " " ++ show b) undefined
-```
-
-Or better usage with our example of Fibonacci numbers to see the calls:
-
-```haskell
 module Main where
 
-import Debug.Trace
+import Data.Int (Int64)
 
--- | Naive recursive algorithm for n-th Fibonacci number
-fib1 :: Integer -> Integer
-fib1 0 = trace "fib1 0" 0
-fib1 1 = trace "fib1 1" 1
-fib1 n = trace ("fib1 " ++ show n) (fib1 (n-1) + fib1 (n-2))
-
--- | Improved recursive algorithm for n-th Fibonacci number
-fib2 :: Integer -> Integer
-fib2 = fib 0 1
-  where
-    fib x _ 0 = trace "fib2 0" x
-    fib x y n = trace ("fib2 " ++ show n) (fib y (x+y) (n-1))
+foreign import ccall "fibonacci"
+  c_fibonacci :: Int64 -> Int64
 
 main :: IO ()
-main = do
-    print (fib1 4)
-    putStrLn "------------"
-    print (fib2 4)
+main = print (c_fibonacci 25)
 ```
 
-```console
-% runhaskell FibonacciTrace.hs
-fib1 4
-fib1 2
-fib1 0
-fib1 1
-fib1 3
-fib1 1
-fib1 2
-fib1 0
-fib1 1
-3
-------------
-fib2 4
-fib2 3
-fib2 2
-fib2 1
-fib2 0
-3
+In C, the function uses `int64_t`, so in Haskell we use `Int64` from `Data.Int`. It is important that the types on both sides correspond correctly. When using FFI, type mismatches can lead to incorrect results or crashes.
+
+Without Stack project, you can simply compile the C code and link it with the Haskell code:
+
+```bash
+gcc -c fibonacci.c -o fibonacci.o
+ghc Main.hs fibonacci.o -o fib-ffi
+./fib-ffi
 ```
 
-#### GHCi debugger
+With Stack, you can specify the C source file in `package.yaml`:
 
-If you need a better debugger, you can use [GHCi debugger](https://downloads.haskell.org/~ghc/7.4.1/docs/html/users_guide/ghci-debugger.html) (other compilers, such as Hugs, have some different), which allows:
-
-* setting breakpoints and stepping,
-* inspecting variables,
-* tracing,
-* working with exceptions,
-* and so on.
-
-```
-Prelude> :l FibonacciNaive.hs
-[1 of 1] Compiling Main             ( FibonacciNaive.hs, interpreted )
-Ok, modules loaded: Main.
-*Main> :break 9
-Breakpoint 0 activated at FibonacciNaive.hs:9:10-60
-*Main> fib1 5
-Stopped in Main.fib1, FibonacciNaive.hs:9:10-60
-_result :: Integer = _
-n :: Integer = 5
-[FibonacciNaive.hs:9:10-60] *Main> :continue
-fib1 5
-Stopped in Main.fib1, FibonacciNaive.hs:9:10-60
-_result :: Integer = _
-n :: Integer = 3
-[FibonacciNaive.hs:9:28-33] *Main> :show breaks
-[0] Main FibonacciNaive.hs:9:10-60
-[FibonacciNaive.hs:9:28-33] *Main> :abandon
-*Main>
+```yaml
+executables:
+  fib:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -O2
+    c-sources:
+      - c-src/fibonacci.c
 ```
 
-#### `debug` package
+Of course, the best way is to have also optimized C code, without the naive algorithm, but the point here is to demonstrate the FFI mechanism itself.
 
-An interesting solution brings also the [debug](https://hackage.haskell.org/package/debug) package (and related extensions). It uses *Template Haskell* to examine the code and algorithms.
+```c
+// Fibonacci number with O(n) time complexity using iteration
+#include <stdint.h>
 
-```haskell
-{-# LANGUAGE TemplateHaskell, ViewPatterns, PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-module QuickSort(quicksort) where
-import Data.List
-import Debug
+int64_t fibonacci(int64_t n) {
+    if (n <= 1) return n;
 
-debug [d|
-   quicksort :: Ord a => [a] -> [a]
-   quicksort [] = []
-   quicksort (x:xs) = quicksort lt ++ [x] ++ quicksort gt
-       where (lt, gt) = partition (<= x) xs
-   |]
+    int64_t a = 0, b = 1;
+
+    for (int64_t i = 2; i <= n; i++) {
+        int64_t tmp = a + b;
+        a = b;
+        b = tmp;
+    }
+
+    return b;
+}
 ```
+
+or even more:
+
+```c
+// Fibonacci number with O(log n) time complexity using fast doubling
+#include <stdint.h>
+
+static void fib_fast_doubling(int64_t n, int64_t* a, int64_t* b) {
+    if (n == 0) {
+        *a = 0;
+        *b = 1;
+        return;
+    }
+
+    int64_t x, y;
+    fib_fast_doubling(n / 2, &x, &y);
+
+    int64_t c = x * (2 * y - x);
+    int64_t d = x * x + y * y;
+
+    if (n % 2 == 0) {
+        *a = c;
+        *b = d;
+    } else {
+        *a = d;
+        *b = c + d;
+    }
+}
+
+int64_t fibonacci(int64_t n) {
+    int64_t a, b;
+    fib_fast_doubling(n, &a, &b);
+    return a;
+}
+```
+
+#### Important FFI caveat
+
+When discussing FFI in a performance chapter, it is easy to give the wrong impression.
+
+The point is **not**:
+
+> “If Haskell is slow, rewrite it in C.”
+
+The real lesson is:
+
+* first choose a better algorithm,
+* then profile the program, and
+* only then consider whether FFI is justified.
+
+Often, a well-written Haskell implementation with a better algorithm will outperform a foreign implementation of a poor algorithm.
+
+#### Why FFI is useful beyond performance
+
+FFI is not only about speed. A major practical use of FFI is interoperability with existing libraries.
+
+For example, a Haskell program may call C code to use:
+
+* system libraries,
+* graphics libraries,
+* database libraries,
+* scientific computing libraries, or
+* operating system APIs.
+
+In such cases, FFI is valuable even when performance is not the primary concern.
+
+Moreover, FFI can be naturally used with other languages that can expose a C-compatible API, such as C++, Rust, or Fortran. This allows Haskell to interoperate with a wide range of ecosystems and leverage existing codebases.
+
+The most common and direct FFI in Haskell is with C, because GHC has strong support for it and many system libraries expose a C interface. However, interoperability is not limited to C.
+
+Depending on the tooling and ecosystem, Haskell can also interoperate with:
+
+* C++ (often through C-compatible wrappers),
+* Rust (typically by exposing a C ABI),
+* Fortran, and
+* other languages that can provide C-callable functions.
+
+In practice, many languages use C as a common interoperability layer.
+
+That means the typical pattern is:
+
+1) write foreign code in another language,
+2) expose a C-compatible API,
+3) call that API from Haskell via FFI.
+
+Interoperability also works in the other direction. Not only can Haskell call foreign code, but foreign programs can also call Haskell code. This is useful when:
+
+* embedding Haskell into a larger system,
+* exposing Haskell functionality to another application, or
+* building mixed-language systems.
+
+So FFI is not just *Haskell calling C* — it is a bridge between language runtimes.
+
+### Performance considerations
+
+In this chapter, we explored several ways to improve performance in Haskell programs.  
+These techniques operate at different levels, and it is important to understand their relative impact.
+
+---
+
+#### Where does performance come from?
+
+A program can be slow for several fundamentally different reasons:
+
+- **Algorithmic complexity**  
+  The program is doing too much work.
+
+- **Evaluation strategy**  
+  The program builds unnecessary thunks or retains too much data.
+
+- **Data representation**  
+  The program uses inefficient types or memory layouts.
+
+- **Execution model**  
+  The program does not take advantage of available parallelism.
+
+Understanding which of these is the real issue is the key to effective optimization.
+
+#### The order of optimization
+
+The most important lesson of this chapter is that not all optimizations are equally important.
+
+A useful rule of thumb is:
+
+1. **Measure and profile first**
+2. **Improve the algorithm or data structure**
+3. **Fix evaluation issues (strictness, space leaks)**
+4. **Choose appropriate types (`Int` vs `Integer`, etc.)**
+5. **Rely on compiler optimizations (`-O2`)**
+6. **Consider parallelism for large independent work**
+7. **Use FFI only when justified**
+
+Each step typically gives diminishing returns compared to the previous one.
+
+> The biggest improvements usually come from changing the algorithm, not from low-level tuning.
+
+#### Avoid premature optimization
+
+It is tempting to optimize code early, especially in a language like Haskell where evaluation behavior is subtle.
+
+However:
+
+- optimization without measurement can waste time,
+- and may make code more complex without real benefit.
+
+Instead:
+
+- write clear and correct code first,
+- measure and profile,
+- and only then optimize the parts that matter.
+
+#### Balance clarity and performance
+
+Many optimizations (such as strictness annotations or unboxed values) make code less abstract and harder to read.
+
+This creates a trade-off:
+
+- **clear, declarative code** is easier to understand and maintain,
+- **low-level optimized code** can be faster but more complex.
+
+In most cases:
+
+- start with clear code,
+- optimize only where necessary,
+- and keep optimized parts small and well-documented.
+
+#### Parallelism is not a shortcut
+
+Parallelism can improve performance, but only under the right conditions:
+
+- tasks must be large enough,
+- overhead must be small,
+- and the work must be independent.
+
+It is **not a replacement for a good algorithm**.
+
+#### FFI is a tool, not a solution
+
+Calling foreign code can be useful, but:
+
+- it introduces complexity,
+- it reduces portability,
+- and it does not solve fundamental design problems.
+
+Use FFI when it provides clear value, not as a default optimization strategy.
+
+#### Final takeaway
+
+Effective performance work is not about applying every available technique.   It is about choosing the *right* technique for the problem.
+
+In practice, this means:
+
+> Measure → Understand → Improve → Repeat
+
+and always remembering:
+
+> **Algorithm > evaluation > representation > low-level tuning**
+
+This hierarchy is the key to writing efficient Haskell programs.
 
 ## Task assignment
 
