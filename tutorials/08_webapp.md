@@ -569,16 +569,214 @@ Here are a few examples of simple and more complex web apps:
 * [ds-wizard/engine-backend](https://github.com/ds-wizard/engine-backend)
 
 
-## Continuation-style web development
+## Case study: a simple Servant web application
 
-We would also like to raise your attention to an interesting approach to web development based on the [continuation](https://wiki.haskell.org/Continuation). A continuation is "something" that enables you to save the state of computation, suspend it (do something else) and later resume it. This "something" may be a first-class language feature (such as in Scheme), or a library feature - in Haskell, surprisingly, we have a continuation monad ;-).
+To connect the concepts from this tutorial with practical usage, we will briefly outline the architecture of a simple web application based on Servant, which you will use in the assignment.
 
-A need for continuation occurs typically in web development (and generally in UI development) when you want a modal dialogue. Today, most of the dialogues are handled on client-side, however if you need to do a modal dialogue on server-side, it is hard - HTTP behaves like a programming language, which does not have subroutines, only GOTOs (URLSs are the 'line numbers'). Continuation can provide the missing abstraction here, which is embodied in the [MFlow](http://mflowdemo.herokuapp.com) library. Sadly, the project seems abandoned for several years.
+The goal is not to explain every detail, but to show how the pieces fit together.
 
-At the same time, the continuation-style web server programming is typically the first choice in the Smalltalk (OOP) world - [Seaside](http://seaside.st/) is purely continuation-based, and as such it gives a "desktop programming" experience for the web development resulting in no need of dealing with routing and URLs. As for the FP world, continuation-style web programming is surprisingly not used much in practice, but there are solutions such as the [Racket web server](https://docs.racket-lang.org/web-server/index.html) or [cl-weblocks](https://www.cliki.net/cl-weblocks) in Common Lisp.
+### Why Servant?
 
+Servant is a web framework that allows you to define your API at the type level.
 
-The next time, we will deal a bit with frontend technologies for Haskell, functional reactive programming and [The JavaScript problem](https://wiki.haskell.org/The_JavaScript_Problem). So you will also see how to develop server-side and client-side separately and connect them through a (REST) API.
+This has several advantages:
+
+* the API serves as a single source of truth,
+* server and client can be derived from the same definition,
+* many errors are caught at compile time.
+
+Servant is especially well-suited for building REST APIs with JSON.
+
+### Application architecture
+
+In the assignment, the application follows a simple layered structure:
+
+* **API** (presentation) layer – defines HTTP endpoints (routes, request/response types)
+* **Service** (business logic) layer – contains business logic
+* **Database** (persistence / data) layer – handles persistence (SQLite)
+* Model / DTOs – represent internal data and external API formats
+
+This separation helps keep the code:
+
+* modular,
+* testable,
+* easier to understand.
+
+We intentionally keep the architecture (and naming) close to what you may know from other languages and frameworks to show how Haskell can be used in a familiar way, while still benefiting from its unique features.
+
+### Application monad (context)
+
+The application uses a custom monad stack (using Monad transformers) to manage the application context, which includes:
+
+```haskell
+newtype AppContextM a = AppContextM
+    { runAppContextM :: ReaderT AppContext (LoggingT (ExceptT ServerError IO)) a
+    }
+    deriving (Applicative, Functor, Monad, MonadIO, MonadReader AppContext, MonadError ServerError, MonadLogger)
+```
+
+This stack combines several cross-cutting concerns:
+
+* `ReaderT AppContext` = shared environment (configuration, database connection, etc.)
+* `LoggingT` = structured logging
+* `ExceptT ServerError IO` = error handling compatible with Servant
+
+You have already seen these building blocks — here they are combined into a practical application context.
+
+### Example domain: TODO item
+
+The application typically works with a simple entity such as a TODO item.
+
+You will encounter:
+
+* ``Model`` = internal representation used in business logic
+* ``DTOs`` (Data Transfer Objects) = types used for JSON input/output
+* ``Conversion functions`` = mapping between internal and external representations
+
+### Model and Database
+
+The model describes how data are stored in the database. We can define models using **Persistent** library, which provides a nice DSL for defining database entities and their fields.
+
+```haskell
+--- ... Database/Model.hs
+
+share
+    [mkPersist sqlSettings, mkMigrate "migrateAll"]
+    [persistLowerCase|
+TODOItem
+  title String
+  description String
+  isDone Bool
+  deriving Show
+|]
+```
+
+This generates the `TODOItem` type together with database keys and migration support.
+
+Similarly to Java frameworks we can create a `Repository` or `DAO` to abstract database operations, but in this simple application, we will directly use Persistent functions in the service layer.
+
+```haskell
+--- ... Database/TODOItemDAO.hs
+
+getById :: String -> AppContextM (Maybe TODOItem)
+getById todoId = do
+    result <- runDB $ selectList [TODOItemUuid ==. todoId] []
+    case result of
+        [] -> return Nothing
+        ((Entity _ todoItem) : _) -> return (Just todoItem)
+
+create :: TODOItem -> AppContextM TODOItemId
+create newTODOItem = runDB $ insert newTODOItem
+
+getAll :: AppContextM [TODOItem]
+getAll = do
+    result <- runDB $ selectList [] []
+    return $ extractTODOItem <$> result
+  where
+    extractTODOItem (Entity _ todoItem) = todoItem
+```
+
+Naturally, this should not contain any business logic, just database access.
+
+### Service
+
+The service layer contains the application logic and composes DAO + mapper functions:
+
+```haskell
+-- ... Service/TODOItemService.hs
+
+getAllTODOItems :: AppContextM [TODOItemDTO]
+getAllTODOItems = do
+    todoItems <- getAll
+    return $ toDTO <$> todoItems
+
+createTODOItem :: TODOItemCreateDTO -> AppContextM (Maybe TODOItemDTO)
+createTODOItem createDto = do
+    newUuid <- liftIO $ toString <$> nextRandom
+    let newTODOItem = fromCreateDTO newUuid createDto
+    _ <- create newTODOItem
+    mTODOItem <- getById newUuid
+    return $ toDTO <$> mTODOItem
+
+getTODOItem :: String -> AppContextM (Maybe TODOItemDTO)
+getTODOItem todoId = do
+    mTODOItem <- getById todoId
+    return $ toDTO <$> mTODOItem
+```
+
+Compared to the DAO layer, the service layer works with DTOs and application use-cases rather than raw database operations.
+
+### API
+
+Finally, the API layer defines the HTTP endpoints and how they map to service functions. First on the type level:
+
+```haskell
+-- ... API/TODOItemAPI.hs
+
+type List_GET
+    = "todo" :> QueryParam "q" String :> Get '[JSON] [TODOItemDTO]
+
+type List_POST
+    = ReqBody '[JSON] TODOItemCreateDTO
+   :> "todo"
+   :> Verb 'POST 201 '[JSON] TODOItemDTO
+
+type Detail_GET
+    = "todo" :> Capture "todoId" String :> Get '[JSON] TODOItemDTO
+
+type TODOItemAPI
+    = List_GET
+ :<|> List_POST
+ :<|> Detail_GET
+```
+
+Then, we implement the server by mapping API endpoints to service functions:
+
+```haskell
+-- ... API/TODOItemAPI.hs
+
+list_GET :: Maybe String -> AppContextM [TODOItemDTO]
+list_GET _query = getAllTODOItems
+
+list_POST :: TODOItemCreateDTO -> AppContextM TODOItemDTO
+list_POST reqDto = do
+    mTODOItemDTO <- createTODOItem reqDto
+    returnOr404 mTODOItemDTO
+
+detail_GET :: String -> AppContextM TODOItemDTO
+detail_GET todoId = do
+    mTODOItemDTO <- getTODOItem todoId
+    returnOr404 mTODOItemDTO
+```
+
+Finally, we can define the complete server by combining all endpoints:
+
+```haskell
+todoServer :: ServerT TODOItemAPI AppContextM
+todoServer = list_GET :<|> list_POST :<|> detail_GET
+```
+
+### Application entry point
+
+The application entry point initializes the application context, runs database migrations, and starts the server:
+
+```haskell
+main :: IO ()
+main = do
+    -- Initialize application context (e.g., database connection)
+    appContext <- initializeAppContext
+    -- Run database migrations
+    runSqlite (appDbPath appContext) $ runMigration migrateAll
+    -- Start the server
+    let apiProxy = Proxy :: Proxy TODOItemAPI
+    run 3000 $ serve apiProxy (hoistServer apiProxy (convertAppContext appContext) todoServer)
+```
+
+Functions like `initializeAppContext` and `convertAppContext` are responsible for setting up the application context and converting it to the form expected by Servant.
+
+### Conclusion
+
+This case study shows how to structure a simple web application in Haskell using Servant, Persistent, and a custom application monad. The same principles can be applied to other frameworks and libraries as well. The key takeaway is that Haskell's strong type system and powerful abstractions allow us to build web applications that are modular, testable, and maintainable.
 
 ## Task assignment
 
