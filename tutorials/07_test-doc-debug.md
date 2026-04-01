@@ -168,7 +168,7 @@ There are many predefined expectation functions that are typically written in in
 
 * `shouldBe` = equality test
 * `shouldNotBe` = inequality test
-* `shouldSatisfy` = test if result satisfies given property as function `:: a -> Bool`
+* `shouldSatisfy` = test if result satisfies given property as function of type `a -> Bool`
 * `shouldStartWith` = test if list has a given prefix
 * `shouldEndWith` = test if list has a given suffix
 * `shouldContain` = test if list contains sublist
@@ -352,7 +352,7 @@ You can leverage the documentation also to explain design decisions, trade-offs,
 
 ### Documenting functions
 
-Haddock comments use -- | for single-line documentation and {-| ... -} for multi-line blocks. For functions, you should document:
+Haddock comments use `-- |` for single-line documentation and `{-| ... -}` for multi-line blocks. For functions, you should document:
 
 ```haskell
 -- | Computes the arithmetic mean of a non-empty list.
@@ -483,7 +483,7 @@ import Debug.Trace (traceShowId)
 
 foo xs = traceShowId (take 5 xs) ++ "..."
 ```
-* Use `traceM`/`traceIO` when you're in monadic code (IO, StateT, etc.). The file already points out `traceIO` and `traceM` as standard options. 
+* Use `traceM`/`traceIO` when you're in monadic code (`IO`, `StateT`, etc.). The file already points out `traceIO` and `traceM` as standard options. 
 * Laziness gotcha: sometimes nothing prints because the value isn't demanded yet. If you expect a trace and don't see it, ensure the expression is actually evaluated (e.g., by printing it, using `evaluate`, or by restructuring so it's forced).
 * Keep traces out of releases: a common pattern is to guard them behind a CPP flag, or keep them local and remove them once fixed.
 
@@ -543,7 +543,7 @@ This example is not chosen because it is practical, but because it clearly demon
 * a reasonable algorithm,
 * and low-level optimizations.
 
-### 1. Naive Fibonacci
+### Case 0: Naive Fibonacci
 
 ```haskell
 fibonacci :: Integer -> Integer
@@ -741,7 +741,7 @@ main = do
   print (sumGood [1..10000000])
 ```
 
-### 2. The biggest optimization: a better algorithm
+### Case 1: The biggest optimization: a better algorithm
 
 The main problem with the naive Fibonacci implementation is not laziness, boxing, or the choice of numeric type. The real problem is the **algorithm itself**.
 
@@ -771,7 +771,7 @@ Now we can benchmark and profile these implementations to see the dramatic impro
 
 Low-level optimizations can improve a good implementation, but they rarely compensate for a poor algorithm.
 
-### 3. Strict evaluation
+### Case 2: Strict evaluation
 
 Even after choosing a much better algorithm, evaluation strategy still matters.
 
@@ -804,7 +804,7 @@ The important lesson is that strictness is usually a secondary optimization:
 
 Strictness can make a good implementation better, but it does not change the fundamental complexity of the problem.
 
-### 4. Choosing the right types
+### Case 3: Choosing the right types
 
 The next question is whether we are using the most appropriate data type.
 
@@ -835,7 +835,7 @@ However, `Int` has a fixed size and can overflow. That means it is only appropri
 
 Choosing the right type will usually not matter as much as choosing the right algorithm, but it can still provide a noticeable improvement once the algorithm is already good. This is of course different when it comes to **types of data structures**, where the choice of representation can have a significant impact on performance.
 
-### 5. Boxed vs unboxed values (advanced)
+### Case 4: Boxed vs unboxed values (advanced)
 
 Another source of overhead in Haskell is how values are represented in memory.
 
@@ -911,7 +911,7 @@ main = print (fibonacciUnboxed 30)
 
 Note that we are using `Int` and cannot use `Integer` here, because `Integer` is a boxed type and cannot be unboxed. This code is more efficient than the boxed version, but it is also more complex and less flexible. It is generally recommended to let GHC handle unboxing for you by writing clear, strict code with appropriate types.
 
-### 6. Compiler optimizations
+### Case 5: Compiler optimizations
 
 So far, all improvements were made by changing the source code. However, the compiler itself can significantly improve performance.
 
@@ -938,7 +938,7 @@ ghc-options:
   - -O2
 ```
 
-### 7. Parallelism and concurrency
+### Case 6: Parallelism and concurrency
 
 Another possible optimization is to use multiple CPU cores. This can help when:
 
@@ -1120,7 +1120,7 @@ stack exec -- fib-par -- +RTS -N4
 
 Here, `-N` uses all available cores, while `-N4` limits it to 4 cores. Without this option, the program may still use concurrency abstractions, but it will not execute pure computations in parallel across multiple cores.
 
-### 8. Foreign Function Interface (FFI)
+### Case 7: Foreign Function Interface (FFI)
 
 Another way to improve performance, or to reuse existing code, is to call functions written in another language.
 
@@ -1429,14 +1429,14 @@ The homework to practice IO (again), testing, and writing project documentation 
 
 ## Further reading
 
-* [A Gentle Introduction to Haskell - Input/Output](https://www.haskell.org/tutorial/io.html)
-* [Haskell - Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
-* [Real World Haskell - Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
-* [WikiBooks - Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
+* [A Gentle Introduction to Haskell: Input/Output](https://www.haskell.org/tutorial/io.html)
+* [Haskell: Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
+* [Real World Haskell: Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
+* [WikiBooks Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
 * [Haddock User Guide](https://www.haskell.org/haddock/doc/html/index.html)
 * [QuickCheck and Magic of Testing](https://www.fpcomplete.com/blog/2017/01/quickcheck)
-* [Haskell - Debugging](https://wiki.haskell.org/Debugging)
-* [Haskell - Performance](https://wiki.haskell.org/Performance)
-* [Haskell - Concurrency](https://wiki.haskell.org/Concurrency)
-* [Real World Haskell - Concurrent and Multicore Programming](http://book.realworldhaskell.org/read/concurrent-and-multicore-programming.html)
-* [GHC - Concurrent and Parallel Haskell](https://downloads.haskell.org/~ghc/7.0.3/docs/html/users_guide/lang-parallel.html)
+* [Haskell: Debugging](https://wiki.haskell.org/Debugging)
+* [Haskell: Performance](https://wiki.haskell.org/Performance)
+* [Haskell: Concurrency](https://wiki.haskell.org/Concurrency)
+* [Real World Haskell: Concurrent and Multicore Programming](http://book.realworldhaskell.org/read/concurrent-and-multicore-programming.html)
+* [GHC: Concurrent and Parallel Haskell](https://downloads.haskell.org/~ghc/7.0.3/docs/html/users_guide/lang-parallel.html)
