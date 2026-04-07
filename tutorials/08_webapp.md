@@ -132,6 +132,7 @@ There are several frameworks in Haskell (see [here](https://wiki.haskell.org/Web
 - [Snap](http://snapframework.com)
 - [Spock](https://www.spock.li)
 - [Yesod](https://www.yesodweb.com)
+- [IHP](https://ihp.digitallyinduced.com)
 
 As you can see, there is quite an above-average offer of them. They mostly differ at the level of abstraction and scope: Scotty being relatively low-abstraction routing and middleware and Yesod being a complete solution including templating and persistence, everything on a high abstraction level. The choice depends on your preference and needs. As always, a higher abstraction means the system does a lot of job for yourself, you write fewer code, which means a higher effectiveness and less bugs. On the other hand, you may face a [leaky abstraction problem](https://blog.codinghorror.com/all-abstractions-are-failed-abstractions/) at some point.
 
@@ -218,6 +219,19 @@ getHomeR = defaultLayout [whamlet|Hello World!|]
 main :: IO ()
 main = warp 3000 HelloWorld
 ```
+
+### IHP (Integrated Haskell Platform)
+
+[IHP](https://ihp.digitallyinduced.com/) is a batteries-included web framework for Haskell. It is designed to be easy to use and to provide a lot of functionality out of the box, including:
+
+* A powerful type system that helps catch errors at compile time
+* A built-in ORM (Object-Relational Mapping) for working with databases
+* A templating engine for generating HTML
+* A development server for testing and debugging
+
+IHP is a good choice for developers who want to build web applications quickly and easily, without having to worry about the underlying details of web development. It is also a good choice for developers who want to take advantage of Haskell's powerful type system and functional programming features.
+
+The architecture of IHP is based on the Model-View-Controller (MVC) pattern, which helps to keep the code organized and maintainable. The framework also provides a lot of built-in functionality for common web development tasks, such as authentication, authorization, and database migrations.
 
 ### Scotty
 
@@ -629,9 +643,9 @@ The application typically works with a simple entity such as a TODO item.
 
 You will encounter:
 
-* ``Model`` = internal representation used in business logic
-* ``DTOs`` (Data Transfer Objects) = types used for JSON input/output
-* ``Conversion functions`` = mapping between internal and external representations
+* ``Model`` = internal representation used in business logic
+* ``DTOs`` (Data Transfer Objects) = types used for JSON input/output
+* ``Conversion functions`` = mapping between internal and external representations
 
 ### Model and Database
 
@@ -784,8 +798,8 @@ The homework to complete a simple web app is in repository [MI-AFP/hw08](https:/
 
 ## Further reading
 
-* [YesodBook - Persistent](https://www.yesodweb.com/book/persistent)
-* [adit.io - Making A Website With Haskell](http://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
+* [YesodBook: Persistent](https://www.yesodweb.com/book/persistent)
+* [adit.io: Making A Website With Haskell](http://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
 * [24 Days of Hackage: blaze-html](https://ocharles.org.uk/blog/posts/2012-12-22-24-days-of-hackage-blaze.html)
 * [Haskell web frameworks](https://wiki.haskell.org/Web/Frameworks)
 * [Reddit: What Haskell web framework do you use and why? ](https://www.reddit.com/r/haskell/comments/332s1k/what_haskell_web_framework_do_you_use_and_why/)
