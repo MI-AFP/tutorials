@@ -63,8 +63,6 @@ Important part of a productive environment (and not just for team, even if you a
 
 The most famous version control systems these days are [Git](https://git-scm.com) and [SVN (subversion)](https://subversion.apache.org). Frequently, you can stick with rule that SVN is more suitable for larger and binary files (although there is Git LFS) or when good integration for specific tool is supplied (for example, Enterprise Architect). The core difference is in approach that SVN is centralized and you need to lock part that you want to change, this is where Git will require you resolve merge conflicts. Merging and branches in SVN are more complicated than in Git (this many be subjective).
 
-![Git vs. Subversion (git-tower.com)](https://www.git-tower.com/learn/content/01-git/01-ebook/en/02-desktop-gui/07-appendix/02-from-subversion-to-git/centralized-vs-distributed.png)
-
 For more see: https://www.perforce.com/blog/vcs/git-vs-svn-what-difference
 
 ### GitHub, GitLab, and others
@@ -142,7 +140,7 @@ To avoid that, you need some people to do reviews for you and do the review for 
 
 As already being said few times, there are services that can be easily integrated with GitHub or GitLab in order to do something with your project automatically when you push commits, create pull request, release new version, or do some other action. The "something" can be actually anything and you can write such "[CI tool](https://en.wikipedia.org/wiki/Continuous_integration)" even by yourself.
 
-* Continuous Integration - This term is used usually when your software is built (all parts are integrated), and tested with automatic tests or at least attempt to execute it is done. The result is that at that moment your code is (at least somehow) working. It is nice to see in your commits history which were working and which were not. For this, you can use [Travis CI](travis-ci.org), [Semaphore CI](https://semaphoreci.com), AppVeyor, and many others.
+* Continuous Integration - This term is used usually when your software is built (all parts are integrated), and tested with automatic tests or at least attempt to execute it is done. The result is that at that moment your code is (at least somehow) working. It is nice to see in your commits history which were working and which were not. For this, you can use [Travis CI](https://travis-ci.org), [Semaphore CI](https://semaphoreci.com), AppVeyor, and many others.
 * Continuous Inspection - Services that does static inspection of your code, they can verify dependencies of your project, evaluate coverage, and others. One of the examples is [SonarQube](https://www.sonarqube.org), but again there are many similar services.
 * Continuous Delivery - If your code passed the build and test phases, it can be deployed somewhere. The deployment can have many realizations, from actual deployment on some web hosting or app server (realized, for example, by service like [Heroku](https://www.heroku.com) or [AWS](https://aws.amazon.com)), though publishing new documentation on [ReadTheDocs](https://readthedocs.org), to uploading installation packages to some registry. All depends what you need, want, and how you will set it up.
 

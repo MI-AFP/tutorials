@@ -746,10 +746,10 @@ For the second assignment, navigate to the `hw02` project and follow the instruc
 
 ## Further reading
 
-* [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
+* [Learn You a Haskell for Great Good](https://learnyouahaskell.github.io/)
 * [School of Haskell](https://www.schoolofhaskell.com/school/starting-with-haskell/introduction-to-haskell)
 
-[containers]: http://hackage.haskell.org/package/containers
-[Data.List]: hackage.haskell.org/package/base/docs/Data-List.html
-[Data.String]: hackage.haskell.org/package/base/docs/Data-String.html
-[Data.Tuple]: hackage.haskell.org/package/base/docs/Data-Tuple.html
+[containers]: https://hackage.haskell.org/package/containers
+[Data.List]: https://hackage.haskell.org/package/base/docs/Data-List.html
+[Data.String]: https://hackage.haskell.org/package/base/docs/Data-String.html
+[Data.Tuple]: https://hackage.haskell.org/package/base/docs/Data-Tuple.html

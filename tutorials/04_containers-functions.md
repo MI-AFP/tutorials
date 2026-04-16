@@ -15,7 +15,7 @@ The goal is not category theory though. The goal is to see that Haskell programs
 We already know the basic data types from the `base` package such as:
 
 * [`Bool`](https://hackage.haskell.org/package/base/docs/Data-Bool.html)
-* numeric types ([`Int`](https://hackage.haskell.org/package/base/docs/Data-Int.html), [`Integer`](https://hackage.haskell.org/package/base/docs/Data-Integer.html), [`Double`](https://hackage.haskell.org/package/base/docs/Data-Double.html), ...)
+* numeric types ([`Int`](https://hackage.haskell.org/package/base/docs/Data-Int.html), [`Integer`](https://hackage.haskell.org/package/base/docs/GHC-Integer.html), [`Double`](https://hackage.haskell.org/package/base/docs/Prelude.html#t:Double), ...)
 * [`Char`](https://hackage.haskell.org/package/base/docs/Data-Char.html)
 * [lists](https://hackage.haskell.org/package/base/docs/Data-List.html) `[a]`
 * [tuples](https://hackage.haskell.org/package/base/docs/Data-Tuple.html) `(a, b)`
@@ -888,9 +888,9 @@ For the assignment, navigate to the `hw04` project and follow the instructions i
 * [Haskell containers](https://haskell-containers.readthedocs.io/en/latest/)
 * [Haskell - Handling errors in Haskell](https://wiki.haskell.org/Handling_errors_in_Haskell)
 * [Haskell - error](https://wiki.haskell.org/Error)
-* [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
+* [8 ways to report errors in Haskell](https://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/)
 
 [containers]: https://hackage.haskell.org/package/containers
 [GHC]: https://www.haskell.org/ghc/
 [Hackage]: https://hackage.haskell.org
-[Hoogle]: https://www.haskell.org/hoogle/
+[Hoogle]: https://hoogle.haskell.org/

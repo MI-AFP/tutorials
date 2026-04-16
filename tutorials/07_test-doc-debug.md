@@ -58,7 +58,7 @@ When to use HUnit:
 
 ### QuickCheck
 
-[QuickCheck](https://hackage.haskell.org/package/QuickCheck) is built around the idea that instead of writing many example tests, you write properties your code should satisfy — and QuickCheck tries to falsify them using randomly generated inputs. All from a simple example to complex tutorials of such definitions are explained in the [manual](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
+[QuickCheck](https://hackage.haskell.org/package/QuickCheck) is built around the idea that instead of writing many example tests, you write properties your code should satisfy — and QuickCheck tries to falsify them using randomly generated inputs. All from a simple example to complex tutorials of such definitions are explained in the [manual](https://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html).
 
 When to use QuickCheck:
 
@@ -1431,12 +1431,10 @@ The homework to practice IO (again), testing, and writing project documentation 
 
 * [A Gentle Introduction to Haskell: Input/Output](https://www.haskell.org/tutorial/io.html)
 * [Haskell: Simple input and output](https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output)
-* [Real World Haskell: Testing and quality assurance](http://book.realworldhaskell.org/read/testing-and-quality-assurance.html)
 * [WikiBooks Haskell: Testing](https://en.wikibooks.org/wiki/Haskell/Testing)
 * [Haddock User Guide](https://www.haskell.org/haddock/doc/html/index.html)
 * [QuickCheck and Magic of Testing](https://www.fpcomplete.com/blog/2017/01/quickcheck)
 * [Haskell: Debugging](https://wiki.haskell.org/Debugging)
 * [Haskell: Performance](https://wiki.haskell.org/Performance)
 * [Haskell: Concurrency](https://wiki.haskell.org/Concurrency)
-* [Real World Haskell: Concurrent and Multicore Programming](http://book.realworldhaskell.org/read/concurrent-and-multicore-programming.html)
 * [GHC: Concurrent and Parallel Haskell](https://downloads.haskell.org/~ghc/7.0.3/docs/html/users_guide/lang-parallel.html)

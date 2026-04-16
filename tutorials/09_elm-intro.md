@@ -1010,7 +1010,7 @@ _Note_: Elm is using (same as React) Virtual DOM feature
 
 ### Elm Reactor
 
-It is a quick and simple tool to run Elm project during development. Run `elm reactor` in the project root. It starts a server at [http://localhost:8000](http://localhost:8000) where we can navigate to Elm files.
+It is a quick and simple tool to run Elm project during development. Run `elm reactor` in the project root. It starts a server at `http://localhost:8000` where we can navigate to Elm files.
 
 ## Elm program
 
@@ -1046,15 +1046,13 @@ GHCJS is a compiler for Haskell to JavaScript that uses GHC API. It supports a w
 - [Reflex](https://reflex-frp.org) - A composable, cross-platform functional reactive programming framework for Haskell.
 - [miso](https://haskell-miso.org) - A tasty Haskell front-end framework.
 
-### [PureScript](http://www.purescript.org)
+### [PureScript](https://www.purescript.org)
 
 PureScript is a strongly-typed functional programming language that compiles to JavaScript. It is similar to Haskell with [some differences](https://github.com/purescript/documentation/blob/master/language/Differences-from-Haskell.md). It has a lot of packages published in [Pursuit](https://pursuit.purescript.org). Also, some frameworks for building web applications are there, e.g.:
 
 - [Thermite](https://github.com/paf31/purescript-thermite) - A simple PureScript wrapper for React.
 - [Halogen](https://github.com/slamdata/purescript-halogen) - A declarative, type-safe UI library for PureScript.
 - [Pux](https://github.com/alexmingoia/purescript-pux) - A library for building type-safe web applications.
-
-If you are interested, you can have a look at this comparison: [Benchmarks: GHCJS (Reflex, Miso) & Purescript (Pux, Thermite, Halogen)](https://medium.com/@saurabhnanda/benchmarks-fp-languages-libraries-for-front-end-development-a11af0542f7e)
 
 ### [ReasonML](https://reasonml.github.io)
 

@@ -126,7 +126,7 @@ As with other languages, you usually don't want to build a web application from 
 
 There are several frameworks in Haskell (see [here](https://wiki.haskell.org/Web/Frameworks)) and here is our list of the most used ones:
 
-- [Happstack](http://happstack.com)
+- [Happstack](https://happstack.com)
 - [Scotty](https://github.com/scotty-web/scotty)
 - [Servant](https://haskell-servant.github.io)
 - [Snap](http://snapframework.com)
@@ -235,7 +235,7 @@ The architecture of IHP is based on the Model-View-Controller (MVC) pattern, whi
 
 ### Scotty
 
-[Scotty](https://github.com/scotty-web/scotty) is another Haskell web framework inspired by Ruby's [Sinatra](http://sinatrarb.com), using [WAI](https://hackage.haskell.org/package/wai) and [Warp](https://hackage.haskell.org/package/warp) (a fast, light-weight web server for WAI applications). You can write your own application just with WAI (Web Application Interface), but Scotty provides you with abstractions from a low-level communication. Sadly, there is not so much documentation about Scotty, everything is just on [GitHub](https://github.com/scotty-web/scotty). Scotty uses primarily [Blaze HTML](https://hackage.haskell.org/package/blaze-html) for HTML "templates", however, as we explained, you may also integrate it with any templating library you like.
+[Scotty](https://github.com/scotty-web/scotty) is another Haskell web framework inspired by Ruby's [Sinatra](https://sinatrarb.com), using [WAI](https://hackage.haskell.org/package/wai) and [Warp](https://hackage.haskell.org/package/warp) (a fast, light-weight web server for WAI applications). You can write your own application just with WAI (Web Application Interface), but Scotty provides you with abstractions from a low-level communication. Sadly, there is not so much documentation about Scotty, everything is just on [GitHub](https://github.com/scotty-web/scotty). Scotty uses primarily [Blaze HTML](https://hackage.haskell.org/package/blaze-html) for HTML "templates", however, as we explained, you may also integrate it with any templating library you like.
 
 #### "Hello World"
 
@@ -293,7 +293,7 @@ You might ask "What about styles?" or "What if want to have some JavaScript ther
 
 #### Hastache templates
 
-If you are already familiar with some web development, you've probably heard about the popular [{{ mustache }}](http://mustache.github.io) templates. In Haskell, we have Haskell implementation of Mustache templates called [hastache](https://hackage.haskell.org/package/hastache).
+If you are already familiar with some web development, you've probably heard about the popular [{{ mustache }}](https://mustache.github.io) templates. In Haskell, we have Haskell implementation of Mustache templates called [hastache](https://hackage.haskell.org/package/hastache).
 
 ```haskell
 import Text.Hastache
@@ -400,11 +400,11 @@ main = do
 
 Again, several abstraction levels are available. First, you can employ a low-level approach where you incorporate SQL in the code. For that, you can usually use module `Database.X` where `X` is type of datase:
 
-- [Database.SQLite](http://hackage.haskell.org/package/sqlite-simple)
-- [Database.MySQL](http://hackage.haskell.org/package/mysql)
-- [Database.PostgreSQL](http://hackage.haskell.org/package/PostgreSQL)
-- [Database.MongoDB](http://hackage.haskell.org/package/mongoDB)
-- [Database.Redis](http://hackage.haskell.org/package/redis)
+- [Database.SQLite](https://hackage.haskell.org/package/sqlite-simple)
+- [Database.MySQL](https://hackage.haskell.org/package/mysql)
+- [Database.PostgreSQL](https://hackage.haskell.org/package/PostgreSQL)
+- [Database.MongoDB](https://hackage.haskell.org/package/mongoDB)
+- [Database.Redis](https://hackage.haskell.org/package/redis)
 - etc.
 
 A slightly better services are provided by mid-level libraries:
@@ -412,7 +412,7 @@ A slightly better services are provided by mid-level libraries:
 - [Database.MySQL.Simple](https://hackage.haskell.org/package/mysql-simple)
 - [Database.PostgreSQL.Simple](https://hackage.haskell.org/package/postgresql-simple)
 
-Going higher with the abstraction, you can then use [Haskell Database Connectivity (HDBC)](http://hackage.haskell.org/package/HDBC) for SQL databases. A good introduction to HDBC is in [Chapter 21 - Using Databases](http://book.realworldhaskell.org/read/using-databases.html) of the [Real World Haskell](http://book.realworldhaskell.org/) book.
+Going higher with the abstraction, you can then use [Haskell Database Connectivity (HDBC)](https://hackage.haskell.org/package/HDBC) for SQL databases. A good introduction to HDBC is in Chapter 21 - Using Databases of the [Real World Haskell](https://i.iinfo.cz/files/root/k/real-world-haskell.pdf) book.
 
 ```sql
 CREATE TABLE test(id INTEGER PRIMARY KEY, str TEXT);\
@@ -798,10 +798,6 @@ The homework to complete a simple web app is in repository [MI-AFP/hw08](https:/
 
 ## Further reading
 
-* [YesodBook: Persistent](https://www.yesodweb.com/book/persistent)
-* [adit.io: Making A Website With Haskell](http://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
-* [24 Days of Hackage: blaze-html](https://ocharles.org.uk/blog/posts/2012-12-22-24-days-of-hackage-blaze.html)
+* [YesodBook - Persistent](https://www.yesodweb.com/book/persistent)
+* [adit.io - Making A Website With Haskell](https://adit.io/posts/2013-04-15-making-a-website-with-haskell.html)
 * [Haskell web frameworks](https://wiki.haskell.org/Web/Frameworks)
-* [Reddit: What Haskell web framework do you use and why? ](https://www.reddit.com/r/haskell/comments/332s1k/what_haskell_web_framework_do_you_use_and_why/)
-* [Reddit: Web development using Haskell](https://www.reddit.com/r/haskell/comments/2wfap0/web_development_using_haskell/)
-* [Is Haskell a Good Choice for Web Applications?](http://jekor.com/article/is-haskell-a-good-choice-for-web-applications)
