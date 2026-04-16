@@ -110,7 +110,7 @@ divide_ =
 
 
 modBy_ =
-    modBy 7 2 -- 2
+    modBy 7 2 -- 1
 ```
 
 #### Bool and logical operators
@@ -139,7 +139,10 @@ or =
 
 
 and =
-    False && True -- True
+    False && True -- False
+
+and =
+    True && True -- True
 ```
 
 ### Function
@@ -264,7 +267,7 @@ Or we can expose everything from the module.
 import Lib.Math exposing (..)
 
 linearResult =
-    Lib.Math.linear 5 3 7 -- 38
+    linear 5 3 7 -- 38
 ```
 
 Or we can import a module with a different name.
@@ -957,14 +960,14 @@ type Msg
 type alias Model =
     Int
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> Model
 update msg model =
   case msg of
     Increment ->
-      ( model + 1, Cmd.none )
+      model + 1
 
     Decrement ->
-      ( model - 1, Cmd.none )
+      model - 1
 
 view : Model -> Html.Html Msg
 view model =
