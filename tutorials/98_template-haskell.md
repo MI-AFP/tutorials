@@ -6,8 +6,8 @@ Template Haskell is an experimental language extension to the Haskell programmin
 
 With Template Haskell (TH) you can write code that generates code (i.e. metaprogramming). Sometimes it is considered as bad and result of failing to address some problem in a normal programming way. On the other hand, in some situations it can really simplify your work when you need to really generate amount of similar and complex code from simpler specification. There are some typical use cases of Template Haskell:
 
-* **Deriving of type class instances** - You know keyword `deriving` and we said that you can use it for basic typeclasses such as `Show`, `Read`, or `Ord`. Well, there are ways how to derive also othes. One is using [GHC.Generics](https://wiki.haskell.org/GHC.Generics) but that might slow down the compilation significantly. The other is TH and that way is used for example by [aeson](http://hackage.haskell.org/package/aeson) library when deriving instances for transformation from and to JSON.
-* **Domain Specific Languages (DSLs)** - DSLs are trendy, nice, and cool way how to code things without actually writing the code itself but using different syntax in special quotes. They are integrated into systems built in Haskell. Examples of such DLSs are the language for model declaration used in [persistent](http://hackage.haskell.org/package/persistent), and various other mini-languages used in the [yesod](http://hackage.haskell.org/package/yesod) web framework that we have already shown.
+* **Deriving of type class instances** - You know keyword `deriving` and we said that you can use it for basic typeclasses such as `Show`, `Read`, or `Ord`. Well, there are ways how to derive also othes. One is using [GHC.Generics](https://wiki.haskell.org/GHC.Generics) but that might slow down the compilation significantly. The other is TH and that way is used for example by [aeson](https://hackage.haskell.org/package/aeson) library when deriving instances for transformation from and to JSON.
+* **Domain Specific Languages (DSLs)** - DSLs are trendy, nice, and cool way how to code things without actually writing the code itself but using different syntax in special quotes. They are integrated into systems built in Haskell. Examples of such DLSs are the language for model declaration used in [persistent](https://hackage.haskell.org/package/persistent), and various other mini-languages used in the [yesod](https://hackage.haskell.org/package/yesod) web framework that we have already shown.
 * **Compile-time construction of values of refined types** - It simply turns invalid inputs into compilation failures.
 * **Compile-time loading and processing of data from external files** - This is very useful sometimes to avoid loading resources on the beginning of every run of the application. Even though it involves running IO during compilation, it’s a relatively innocent use case of that dangerous feature.
 
@@ -22,7 +22,7 @@ The core of TH is the `Q` monad (short for “quotation”) that hosts all funct
 * Putting and getting some custom state that is then shared by all TH code in the same module.
 * Running IO during compilation, so we can e.g. read something from a file.
 
-Everything needed for basic TH is in [template-haskell](http://hackage.haskell.org/package/template-haskell) package, including the definition of the `Q` monad and other types and typeclasses that we will mention afterwards.
+Everything needed for basic TH is in [template-haskell](https://hackage.haskell.org/package/template-haskell) package, including the definition of the `Q` monad and other types and typeclasses that we will mention afterwards.
 
 ```haskell
 newtype Q a = Q { unQ :: forall m. Quasi m => m a }
@@ -148,7 +148,6 @@ There are many more options to do with Template Haskell especially when it comes
 * [Template Haskell tutorial (Mark Karpov)](https://markkarpov.com/tutorial/th.html)
 * [Wikipedia - Template Haskell](https://en.wikipedia.org/wiki/Template_Haskell)
 * [Template Haskell Is Not Scary](https://www.parsonsmatt.org/2015/11/15/template_haskell.html)
-* [24 Days of GHC Extensions: Template Haskell](https://ocharles.org.uk/guest-posts/2014-12-22-template-haskell.html)
 * [Syntax of Template Haskell and Quasiquotes](https://riptutorial.com/haskell/example/18471/syntax-of-template-haskell-and-quasiquotes)
 * [Intro to Template Haskell](https://typeclasses.com/news/2018-10-intro-template-haskell)
 * [Template Haskell 101](https://www.schoolofhaskell.com/user/marcin/template-haskell-101)

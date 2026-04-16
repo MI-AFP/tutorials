@@ -595,7 +595,7 @@ class Functor f => Applicative f where
 --(<$>) ::   (a -> b) -> f a -> f b   -- this is from functor
 ```
 
-Function `pure` only lifts something into applicative structure `f`. The more interesting part is the ["tie-fighter"](http://starwars.wikia.com/wiki/TIE/LN_starfighter) operator `<*>` that applies a lifted function over an applicative. You can find out in the documentation following similar functions and partial functions as in [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html):
+Function `pure` only lifts something into applicative structure `f`. The more interesting part is the "tie-fighter" operator `<*>` that applies a lifted function over an applicative. You can find out in the documentation following similar functions and partial functions as in [Data.Functor](https://hackage.haskell.org/package/base/docs/Data-Functor.html):
 
 ```haskell
 (<*) :: f a -> f b -> f a
@@ -664,7 +664,7 @@ In Haskell terminology, we call `Functor f => f a` an **action**. Actions have t
 
 ### Monad — sequencing dependent effects
 
-The most famous (and [scary](https://camo.githubusercontent.com/f2c3667a2cdf19c0cf203fad44c81d197c4cd740/68747470733a2f2f692e696d67666c69702e636f6d2f317a6e707a622e6a7067) :-)) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases.
+The most famous (and often scary) typeclass for Haskell students is [Control.Monad](https://hackage.haskell.org/package/base/docs/Control-Monad.html). It defines basic operations over a monad, a term from category theory. From the perspective of a Haskell programmer, however, it is best to think of a monad as an "abstract datatype of actions". Haskell's `do` expressions provide a convenient syntax for writing monadic expressions. This time we will start Monads (operations, laws, basic behavior, etc.) and next time we will get deeper with some more practical use-cases.
 
 ```haskell
 class Applicative m => Monad m where
@@ -877,9 +877,9 @@ For the assignment, navigate to the `hw05` project and follow the instructions i
 * [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
 * [Haskell: OOP vs type classes](https://wiki.haskell.org/OOP_vs_type_classes)
 * [WikiBooks Haskell: Classes and types](https://en.wikibooks.org/wiki/Haskell/Classes_and_types)
-* [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
+* [Functors, Applicatives, And Monads In Pictures](https://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
 * [Haskell and Category Theory](https://en.wikibooks.org/wiki/Haskell/Category_theory)
 * [Category Theory for Programmers by Bartosz Milewski](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface)
-* [LYAH: Functors, Applicative Functors and Monoids](http://learnyouahaskell.com/functors-applicative-functors-and-monoids)
-* [LYAH: A Fistful of Monads](http://learnyouahaskell.com/a-fistful-of-monads)
+* [LYAH: Functors, Applicative Functors and Monoids](https://learnyouahaskell.github.io/functors-applicative-functors-and-monoids)
+* [LYAH: A Fistful of Monads](https://learnyouahaskell.github.io/a-fistful-of-monads)
 * [Haskell: Monad](https://wiki.haskell.org/Monad)

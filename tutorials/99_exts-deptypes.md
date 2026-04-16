@@ -8,7 +8,7 @@ Language extensions are used to enable language features in Haskell that may see
 
 ### TypeFamilies
 
-This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrized type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same in all type instances, whereas class methods can change their behaviour in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices. (see [GHC docs](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#type-families))
+This extension allows use and definition of indexed type and data families to facilitate type-level programming. Indexed type families, or type families for short, are type constructors that represent sets of types. Set members are denoted by supplying the type family constructor with type parameters, which are called type indices. The difference between vanilla parametrized type constructors and family constructors is much like between parametrically polymorphic functions and (ad-hoc polymorphic) methods of type classes. Parametric polymorphic functions behave the same in all type instances, whereas class methods can change their behaviour in dependence on the class type parameters. Similarly, vanilla type constructors imply the same data representation for all type instances, but family constructors can have varying representation types for varying type indices.
 
 ```haskell
 {-# LANGUAGE TypeFamilies #-}
@@ -61,7 +61,7 @@ Complete example: [Haskell - GADT](https://en.wikibooks.org/wiki/Haskell/GADT)
 
 ### QuasiQuotes
 
-[Quasiquoting](https://wiki.haskell.org/Quasiquotation) allows programmers to use custom, domain-specific syntax to construct fragments of their program. Along with Haskell's existing support for domain specific languages, you are now free to use new syntactic forms for your EDSLs. We've already seen it used in Yesod or Debug. Another simple use is with [Text.RawString.QQ](http://hackage.haskell.org/package/raw-strings-qq/docs/Text-RawString-QQ.html) to allow multiline strings:
+[Quasiquoting](https://wiki.haskell.org/Quasiquotation) allows programmers to use custom, domain-specific syntax to construct fragments of their program. Along with Haskell's existing support for domain specific languages, you are now free to use new syntactic forms for your EDSLs. We've already seen it used in Yesod or Debug. Another simple use is with [Text.RawString.QQ](https://hackage.haskell.org/package/raw-strings-qq/docs/Text-RawString-QQ.html) to allow multiline strings:
 
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
@@ -78,7 +78,7 @@ multiline = [r|<HTML>
 <PRE>|]
 ```
 
-You can, of course, write your own DSL or simplify the syntax for yourself. All you have to do is implement your [QuasiQuoter](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create a simple string-string map with semicolon and newlines:
+You can, of course, write your own DSL or simplify the syntax for yourself. All you have to do is implement your [QuasiQuoter](https://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH-Quote.html#t:QuasiQuoter) (part of Template Haskell). For example, you can create a simple string-string map with semicolon and newlines:
 
 ```haskell
 {-# LANGUAGE TemplateHaskell #-}
@@ -152,7 +152,7 @@ Beautiful, right?!
 
 ### Template Haskell
 
-[Template Haskell](http://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: http://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are an important part of it. Great explanation is [here](https://ocharles.org.uk/blog/guest-posts/2014-12-22-template-haskell.html) and [here](https://markkarpov.com/tutorial/th.html).
+[Template Haskell](https://hackage.haskell.org/package/template-haskell) is a GHC extension to Haskell that adds compile-time metaprogramming facilities. The original design can be found here: https://research.microsoft.com/en-us/um/people/simonpj/papers/meta-haskell/. You could have seen part of it in action in the previous section about quasiquoting but it can do much more although quasiquotes are an important part of it. Great explanation is [here](https://serokell.io/blog/introduction-to-template-haskell) and [here](https://markkarpov.com/tutorial/th.html).
 
 ## Dependent and Refinement Types
 
@@ -166,7 +166,7 @@ Dependent types add complexity to a type system. Deciding the equality of depend
 
 ### Agda
 
-[Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with the implementation described in his PhD thesis. But current version, Agda 2, is a completely rewritten previous Agda from 1999.
+[Agda](https://wiki.portal.chalmers.se/agda/pmwiki.php) is a dependently typed functional programming language originally developed by Ulf Norell at Chalmers University of Technology with the implementation described in his PhD thesis. But current version, Agda 2, is a completely rewritten previous Agda from 1999.
 
 Visit https://github.com/agda/agda where you find some examples as well!
 
@@ -190,7 +190,7 @@ where clauses, with a rule, simple case expressions, pattern matching let and la
 * Totality checking
 * Hugs-style interactive environment
 
-On their website, you can find a documentation with [examples](https://www.idris-lang.org/example/) such as Vectors:
+On their website, you can find a documentation with [examples](https://www.idris-lang.org/pages/example.html) such as Vectors:
 
 ```idris
 infixr 5 ::
@@ -247,8 +247,7 @@ evenList     =  0 `C` 2 `C` 8 `C` N
 ## Further reading
 
 * [Haskell Wiki - Language extensions](https://wiki.haskell.org/Language_extensions)
-* [24 Days of GHC Extensions](https://ocharles.org.uk/blog/pages/2014-12-01-24-days-of-ghc-extensions.html)
 * [Agda](https://github.com/agda/agda)
 * [Idris](https://www.idris-lang.org)
-* [Idris - tutorial](http://docs.idris-lang.org/en/latest/tutorial/)
+* [Idris - tutorial](https://docs.idris-lang.org/en/latest/tutorial/)
 * [LiquidHaskell](https://ucsd-progsys.github.io/liquidhaskell-blog/)

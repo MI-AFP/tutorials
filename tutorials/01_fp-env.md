@@ -50,7 +50,7 @@ If you are interested in deeper theoretical foundations, the following resources
 
 * [Lambda calculus (Wikipedia)](https://en.wikipedia.org/wiki/Lambda_calculus)
 * [Lambda calculus (Stanford Encyclopedia of Philosophy)](https://plato.stanford.edu/entries/lambda-calculus/)
-* [The Lambda Calculus for Absolute Dummies](http://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
+* [The Lambda Calculus for Absolute Dummies](https://palmstroem.blogspot.cz/2012/05/lambda-calculus-for-absolute-dummies.html)
 
 For FIT CTU students, related material is covered in:
 
@@ -896,7 +896,7 @@ As mentioned, Stack handles dependencies automatically. You specify them in `pac
 
 First, you must find the package you need (using [Hoogle], [Hackage], or [Stackage]) and then add it to the `dependencies` section of `package.yaml`. It is good practice to check the license, documentation, and whether the package is actively maintained.
 
-If you look up `Data.Set` ([Hoogle], [Stackage] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](http://hackage.haskell.org/package/containers/docs/Data-Set.html)). In Stackage, you can also see which version is included in the snapshot (resolver) you use.
+If you look up `Data.Set` ([Hoogle], [Stackage] or [Hackage]), you will find out that it is in package `containers` licensed under BSD with maintainer email libraries@haskell.org (see [here](https://hackage.haskell.org/package/containers/docs/Data-Set.html)). In Stackage, you can also see which version is included in the snapshot (resolver) you use.
 
 However, if you now try to add the follow in your `Lib.hs`:
 
@@ -941,7 +941,7 @@ True
 False
 ```
 
-Further, [Stack] also provides [dependency visualization](https://docs.haskellstack.org/en/stable/dependency_visualization/) via well-known tool Dot (GraphViz) and more detailed options...
+Further, [Stack] also provides dependency visualization via well-known tool Dot (GraphViz) and more detailed options...
 
 ## Task assignment
 
@@ -949,9 +949,9 @@ For the first assignment, use the `hw01` project and follow the instructions in 
 
 ## Further reading
 
-* [Why Functional Programming Matters](https://wiki.ccmi.fit.cvut.cz/_media/programming:why_functional_programming_matters.pdf)
-* [Why Haskell Matters](https://dzone.com/articles/why-haskell-matters)
-* [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
+* [Why Functional Programming Matters](https://www.cs.kent.ac.uk/people/staff/dat/miranda/whyfp90.pdf)
+* [Why Haskell Matters](https://wiki.haskell.org/Why_Haskell_matters)
+* [Learn You a Haskell for Great Good](https://learnyouahaskell.github.io/)
 * [School of Haskell](https://www.schoolofhaskell.com/school/starting-with-haskell/introduction-to-haskell)
 * [Stack User Guide](https://docs.haskellstack.org/en/stable/GUIDE/)
 * [GHC User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/)
@@ -962,7 +962,7 @@ For the first assignment, use the `hw01` project and follow the instructions in 
 [Hackage]: https://hackage.haskell.org
 [Haskell]: https://www.haskell.org
 [Haskell 2010]: https://www.haskell.org/onlinereport/haskell2010/
-[Hoogle]: https://www.haskell.org/hoogle/
+[Hoogle]: https://hoogle.haskell.org/
 [hpack]: https://github.com/sol/hpack
 [Stack]: https://docs.haskellstack.org
 [Stackage]: https://www.stackage.org

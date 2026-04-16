@@ -16,7 +16,7 @@ Monad transformer is a wrapper type that has:
 
 ## MonadT, MaybeT and EitherT
 
-When using monad transformers in Haskell, package [transformers](http://hackage.haskell.org/package/transformers) provide them for basic monads such as `Maybe`, `List`, `Reader`, `Writer`, or `State`. Be careful, others are separately in different packages such as `Either` in [either](https://hackage.haskell.org/package/either). It is quite common to use `T` as suffix after monad name to name its transformer.
+When using monad transformers in Haskell, package [transformers](https://hackage.haskell.org/package/transformers) provide them for basic monads such as `Maybe`, `List`, `Reader`, `Writer`, or `State`. Be careful, others are separately in different packages such as `Either` in [either](https://hackage.haskell.org/package/either). It is quite common to use `T` as suffix after monad name to name its transformer.
 
 ### Maybe with IO
 
@@ -400,12 +400,10 @@ heCheckIfRegistrationIsEnabled = heCheckIfFeatureIsEnabled "Registration" (gener
 
 ## References
 
-* [Real World Haskell - Monad Transformers](http://book.realworldhaskell.org/read/monad-transformers.html)
 * [Wikibooks - Haskell/Monad Transformers](https://en.wikibooks.org/wiki/Haskell/Monad_transformers)
 * [Wikipedia - Monad Transformer](https://en.wikipedia.org/wiki/Monad_transformer)
 * [Monday Morning Haskell - Monads 6](https://mmhaskell.com/monads-6) = source of most of the examples
 * [A Gentle Introduction to Monad Transformers](https://github.com/kqr/gists/blob/master/articles/gentle-introduction-monad-transformers.md)
 * [A Gentle Introduction to Monad Transformers](https://github.com/kqr/gists/blob/master/articles/gentle-introduction-monad-transformers.md)
-* [Monad Transformers aren’t hard!](https://medium.com/@alexander.zaidel/monad-transformers-arent-hard-23387c7ef4a6)
 * [Haskell Wiki - Monad Transformers Explained](https://wiki.haskell.org/Monad_Transformers_Explained)
 

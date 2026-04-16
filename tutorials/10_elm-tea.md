@@ -112,7 +112,7 @@ type Msg =
 getTodo : Cmd Msg
 getTodo =
     Http.get
-        { url = "http://example.com/todo"
+        { url = "https://example.com/todo"
         , expect = Http.expectJson GotTodo todoDecoder
         }
 ```
@@ -132,7 +132,7 @@ type Msg =
 postTodo : Todo -> Cmd Msg
 postTodo todo =
     Http.post
-        { url = "http://example.com/todo"
+        { url = "https://example.com/todo"
         , body = Http.jsonBody <| encodeTodo todo
         , expect = Http.expectWhatever TodoSaved
         }
@@ -152,7 +152,7 @@ postTodoRequest =
     Http.request
         { method = "POST"
         , headers = []
-        , url = "http://example.com/todo"
+        , url = "https://example.com/todo"
         , body = Http.jsonBody <| encodeTodo todo
         , expect = Http.expectWhatever TodoSaved
         , timeout = Nothing
@@ -165,7 +165,7 @@ postTodoRequest =
 
 Opaque types are types that hide their internal implementation details within a module. While this statement seems benign on its surface, it’s an incredibly important concept in an ecosystem that enforces semantic versioning.
 
-_Note_: Taken from [Charlie Koster, medium.com](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+_Note_: Taken from Charlie Koster, medium.com: *Advanced Types in Elm - Opaque Types*
 
 ```elm
 module Email exposing (Email, decodeEmail, toString)
@@ -215,7 +215,7 @@ _Note_: From `Email` module, we expose only `Email` type without variant `EmailI
 
 ## Further Reading
 
-- [Opaque types](https://ckoster22.medium.com/advanced-types-in-elm-opaque-types-ec5ec3b84ed2)
+- [Opaque types](https://sporto.github.io/elm-patterns/advanced/opaque-types.html)
 - [Make impossible states impossible](https://www.youtube.com/watch?v=IcgmSRJHu_8&ab_channel=elm-conf)
 - [krisajenkins/remotedata](https://package.elm-lang.org/packages/krisajenkins/remotedata/latest/RemoteData)
 - [Elm Europe 2017 - Evan Czaplicki - The life of a file](https://www.youtube.com/watch?v=XpDsk374LDE)
