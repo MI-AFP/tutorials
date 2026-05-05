@@ -6,7 +6,7 @@ It is very common to use JSON format when communicating with different APIs. In 
 
 ### Decoders
 
-Elm use decoders for that. It is a declarative way how to define what should be in the JSON and how to convert it into Elm types. Functions for that are defined in [Json.Decode](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode) module.
+Elm uses decoders for that. It is a declarative way how to define what should be in the JSON and how to convert it into Elm types. Functions for that are defined in [Json.Decode](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode) module.
 
 For example, we have this JSON representing a TODO:
 
@@ -206,7 +206,7 @@ emailView2 =
     Html.text
 ```
 
-_Note_: From `Email` module, we expose only `Email` type without variant `EmailInternal`. The only way, how to access email value is in this module, no other module does not have access to `EmailInternal` and can use only access function `toString`.
+_Note_: From `Email` module, we expose only `Email` type without variant `EmailInternal`. The only way, how to access email value is in this module, no other module has access to `EmailInternal` and can use only access function `toString`.
 
 ## Materials
 
@@ -278,9 +278,9 @@ When we need more complex forms in our application, there are packages to handle
 
 ### Random
 
-There is a [Random](https://package.elm-lang.org/packages/elm/random/latest/Random) module in [elm/random](https://package.elm-lang.org/packages/elm/random/latest/) package for generating pseudo-random values in Elm. It defines a type called `Generator` which can be think of as a recipe for generating random values.
+There is a [Random](https://package.elm-lang.org/packages/elm/random/latest/Random) module in [elm/random](https://package.elm-lang.org/packages/elm/random/latest/) package for generating pseudo-random values in Elm. It defines a type called `Generator` which can be thought of as a recipe for generating random values.
 
-Here is a definition of genrator for random numbers between 1 and 4.
+Here is a definition of generator for random numbers between 1 and 4.
 
 ```elm
 import Random exposing (Generator)

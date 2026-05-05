@@ -84,7 +84,7 @@ main = withSocketsDo $ do
         C.putStrLn msg
 ```
 
-A you can see, most of the work happens in `do` of `IO` and it highly resembles classic imperative programming. Indeed, networking and also most of UI is inherently not a show room of beautiful Haskell code, but it gets the job done ;-).
+As you can see, most of the work happens in `do` of `IO` and it highly resembles classic imperative programming. Indeed, networking and also most of UI is inherently not a show room of beautiful Haskell code, but it gets the job done ;-).
 
 ### Specialized libraries
 

@@ -23,7 +23,7 @@ const app = program.Elm.Todos.init({
 });
 ```
 
-_Note_: We also need to create the element in our HTML structure. In case we would use [Browswer.document](https://package.elm-lang.org/packages/elm/browser/latest/Browser#document) or [Browser.application](https://package.elm-lang.org/packages/elm/browser/latest/Browser#application) instead, we don't need to specify the node since it will load into the whole document body.
+_Note_: We also need to create the element in our HTML structure. In case we would use [Browser.document](https://package.elm-lang.org/packages/elm/browser/latest/Browser#document) or [Browser.application](https://package.elm-lang.org/packages/elm/browser/latest/Browser#application) instead, we don't need to specify the node since it will load into the whole document body.
 
 ## JavaScript Interop
 
@@ -64,7 +64,7 @@ If we use anything else than `Json.Decode.Value` and provide an incorrect type, 
 
 ### Ports
 
-While Flags are used for sending initial values to the Elm app, Ports are used for sending messages between JavaScript and Elm. The communication is not based on request/response like in HTTP though. We only have one-way messages send from Elm to JavaScript or vice versa.
+While Flags are used for sending initial values to the Elm app, Ports are used for sending messages between JavaScript and Elm. The communication is not based on request/response like in HTTP though. We only have one-way messages sent from Elm to JavaScript or vice versa.
 
 #### Outgoing Messages
 
@@ -104,7 +104,7 @@ import Ports
 update msg model =
     case msg of
         SaveUser user ->
-            (model, Ports.saveUser <| encdeUser user)
+            (model, Ports.saveUser <| encodeUser user)
 ```
 
 #### Incoming messages
@@ -155,9 +155,9 @@ app.ports.gotUser.send(userData);
 
 ## Subscriptions
 
-[Subscriptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happend (e.g., web socket message or clock tick).
+[Subscriptions](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub) are used to tell Elm that we want to be informed if something happened (e.g., web socket message or clock tick).
 
-Here's an example of subscriptions defining that a message `Tick` with current time should be send to update function every 1000 milliseconds.
+Here's an example of subscriptions defining that a message `Tick` with current time should be sent to update function every 1000 milliseconds.
 
 ```elm
 import Time
@@ -246,7 +246,7 @@ update msg model =
             case urlRequest of
                 Browser.Internal url ->
                     ( model
-                    , Nav.pushUrl model.key <| Url.toString url
+                    , Navigation.pushUrl model.key <| Url.toString url
                     )
 
                 Browser.External href ->
@@ -288,7 +288,7 @@ viewLink path =
 
 In the previous example, we used Url as is. However, we can use [Url.Parser](https://package.elm-lang.org/packages/elm/url/latest/Url-Parser) module from [elm/url](https://package.elm-lang.org/packages/elm/url/latest/) package to parse the URL into useful Elm types.
 
-Here's an example form the documentation converting different routes with parameters into `Route` type.
+Here's an example from the documentation converting different routes with parameters into `Route` type.
 
 ```elm
 import Url.Parser exposing ((</>), Parser, int, s, string)
@@ -338,7 +338,7 @@ To be able to split page to more sub modules, we need to use `Html.map` [functio
 
 [Webpack](https://webpack.js.org) is a module bundler for JavaScript applications. It builds a dependency graph of source modules and creates static assets. It uses different loaders for different file types, e.g., to convert new EcmaScript syntax into the one supported by browsers or to convert Sass to CSS. It can also minify those assets.
 
-Besides other loaders, there is also [elm-webpack-laoder](https://github.com/elm-community/elm-webpack-loader). If we require an Elm module from JavaScript code, it will use `elm make` under the hood to build it.
+Besides other loaders, there is also [elm-webpack-loader](https://github.com/elm-community/elm-webpack-loader). If we require an Elm module from JavaScript code, it will use `elm make` under the hood to build it.
 
 Here's an example of configuration:
 
@@ -359,7 +359,7 @@ module.exports = {
 };
 ```
 
-### Usefull links
+### Useful links
 
 - [Elm Europe 2017 - Richard Feldman - Scaling Elm Apps](https://www.youtube.com/watch?v=DoA4Txr4GUs)
 - [Richard Feldman real world SPA](https://github.com/rtfeldman/elm-spa-example)
